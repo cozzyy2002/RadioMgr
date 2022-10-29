@@ -129,6 +129,10 @@
   <ItemGroup>
     <ClCompile Include="..\Common\Assert.cpp" />
     <ClCompile Include="btsw.cpp" />
+    <ClCompile Include="DeviceRadioState.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DeviceRadioState.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

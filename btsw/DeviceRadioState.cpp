@@ -60,7 +60,7 @@ bool DeviceRadioState::operator==(const DeviceRadioState& that) const
 	return (this->m_state == that.m_state);
 }
 
-LPCWSTR DeviceRadioState::str()
+LPCWSTR DeviceRadioState::name()
 {
 	if(m_str.empty()) {
 		wchar_t buff[50];

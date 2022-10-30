@@ -10,15 +10,22 @@
 
 LPCWSTR CLSID_BlueToothRadioManager = L"{afd198ac-5f30-4e89-a789-5ddf60a69366}";
 
-struct Param {
+
+using OperationFunc = bool (*)(DeviceRadioState*, DeviceRadioState*);
+
+struct OperationConfig {
     LPCWSTR str;
-    DEVICE_RADIO_STATE newState;
-    DEVICE_RADIO_STATE currentState;
+    OperationFunc func;
 };
 
-static const Param params[] = {
-    { L"on", DRS_RADIO_ON, DRS_SW_RADIO_OFF },
-    { L"off", DRS_SW_RADIO_OFF, DRS_RADIO_ON },
+static bool operationOn(DeviceRadioState* currentState, DeviceRadioState* newState);
+static bool operationOff(DeviceRadioState* currentState, DeviceRadioState* newState);
+static bool operationToggle(DeviceRadioState* currentState, DeviceRadioState* newState);
+
+static const OperationConfig operations[] = {
+    { L"on", operationOn },
+    { L"off", operationOff },
+    { L"toggle", operationToggle },
 };
 
 int wmain(int argc, wchar_t** argv)
@@ -26,13 +33,13 @@ int wmain(int argc, wchar_t** argv)
     tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { _putts(msg); };
 
 
-    const Param* setParam = nullptr;
+    OperationFunc operationFunc = nullptr;
     UINT32 timeout = 1;
     if(1 < argc) {
-        std::wstring operaton(argv[1]);
-        for(auto& param : params) {
-            if(operaton.compare(param.str) == 0) {
-                setParam = &param;
+        auto operatonStr(argv[1]);
+        for(auto& operation : operations) {
+            if(_wcsicmp(operatonStr, operation.str) == 0) {
+                operationFunc = operation.func;
                 break;
             }
         }
@@ -64,20 +71,39 @@ int wmain(int argc, wchar_t** argv)
     HR_ASSERT_OK(instance->GetRadioState(&state));
 
     std::unique_ptr<DeviceRadioState> currentState(DeviceRadioState::create(state));
-    wprintf_s(L"%s:%s State=%s", friendlyName, signature, currentState->str() );
+#define STR_BOOL(x) ((x) ? L"true" : L"false")
+    wprintf_s(L"%s:%s: State=%s, IsAssociatingDevice=%s, IsMultiComm=%s\n",
+        friendlyName, signature, currentState->name(),
+        STR_BOOL(instance->IsAssociatingDevice()), STR_BOOL(instance->IsMultiComm()));
 
-    if(setParam) {
+    if(operationFunc) {
         std::unique_ptr<DeviceRadioState> newState(currentState->createSwitchableState());
         HR_ASSERT(newState, E_ABORT);
-        if((setParam->currentState == *currentState) || (setParam->newState == *newState)) {
+        if(operationFunc(currentState.get(), newState.get())) {
+            // Change state.
             HR_ASSERT_OK(instance->SetRadioState(*newState, timeout));
-            wprintf_s(L": Complete setting state to %s\n", newState->str());
+            wprintf_s(L"Complete setting state to %s\n", newState->name());
         } else {
-            _putws(L": State is already set");
+            _putws(L"State is already set");
         }
-    } else {
-        _putws(L"");
     }
 
     return 0;
+}
+
+bool operationOn(DeviceRadioState* currentState, DeviceRadioState* newState)
+{
+    return (*currentState == DRS_SW_RADIO_OFF);
+}
+
+bool operationOff(DeviceRadioState* currentState, DeviceRadioState* newState)
+{
+    return (*currentState == DRS_RADIO_ON);
+}
+
+bool operationToggle(DeviceRadioState* currentState, DeviceRadioState* newState)
+{
+    // newState may not nullptr.
+    // So always state can be toggled.
+    return true;
 }

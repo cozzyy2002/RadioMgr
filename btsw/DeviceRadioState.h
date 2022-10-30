@@ -11,7 +11,7 @@ public:
 
 	operator DEVICE_RADIO_STATE() const;
 	bool operator ==(const DeviceRadioState&) const;
-	LPCWSTR str();
+	LPCWSTR name();
 
 protected:
 	DeviceRadioState(LPCWSTR name, DEVICE_RADIO_STATE state, DEVICE_RADIO_STATE switchableState);

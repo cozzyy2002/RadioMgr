@@ -18,14 +18,10 @@ struct OperationConfig {
     OperationFunc func;
 };
 
-static bool operationOn(DeviceRadioState* currentState, DeviceRadioState* newState);
-static bool operationOff(DeviceRadioState* currentState, DeviceRadioState* newState);
-static bool operationToggle(DeviceRadioState* currentState, DeviceRadioState* newState);
-
 static const OperationConfig operations[] = {
-    { L"on", operationOn },
-    { L"off", operationOff },
-    { L"toggle", operationToggle },
+    { L"on", [](DeviceRadioState* currentState, DeviceRadioState*) { return (*currentState == DRS_SW_RADIO_OFF); } },
+    { L"off", [](DeviceRadioState* currentState, DeviceRadioState*) { return (*currentState == DRS_RADIO_ON); } },
+    { L"toggle",[](DeviceRadioState*, DeviceRadioState*) { return true; } },
 };
 
 int wmain(int argc, wchar_t** argv)
@@ -89,21 +85,4 @@ int wmain(int argc, wchar_t** argv)
     }
 
     return 0;
-}
-
-bool operationOn(DeviceRadioState* currentState, DeviceRadioState* newState)
-{
-    return (*currentState == DRS_SW_RADIO_OFF);
-}
-
-bool operationOff(DeviceRadioState* currentState, DeviceRadioState* newState)
-{
-    return (*currentState == DRS_RADIO_ON);
-}
-
-bool operationToggle(DeviceRadioState* currentState, DeviceRadioState* newState)
-{
-    // newState may not nullptr.
-    // So always state can be toggled.
-    return true;
 }

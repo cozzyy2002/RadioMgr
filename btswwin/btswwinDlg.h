@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <RadioMgr.h>
+#include <atlbase.h>
 
 // CbtswwinDlg dialog
 class CbtswwinDlg : public CDialogEx
@@ -11,6 +13,13 @@ class CbtswwinDlg : public CDialogEx
 // Construction
 public:
 	CbtswwinDlg(CWnd* pParent = nullptr);	// standard constructor
+
+	void print(const CString&);
+	void print(LPCTSTR, ...);
+
+protected:
+	CComPtr<IMediaRadioManager> m_radioManager;
+	CComPtr<IRadioInstance> m_radioInstance;
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -31,4 +40,9 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+public:
+	CListBox m_ListLog;
+	afx_msg void OnBnClickedOn();
+	afx_msg void OnBnClickedOff();
+	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData);
 };

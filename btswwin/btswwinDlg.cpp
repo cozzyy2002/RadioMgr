@@ -48,6 +48,8 @@ END_MESSAGE_MAP()
 
 // CbtswwinDlg dialog
 
+#pragma region ValueName template class
+
 template<typename T>
 struct ValueName {
 	LPCTSTR name;
@@ -55,6 +57,7 @@ struct ValueName {
 
 	template<size_t size>
 	static CString getName(const ValueName(&list)[size], const T& v);
+	static CString valueToString(const T& v);
 };
 
 template<typename T> template<size_t size>
@@ -62,30 +65,35 @@ template<typename T> template<size_t size>
 {
 	LPCTSTR name = _T("UNKNOWN");
 	for(auto& i : list) {
-		if(i.value == v) name = i.name;
+		if(i.value == v) {
+			name = i.name;
+			break;
+		}
 	}
 	CString ret;
-	ret.Format(_T("%s(%d)"), name, v);
+	ret.Format(_T("%s(%s)"), name, valueToString(v));
 	return ret;
 }
 
-template<> template<size_t size>
-/*static*/ CString ValueName<GUID>::getName(const ValueName(&list)[size], const GUID& v)
+template<typename T>
+/*static*/ CString ValueName<T>::valueToString(const T& v)
 {
-	LPCTSTR name = _T("UNKNOWN");
-	for(auto& i : list) {
-		if(i.value == v) name = i.name;
-	}
+	CString ret;
+	ret.Format(_T("%d"), v);
+	return ret;
+}
 
+template<>
+/*static*/ CString ValueName<GUID>::valueToString(const GUID& v)
+{
 	OLECHAR strGuid[50];
 	StringFromGUID2(v, strGuid, ARRAYSIZE(strGuid));
-	ATL::CW2T tstrGuid(strGuid);
-	CString ret;
-	ret.Format(_T("%s(%s)"), name, (LPCTSTR)tstrGuid);
-	return ret;
+	return strGuid;
 }
 
 #define VALUE_NAME_ITEM(x) {_T(#x), x}
+
+#pragma endregion
 
 CbtswwinDlg::CbtswwinDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_BTSWWIN_DIALOG, pParent)

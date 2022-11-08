@@ -6,6 +6,7 @@
 #include "framework.h"
 #include "btswwin.h"
 #include "btswwinDlg.h"
+#include "../Common/Assert.h"
 #include "afxdialogex.h"
 
 #ifdef _DEBUG
@@ -63,7 +64,7 @@ struct ValueName {
 template<typename T> template<size_t size>
 /*static*/ CString ValueName<T>::getName(const ValueName (&list)[size], const T& v)
 {
-	LPCTSTR name = _T("UNKNOWN");
+	auto name = _T("UNKNOWN");
 	for(auto& i : list) {
 		if(i.value == v) {
 			name = i.name;
@@ -71,7 +72,7 @@ template<typename T> template<size_t size>
 		}
 	}
 	CString ret;
-	ret.Format(_T("%s(%s)"), name, valueToString(v));
+	ret.Format(_T("%s(%s)"), name, valueToString(v).GetString());
 	return ret;
 }
 
@@ -86,8 +87,8 @@ template<typename T>
 template<>
 /*static*/ CString ValueName<GUID>::valueToString(const GUID& v)
 {
-	OLECHAR strGuid[50];
-	StringFromGUID2(v, strGuid, ARRAYSIZE(strGuid));
+	OLECHAR strGuid[50] = _T("");
+	HR_EXPECT(0 < StringFromGUID2(v, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
 	return strGuid;
 }
 
@@ -99,6 +100,26 @@ CbtswwinDlg::CbtswwinDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_BTSWWIN_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+}
+
+static CbtswwinDlg* pdlg = nullptr;
+
+// Show failed message in log list control with formatted HRESULT.
+static void AssertFailedProc(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int line)
+{
+	if(pdlg) {
+		LPTSTR msg;
+		DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
+		auto formatResult = FormatMessage(flags, NULL, hr, 0, (LPTSTR)&msg, 100, NULL);
+		if(formatResult) {
+			pdlg->print(_T("`%s` failed: %s(0x%08x)"), exp, msg, hr);
+			LocalFree(msg);
+			return;
+		}
+	}
+
+	// Call default proc if CbtswwinDlg is not created yet or FormatMessage() failed.
+	tsm::Assert::defaultAssertFailedProc(hr, exp, sourceFile, line);
 }
 
 void CbtswwinDlg::print(const CString& text)
@@ -172,15 +193,27 @@ BOOL CbtswwinDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
-	CoInitializeEx(NULL, COINIT_MULTITHREADED);
-	CLSID clsid;
-	CLSIDFromString(L"{afd198ac-5f30-4e89-a789-5ddf60a69366}", &clsid);
-	m_radioManager.CoCreateInstance(clsid);
-	CComPtr<IRadioInstanceCollection> col;
-	m_radioManager->GetRadioInstances(&col);
-	col->GetAt(0, &m_radioInstance);
+	::pdlg = this;
+	tsm::Assert::onAssertFailedProc = ::AssertFailedProc;
+
+	HR_EXPECT_OK(CoInitializeEx(NULL, COINIT_MULTITHREADED));
+	auto hr = createRadioInstance();
+	print(_T("%s to initialize"), SUCCEEDED(hr) ? _T("Succeeded") : _T("Failed"));
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
+}
+
+// Create IRadioInstance object for Bluetooth device.
+HRESULT CbtswwinDlg::createRadioInstance()
+{
+	CLSID clsid;
+	HR_ASSERT_OK(CLSIDFromString(L"{afd198ac-5f30-4e89-a789-5ddf60a69366}", &clsid));
+	HR_ASSERT_OK(m_radioManager.CoCreateInstance(clsid));
+	CComPtr<IRadioInstanceCollection> col;
+	HR_ASSERT_OK(m_radioManager->GetRadioInstances(&col));
+	HR_ASSERT_OK(col->GetAt(0, &m_radioInstance));
+
+	return S_OK;
 }
 
 void CbtswwinDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -237,7 +270,7 @@ HCURSOR CbtswwinDlg::OnQueryDragIcon()
 void CbtswwinDlg::OnBnClickedOn()
 {
 	auto hr = m_radioInstance->SetRadioState(DRS_RADIO_ON, 1);
-	print(_T("Bluetooth ON: 0x%p"), (void*)hr);
+	print(_T("Bluetooth ON: 0x%08x"), hr);
 }
 
 
@@ -245,7 +278,7 @@ void CbtswwinDlg::OnBnClickedOn()
 void CbtswwinDlg::OnBnClickedOff()
 {
 	auto hr = m_radioInstance->SetRadioState(DRS_SW_RADIO_OFF, 1);
-	print(_T("Bluetooth OFF: 0x%p"), (void*)hr);
+	print(_T("Bluetooth OFF: 0x%08x"), hr);
 }
 
 

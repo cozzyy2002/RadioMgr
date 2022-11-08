@@ -13,6 +13,7 @@ class CbtswwinDlg : public CDialogEx
 // Construction
 public:
 	CbtswwinDlg(CWnd* pParent = nullptr);	// standard constructor
+	HRESULT createRadioInstance();
 
 	void print(const CString&);
 	void print(LPCTSTR, ...);

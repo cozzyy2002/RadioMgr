@@ -56,10 +56,15 @@ struct ValueName {
 	LPCTSTR name;
 	T value;
 
+	static LPCTSTR ValueFormat;
 	template<size_t size>
 	static CString getName(const ValueName(&list)[size], const T& v);
 	static CString valueToString(const T& v);
 };
+
+template<typename T> LPCTSTR ValueName<T>::ValueFormat = _T("%d");
+template<> LPCTSTR ValueName<UINT>::ValueFormat = _T("%u");
+template<> LPCTSTR ValueName<float>::ValueFormat = _T("%f");
 
 template<typename T> template<size_t size>
 /*static*/ CString ValueName<T>::getName(const ValueName (&list)[size], const T& v)
@@ -80,7 +85,7 @@ template<typename T>
 /*static*/ CString ValueName<T>::valueToString(const T& v)
 {
 	CString ret;
-	ret.Format(_T("%d"), v);
+	ret.Format(ValueFormat, v);
 	return ret;
 }
 
@@ -193,6 +198,8 @@ BOOL CbtswwinDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+
+	// Prepare for AssertFailedProc() static function.
 	::pdlg = this;
 	tsm::Assert::onAssertFailedProc = ::AssertFailedProc;
 

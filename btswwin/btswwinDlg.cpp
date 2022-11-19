@@ -281,18 +281,8 @@ HCURSOR CbtswwinDlg::OnQueryDragIcon()
 
 void CbtswwinDlg::OnBnClickedOn()
 {
-	static const ValueName<DEVICE_RADIO_STATE> stateNames[] = {
-		VALUE_NAME_ITEM(DRS_RADIO_ON, _T("Device radio is ON")),
-		VALUE_NAME_ITEM(DRS_SW_RADIO_OFF, _T("Device radio is OFF")),
-		VALUE_NAME_ITEM(DRS_HW_RADIO_OFF),
-		VALUE_NAME_ITEM(DRS_SW_HW_RADIO_OFF),
-		VALUE_NAME_ITEM(DRS_HW_RADIO_ON_UNCONTROLLABLE),
-		VALUE_NAME_ITEM(DRS_RADIO_INVALID),
-		VALUE_NAME_ITEM(DRS_HW_RADIO_OFF_UNCONTROLLABLE),
-	};
 	auto hr = m_radioInstance->SetRadioState(DRS_RADIO_ON, 1);
 	print(_T("Bluetooth ON: 0x%08x"), hr);
-	print(ValueName<DEVICE_RADIO_STATE>::getName(stateNames, DRS_SW_RADIO_OFF));
 }
 
 

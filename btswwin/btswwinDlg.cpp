@@ -53,31 +53,36 @@ END_MESSAGE_MAP()
 
 template<typename T>
 struct ValueName {
-	LPCTSTR name;
 	T value;
+	LPCTSTR name;
+	LPCTSTR description;
 
-	static LPCTSTR ValueFormat;
+	static LPCTSTR StringFormat;
 	template<size_t size>
 	static CString getName(const ValueName(&list)[size], const T& v);
 	static CString valueToString(const T& v);
 };
 
-template<typename T> LPCTSTR ValueName<T>::ValueFormat = _T("%d");
-template<> LPCTSTR ValueName<UINT>::ValueFormat = _T("%u");
-template<> LPCTSTR ValueName<float>::ValueFormat = _T("%f");
+template<typename T> LPCTSTR ValueName<T>::StringFormat = _T("%d");
+template<> LPCTSTR ValueName<UINT>::StringFormat = _T("0x%04X");
+template<> LPCTSTR ValueName<float>::StringFormat = _T("%f");
 
 template<typename T> template<size_t size>
 /*static*/ CString ValueName<T>::getName(const ValueName (&list)[size], const T& v)
 {
 	auto name = _T("UNKNOWN");
+	CString desc;
 	for(auto& i : list) {
 		if(i.value == v) {
 			name = i.name;
+			if(i.description) {
+				desc.Format(_T(":%s"), i.description);
+			}
 			break;
 		}
 	}
 	CString ret;
-	ret.Format(_T("%s(%s)"), name, valueToString(v).GetString());
+	ret.Format(_T("%s(%s)%s"), name, valueToString(v).GetString(), desc.GetString());
 	return ret;
 }
 
@@ -85,7 +90,7 @@ template<typename T>
 /*static*/ CString ValueName<T>::valueToString(const T& v)
 {
 	CString ret;
-	ret.Format(ValueFormat, v);
+	ret.Format(StringFormat, v);
 	return ret;
 }
 
@@ -97,7 +102,7 @@ template<>
 	return strGuid;
 }
 
-#define VALUE_NAME_ITEM(x) {_T(#x), x}
+#define VALUE_NAME_ITEM(x, ...) {x, _T(#x), __VA_ARGS__}
 
 #pragma endregion
 
@@ -276,8 +281,18 @@ HCURSOR CbtswwinDlg::OnQueryDragIcon()
 
 void CbtswwinDlg::OnBnClickedOn()
 {
+	static const ValueName<DEVICE_RADIO_STATE> stateNames[] = {
+		VALUE_NAME_ITEM(DRS_RADIO_ON, _T("Device radio is ON")),
+		VALUE_NAME_ITEM(DRS_SW_RADIO_OFF, _T("Device radio is OFF")),
+		VALUE_NAME_ITEM(DRS_HW_RADIO_OFF),
+		VALUE_NAME_ITEM(DRS_SW_HW_RADIO_OFF),
+		VALUE_NAME_ITEM(DRS_HW_RADIO_ON_UNCONTROLLABLE),
+		VALUE_NAME_ITEM(DRS_RADIO_INVALID),
+		VALUE_NAME_ITEM(DRS_HW_RADIO_OFF_UNCONTROLLABLE),
+	};
 	auto hr = m_radioInstance->SetRadioState(DRS_RADIO_ON, 1);
 	print(_T("Bluetooth ON: 0x%08x"), hr);
+	print(ValueName<DEVICE_RADIO_STATE>::getName(stateNames, DRS_SW_RADIO_OFF));
 }
 
 

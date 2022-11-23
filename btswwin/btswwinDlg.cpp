@@ -237,6 +237,8 @@ void CbtswwinDlg::OnBnClickedOff()
 	print(_T("Bluetooth OFF: 0x%08x"), hr);
 }
 
+// String format for Power events.
+template<> LPCTSTR ValueName<UINT>::StringFormat = _T("0x%04X");
 
 UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 {
@@ -248,7 +250,7 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 		VALUE_NAME_ITEM(PBT_POWERSETTINGCHANGE),
 	};
 
-	print(_T(__FUNCTION__) _T(": PowerEvent=%s"), ValueName<UINT>::getName(powerEvents, nPowerEvent));
+	print(_T(__FUNCTION__) _T(": PowerEvent=%s"), ValueToString(powerEvents, nPowerEvent).GetString());
 
 	if(nPowerEvent == PBT_POWERSETTINGCHANGE) {
 		static const ValueName<GUID> powerSettingGuids[] = {
@@ -266,7 +268,7 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 		};
 
 		auto setting = (PPOWERBROADCAST_SETTING)nEventData;
-		print(_T("  PowerSetting=%s"), ValueName<GUID>::getName(powerSettingGuids, setting->PowerSetting));
+		print(_T("  PowerSetting=%s"), ValueToString(powerSettingGuids, setting->PowerSetting).GetString());
 	}
 
 	return CDialogEx::OnPowerBroadcast(nPowerEvent, nEventData);

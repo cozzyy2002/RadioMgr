@@ -99,6 +99,11 @@ void CbtswwinDlg::print(LPCTSTR fmt, ...)
 	m_ListLog.AddString(text);
 }
 
+void CbtswwinDlg::PowerNotifyDeleteFunc(HPOWERNOTIFY h)
+{
+	WIN32_EXPECT(UnregisterPowerSettingNotification(h));
+}
+
 void CbtswwinDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
@@ -155,6 +160,9 @@ BOOL CbtswwinDlg::OnInitDialog()
 	HR_EXPECT_OK(CoInitializeEx(NULL, COINIT_MULTITHREADED));
 	auto hr = createRadioInstance();
 	print(_T("%s to initialize"), SUCCEEDED(hr) ? _T("Succeeded") : _T("Failed"));
+
+	m_hPowerNotify = RegisterPowerSettingNotification(m_hWnd, &GUID_SESSION_DISPLAY_STATUS, DEVICE_NOTIFY_WINDOW_HANDLE);
+	WIN32_EXPECT(m_hPowerNotify);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }

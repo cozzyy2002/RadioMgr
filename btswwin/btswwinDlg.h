@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "SafeHandle.h"
+
 #include <RadioMgr.h>
 #include <atlbase.h>
 
@@ -21,6 +23,9 @@ public:
 protected:
 	CComPtr<IMediaRadioManager> m_radioManager;
 	CComPtr<IRadioInstance> m_radioInstance;
+
+	static void PowerNotifyDeleteFunc(HPOWERNOTIFY);
+	SafeHandle<HPOWERNOTIFY, PowerNotifyDeleteFunc> m_hPowerNotify;
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -46,4 +51,5 @@ public:
 	afx_msg void OnBnClickedOn();
 	afx_msg void OnBnClickedOff();
 	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData);
+//	afx_msg void OnDestroy();
 };

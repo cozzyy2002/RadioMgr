@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "SafeHandle.h"
+#include "../Common/SafeHandle.h"
 
 #include <RadioMgr.h>
 #include <atlbase.h>

@@ -99,7 +99,7 @@ void CbtswwinDlg::print(LPCTSTR fmt, ...)
 	m_ListLog.AddString(text);
 }
 
-void CbtswwinDlg::PowerNotifyDeleteFunc(HPOWERNOTIFY h)
+void CbtswwinDlg::unregisterPowerNotify(HPOWERNOTIFY h)
 {
 	WIN32_EXPECT(UnregisterPowerSettingNotification(h));
 }

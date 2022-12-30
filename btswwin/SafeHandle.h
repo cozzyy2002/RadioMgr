@@ -16,6 +16,11 @@ public:
 	operator H() const { return m_handle.get(); }
 	operator bool() const { return m_handle.operator bool(); }
 
+	SafeHandle(SafeHandle&&) = delete;
+	SafeHandle& operator=(SafeHandle&&) = delete;
+	SafeHandle(const SafeHandle&) = delete;
+	SafeHandle& operator=(const SafeHandle&) = delete;
+
 protected:
 	struct Deleter {
 		using pointer = H;

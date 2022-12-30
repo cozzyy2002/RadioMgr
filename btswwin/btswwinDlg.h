@@ -24,8 +24,9 @@ protected:
 	CComPtr<IMediaRadioManager> m_radioManager;
 	CComPtr<IRadioInstance> m_radioInstance;
 
-	static void PowerNotifyDeleteFunc(HPOWERNOTIFY);
-	SafeHandle<HPOWERNOTIFY, PowerNotifyDeleteFunc> m_hPowerNotify;
+	static void unregisterPowerNotify(HPOWERNOTIFY);
+	using PowerNotifyHandle = SafeHandle<HPOWERNOTIFY, unregisterPowerNotify>;
+	PowerNotifyHandle m_hPowerNotify;
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME

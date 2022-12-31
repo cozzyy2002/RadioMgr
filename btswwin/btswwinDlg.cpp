@@ -159,11 +159,13 @@ BOOL CbtswwinDlg::OnInitDialog()
 
 	HR_EXPECT_OK(CoInitializeEx(NULL, COINIT_MULTITHREADED));
 	auto hr = createRadioInstance();
+
+	if(SUCCEEDED(hr)) {
+		m_hPowerNotify = RegisterPowerSettingNotification(m_hWnd, &GUID_SESSION_USER_PRESENCE, DEVICE_NOTIFY_WINDOW_HANDLE);
+		hr = WIN32_EXPECT(m_hPowerNotify);
+	}
+
 	print(_T("%s to initialize"), SUCCEEDED(hr) ? _T("Succeeded") : _T("Failed"));
-
-	m_hPowerNotify = RegisterPowerSettingNotification(m_hWnd, &GUID_SESSION_DISPLAY_STATUS, DEVICE_NOTIFY_WINDOW_HANDLE);
-	WIN32_EXPECT(m_hPowerNotify);
-
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -175,6 +177,9 @@ HRESULT CbtswwinDlg::createRadioInstance()
 	HR_ASSERT_OK(m_radioManager.CoCreateInstance(clsid));
 	CComPtr<IRadioInstanceCollection> col;
 	HR_ASSERT_OK(m_radioManager->GetRadioInstances(&col));
+	UINT32 instanceCount;
+	HR_ASSERT_OK(col->GetCount(&instanceCount));
+	HR_ASSERT(0 < instanceCount, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
 	HR_ASSERT_OK(col->GetAt(0, &m_radioInstance));
 
 	return S_OK;
@@ -276,7 +281,22 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 		};
 
 		auto setting = (PPOWERBROADCAST_SETTING)nEventData;
-		print(_T("  PowerSetting=%s"), ValueToString(powerSettingGuids, setting->PowerSetting).GetString());
+		DWORD data = 0;
+		switch(setting->DataLength) {
+		case sizeof(UCHAR):
+			data = setting->Data[0];
+			break;
+		case sizeof(WORD):
+			data = *((WORD*)(setting->Data));
+			break;
+		case sizeof(DWORD):
+			data = *((DWORD*)(setting->Data));
+			break;
+		}
+		print(_T("  PowerSetting=%s, size=%d, data=%d"),
+			ValueToString(powerSettingGuids, setting->PowerSetting).GetString(),
+			setting->DataLength, data
+		);
 	}
 
 	return CDialogEx::OnPowerBroadcast(nPowerEvent, nEventData);

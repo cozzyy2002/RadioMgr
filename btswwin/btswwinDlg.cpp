@@ -83,7 +83,7 @@ void CbtswwinDlg::print(const CString& text)
 
 void CbtswwinDlg::print(LPCTSTR fmt, ...)
 {
-	if(10 < m_ListLog.GetCount()) {
+	if(100 < m_ListLog.GetCount()) {
 		m_ListLog.DeleteString(0);
 	}
 
@@ -117,6 +117,7 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_BN_CLICKED(IDO_ON, &CbtswwinDlg::OnBnClickedOn)
 	ON_BN_CLICKED(IDO_OFF, &CbtswwinDlg::OnBnClickedOff)
 	ON_WM_POWERBROADCAST()
+	ON_BN_CLICKED(ID_EDIT_COPY, &CbtswwinDlg::OnBnClickedEditCopy)
 END_MESSAGE_MAP()
 
 
@@ -300,4 +301,33 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 	}
 
 	return CDialogEx::OnPowerBroadcast(nPowerEvent, nEventData);
+}
+
+// Copy text in the log window to clipboard.
+void CbtswwinDlg::OnBnClickedEditCopy()
+{
+	auto line = m_ListLog.GetCount();
+	CString text;
+	for(int i = 0; i < line; i++) {
+		CString t;
+		m_ListLog.GetText(i, t);
+		text += (t + _T("\n"));
+	}
+
+	OpenClipboard();
+	EmptyClipboard();
+
+	size_t size = (text.GetLength() + 1) * sizeof(TCHAR);
+	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, size);
+	if(SUCCEEDED(WIN32_EXPECT(hMem))) {
+		memcpy_s(GlobalLock(hMem), size, text.LockBuffer(), size);
+		GlobalUnlock(hMem);
+		text.UnlockBuffer();
+
+		UINT format = (sizeof(TCHAR) == sizeof(WCHAR) ? CF_UNICODETEXT : CF_TEXT);
+		::SetClipboardData(format, hMem);
+	}
+	CloseClipboard();
+
+	print(_T("Copied %d line(%d bytes) to Clipboard"), line, size);
 }

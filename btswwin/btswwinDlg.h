@@ -53,4 +53,5 @@ public:
 	afx_msg void OnBnClickedOff();
 	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData);
 //	afx_msg void OnDestroy();
+	afx_msg void OnBnClickedEditCopy();
 };

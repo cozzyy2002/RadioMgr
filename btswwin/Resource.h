@@ -5,6 +5,7 @@
 #define IDO_ON                          3
 #define IDO_ON2                         4
 #define IDO_OFF                         4
+#define ID_FILE_COPY                    5
 #define IDM_ABOUTBOX                    0x0010
 #define IDD_ABOUTBOX                    100
 #define IDS_ABOUTBOX                    101

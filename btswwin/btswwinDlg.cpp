@@ -325,9 +325,10 @@ void CbtswwinDlg::OnBnClickedEditCopy()
 		text.UnlockBuffer();
 
 		UINT format = (sizeof(TCHAR) == sizeof(WCHAR) ? CF_UNICODETEXT : CF_TEXT);
-		::SetClipboardData(format, hMem);
+		WIN32_EXPECT(::SetClipboardData(format, hMem) == hMem);
+		print(_T("Copied %d line(%d bytes) to Clipboard"), line, size);
+	} else {
+		print(_T("Failed to allocate %d bytes memory"), size);
 	}
 	CloseClipboard();
-
-	print(_T("Copied %d line(%d bytes) to Clipboard"), line, size);
 }

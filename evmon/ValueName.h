@@ -5,10 +5,6 @@
 #include <string>
 #include <time.h>
 
-#ifdef GetCurrentTime
-#undef GetCurrentTime
-#endif
-
 namespace std {
 #if defined(_UNICODE)
 	using tstring = std::wstring;

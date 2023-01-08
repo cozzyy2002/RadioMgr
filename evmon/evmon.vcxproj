@@ -129,6 +129,10 @@
   <ItemGroup>
     <ClCompile Include="..\Common\Assert.cpp" />
     <ClCompile Include="evmon.cpp" />
+    <ClCompile Include="ValueName.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ValueName.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

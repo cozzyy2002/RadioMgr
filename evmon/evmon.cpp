@@ -14,6 +14,9 @@ static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static void AssertFailedProc(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int line);
 static LPTSTR trim(LPTSTR str, int len);
 static void print(LPCTSTR format, ...);
+static BOOL WINAPI CtrlCHandler(DWORD ctrlType);
+
+static HWND g_hwnd(NULL);
 
 int _tmain(int argc, TCHAR** argv)
 {
@@ -21,21 +24,74 @@ int _tmain(int argc, TCHAR** argv)
 	tsm::Assert::onAssertFailedProc = AssertFailedProc;
 	tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { _putts(msg); };
 
+	WIN32_ASSERT(SetConsoleCtrlHandler(CtrlCHandler, TRUE));
+
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = WndProc;
 	wc.lpszClassName = _T("Message-Only Window");
 	wc.hInstance = GetModuleHandle(NULL);
 	auto atom = RegisterClass(&wc);
 	WIN32_ASSERT(atom != 0);
-	auto hwnd = CreateWindow((LPCTSTR)atom, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
-	WIN32_ASSERT(hwnd != NULL);
+	g_hwnd = CreateWindow((LPCTSTR)atom, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
+	WIN32_ASSERT(g_hwnd != NULL);
 
 	_putts(_T("Press CTRL+C to exit."));
 	MSG msg;
-	while(GetMessage(&msg, hwnd, 0, 0)) {
+	BOOL getMessageResult;
+	while((getMessageResult = GetMessage(&msg, g_hwnd, 0, 0)) != 0) {
+		if(FAILED(WIN32_EXPECT(getMessageResult != -1))) { break; }
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+
+	WIN32_ASSERT(DestroyWindow(g_hwnd));
+}
+
+static BOOL WINAPI CtrlCHandler(DWORD ctrlType)
+{
+	ValueName<DWORD>::StringFormat = _T("%d");
+	static const ValueName<DWORD> types[] = {
+		VALUE_NAME_ITEM(CTRL_C_EVENT),
+		VALUE_NAME_ITEM(CTRL_BREAK_EVENT),
+		VALUE_NAME_ITEM(CTRL_CLOSE_EVENT),
+		VALUE_NAME_ITEM(CTRL_LOGOFF_EVENT),
+		VALUE_NAME_ITEM(CTRL_SHUTDOWN_EVENT),
+	};
+
+	print(_T(__FUNCTION__ ": %s"), ValueToString(types, ctrlType).GetString());
+
+	auto hr = WIN32_EXPECT(PostMessage(g_hwnd, WM_CLOSE, 0, 0L));
+	return (SUCCEEDED(hr) ? TRUE : FALSE);
+}
+
+template<typename T>
+using ParamFunc = void (*)(T*);
+
+void PowerSettingChangePrameFunc(POWERBROADCAST_SETTING* setting)
+{
+	static const ValueName<GUID> PowerSettings[] = {
+		VALUE_NAME_ITEM(GUID_ACDC_POWER_SOURCE),
+		VALUE_NAME_ITEM(GUID_BATTERY_PERCENTAGE_REMAINING),
+		VALUE_NAME_ITEM(GUID_CONSOLE_DISPLAY_STATE),
+		VALUE_NAME_ITEM(GUID_IDLE_BACKGROUND_TASK),
+		VALUE_NAME_ITEM(GUID_MONITOR_POWER_ON),
+		VALUE_NAME_ITEM(GUID_POWER_SAVING_STATUS),
+		VALUE_NAME_ITEM(GUID_POWERSCHEME_PERSONALITY),
+		VALUE_NAME_ITEM(GUID_MIN_POWER_SAVINGS),
+		VALUE_NAME_ITEM(GUID_MAX_POWER_SAVINGS),
+		VALUE_NAME_ITEM(GUID_TYPICAL_POWER_SAVINGS),
+		VALUE_NAME_ITEM(GUID_SESSION_DISPLAY_STATUS),
+		VALUE_NAME_ITEM(GUID_SESSION_USER_PRESENCE),
+		VALUE_NAME_ITEM(GUID_SYSTEM_AWAYMODE),
+	};
+
+	DWORD data = 0;
+	switch(setting->DataLength) {
+	case sizeof(BYTE) : data = setting->Data[0]; break;
+	case sizeof(WORD) : data = *(WORD*)(setting->Data); break;
+	case sizeof(DWORD): data = *(DWORD*)(setting->Data); break;
+	}
+	print(_T("%s: DataLength=%d, Data=%d"), ValueToString(PowerSettings, setting->PowerSetting).GetString(), setting->DataLength, data);
 }
 
 #define HANDLE_WM_POWERBROADCAST(hwnd, wParam, lParam, fn) (LRESULT)(fn)((hwnd), (UINT)(wParam), (LPVOID)(lParam))
@@ -47,18 +103,17 @@ static LRESULT OnWmPowerBroadCast(HWND hwnd, UINT ev, LPVOID param)
 		VALUE_NAME_ITEM(PBT_APMRESUMEAUTOMATIC),
 		VALUE_NAME_ITEM(PBT_APMRESUMESUSPEND),
 		VALUE_NAME_ITEM(PBT_APMSUSPEND),
-		VALUE_NAME_ITEM(PBT_POWERSETTINGCHANGE),
+		VALUE_NAME_ITEM(PBT_POWERSETTINGCHANGE, nullptr, PowerSettingChangePrameFunc),
 	};
 
-	print(_T("WM_POWERBROADCAST Event=%s"), ValueToString(events, ev).GetString());
-
-	switch(ev) {
-	case PBT_POWERSETTINGCHANGE:
-		{
-			auto setting = (POWERBROADCAST_SETTING*)param;
-		}
-		break;
+	auto& eventValueName = FindValueName(events, ev);
+	print(_T("WM_POWERBROADCAST Event=%s"), eventValueName.toString().GetString());
+	auto paramFunc = (ParamFunc<POWERBROADCAST_SETTING>)eventValueName.param;
+	if(paramFunc) {
+		auto setting = (POWERBROADCAST_SETTING*)param;
+		paramFunc(setting);
 	}
+
 	return FALSE;
 }
 
@@ -78,24 +133,33 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT id, WPARAM wParam, LPARAM lParam
 {
 	ValueName<UINT>::StringFormat = _T("0x%x");
 	static const ValueName<UINT> msgs[] = {
+		VALUE_NAME_ITEM(WM_POWERBROADCAST),
+		VALUE_NAME_ITEM(WM_POWER),
+
 		VALUE_NAME_ITEM(WM_CREATE),
 		VALUE_NAME_ITEM(WM_GETMINMAXINFO),
 		VALUE_NAME_ITEM(WM_NCCREATE),
 		VALUE_NAME_ITEM(WM_NCCALCSIZE),
-		VALUE_NAME_ITEM(WM_POWERBROADCAST),
-		VALUE_NAME_ITEM(WM_POWER),
+		VALUE_NAME_ITEM(WM_DESTROY),
+		VALUE_NAME_ITEM(WM_NCDESTROY),
+		VALUE_NAME_ITEM(WM_CLOSE),
+		VALUE_NAME_ITEM(WM_QUIT),
+		{0x90, _T("WM_UAHDESTROYWINDOW")},
 	};
 
 	print(_T(__FUNCTION__ " %s"), ValueToString(msgs, id).GetString());
 	switch(id) {
 		HANDLE_MSG(hwnd, WM_POWERBROADCAST, OnWmPowerBroadCast);
 		HANDLE_MSG(hwnd, WM_POWER, OnWmPower);
+	case WM_CLOSE:
+		PostQuitMessage(0);
+		return 0;
 	default:
 		return DefWindowProc(hwnd, id, wParam, lParam);
 	}
 }
 
-// Print current date/time and formatted text.
+// Print current date/time, thread ID and formatted text.
 static void print(LPCTSTR format, ...)
 {
 	CString text;
@@ -104,7 +168,7 @@ static void print(LPCTSTR format, ...)
 	text.FormatV(format, args);
 	va_end(args);
 
-	_tprintf_s(_T("%s %s\n"), CTime::CurrentTime().Format(_T("%F %T")).GetString(), text.GetString());
+	_tprintf_s(_T("%s [%d] %s\n"), CTime::CurrentTime().Format(_T("%F %T")).GetString(), GetCurrentThreadId(), text.GetString());
 }
 
 // Output failed message with formatted HRESULT to the console.

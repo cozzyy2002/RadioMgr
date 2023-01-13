@@ -46,7 +46,6 @@ template<typename T>
 struct ValueName {
 	T value;
 	LPCTSTR name;
-	LPCTSTR description;
 	LPVOID param;		// User defined value.
 
 	static LPCTSTR StringFormat;
@@ -89,10 +88,8 @@ CString ValueToString(const ValueName<T>(&list)[size], const T& v)
 template<typename T>
 CString ValueName<T>::toString() const
 {
-	CString desc;
-	if(description) { desc.Format(_T(":%s"), description); }
 	CString ret;
-	ret.Format(_T("%s(%s)%s"), (name ? name : _T("No name")), valueToString().GetString(), desc.GetString());
+	ret.Format(_T("%s(%s)"), (name ? name : _T("No name")), valueToString().GetString());
 	return ret;
 }
 

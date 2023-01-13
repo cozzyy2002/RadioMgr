@@ -5,8 +5,9 @@
 #include <windowsx.h>
 #include <tchar.h>
 #include <locale.h>
+#include <vector>
+#include <memory>
 
-#include "../Common/SafeHandle.h"
 #include "../Common/Assert.h"
 #include "ValueName.h"
 
@@ -18,13 +19,151 @@ static BOOL WINAPI CtrlCHandler(DWORD ctrlType);
 
 static HWND g_hwnd(NULL);
 
+using PowerSettingFunc = CString (*)(POWERBROADCAST_SETTING*);
+
+static CString AcDcPowerSource(POWERBROADCAST_SETTING* setting)
+{
+	static const ValueName<SYSTEM_POWER_CONDITION> values[] = {
+		VALUE_NAME_ITEM(PoAc),
+		VALUE_NAME_ITEM(PoDc),
+		VALUE_NAME_ITEM(PoHot),
+	};
+	return ValueToString(values, *(SYSTEM_POWER_CONDITION*)setting->Data);
+}
+
+static CString BatteryPercentageRemaining(POWERBROADCAST_SETTING* setting)
+{
+	CString str;
+	str.Format(_T("%d%%"), *(DWORD*)setting->Data);
+	return str;
+}
+
+static CString ConsoleDisplayState(POWERBROADCAST_SETTING* setting)
+{
+	static const ValueName<DWORD> values[] = {
+		{0x0, _T("The display is off")},
+		{0x1, _T("The display is on")},
+		{0x2, _T("The display is dimmed")},
+	};
+	return ValueToString(values, *(DWORD*)setting->Data);
+}
+
+static CString IdleBackgroundTask(POWERBROADCAST_SETTING* setting)
+{
+	// setting->Data has no infomation.
+	return _T("No data");
+}
+
+static CString MonitorPowerOn(POWERBROADCAST_SETTING* setting)
+{
+	static const ValueName<DWORD> values[] = {
+		{0x0, _T("The monitor is off")},
+		{0x1, _T("The monitor is on")},
+	};
+	return ValueToString(values, *(DWORD*)setting->Data);
+}
+
+static CString PowerSavingStatus(POWERBROADCAST_SETTING* setting)
+{
+	static const ValueName<DWORD> values[] = {
+		{0x0, _T("The Battery saver is off")},
+		{0x1, _T("The Battery saver is on. Save energy where possible")},
+	};
+	return ValueToString(values, *(DWORD*)setting->Data);
+}
+
+static CString PowerSchemePersonality(POWERBROADCAST_SETTING* setting)
+{
+	static const ValueName<GUID> values[] = {
+		VALUE_NAME_ITEM(GUID_MIN_POWER_SAVINGS),
+		VALUE_NAME_ITEM(GUID_MAX_POWER_SAVINGS),
+		VALUE_NAME_ITEM(GUID_TYPICAL_POWER_SAVINGS),
+	};
+	return ValueToString(values, *(GUID*)setting->Data);
+}
+
+static CString SessionDisplayStatus(POWERBROADCAST_SETTING* setting)
+{
+	return ConsoleDisplayState(setting);
+}
+
+static CString SessionUserPresence(POWERBROADCAST_SETTING* setting)
+{
+	static const ValueName<USER_ACTIVITY_PRESENCE> values[] = {
+		VALUE_NAME_ITEM(PowerUserPresent),
+		VALUE_NAME_ITEM(PowerUserNotPresent),
+		VALUE_NAME_ITEM(PowerUserInactive),
+	};
+	return ValueToString(values, *(USER_ACTIVITY_PRESENCE*)setting->Data);
+}
+
+//static CString LidCloseAction(POWERBROADCAST_SETTING* setting);
+//static CString LidOpenPowerState(POWERBROADCAST_SETTING* setting);
+//static CString LidSwitchStateReliability(POWERBROADCAST_SETTING* setting);
+
+static CString LidSwitchStateChange(POWERBROADCAST_SETTING* setting)
+{
+	static const ValueName<DWORD> values[] = {
+		{0x0, _T("The lid is closed")},
+		{0x1, _T("The lid is opened")},
+	};
+	return ValueToString(values, *(DWORD*)setting->Data);
+}
+static CString SystmAwayMode(POWERBROADCAST_SETTING* setting)
+{
+	static const ValueName<DWORD> values[] = {
+		{0x0, _T("The computer is exiting away mode")},
+		{0x1, _T("The computer is entering away mode")},
+	};
+	return ValueToString(values, *(DWORD*)setting->Data);
+}
+
+CString UnknownPowerStateData(POWERBROADCAST_SETTING* setting)
+{
+	DWORD data = 0;
+	switch(setting->DataLength) {
+	default:
+	case sizeof(BYTE) : data = setting->Data[0]; break;
+	case sizeof(WORD) : data = *(WORD*)(setting->Data); break;
+	case sizeof(DWORD) : data = *(DWORD*)(setting->Data); break;
+	}
+	CString str;
+	str.Format(_T("DataLength=%d, Data=%d"), setting->DataLength, data);
+	return str;
+}
+
+// Power Setting GUIDs.
+// See https://learn.microsoft.com/en-us/windows/win32/power/power-setting-guids
+static const ValueName<GUID> PowerSettings[] = {
+	VALUE_NAME_ITEM(GUID_ACDC_POWER_SOURCE, AcDcPowerSource),
+	VALUE_NAME_ITEM(GUID_BATTERY_PERCENTAGE_REMAINING, BatteryPercentageRemaining),
+	VALUE_NAME_ITEM(GUID_CONSOLE_DISPLAY_STATE, ConsoleDisplayState),
+	VALUE_NAME_ITEM(GUID_IDLE_BACKGROUND_TASK, IdleBackgroundTask),
+	VALUE_NAME_ITEM(GUID_MONITOR_POWER_ON, MonitorPowerOn),
+	VALUE_NAME_ITEM(GUID_POWER_SAVING_STATUS, PowerSavingStatus),
+	VALUE_NAME_ITEM(GUID_POWERSCHEME_PERSONALITY, PowerSchemePersonality),
+	VALUE_NAME_ITEM(GUID_SESSION_DISPLAY_STATUS, SessionDisplayStatus),
+	VALUE_NAME_ITEM(GUID_SESSION_USER_PRESENCE, SessionUserPresence),
+	VALUE_NAME_ITEM(GUID_LIDCLOSE_ACTION, UnknownPowerStateData),
+	VALUE_NAME_ITEM(GUID_LIDOPEN_POWERSTATE, UnknownPowerStateData),
+	VALUE_NAME_ITEM(GUID_LIDSWITCH_STATE_RELIABILITY, UnknownPowerStateData),
+	VALUE_NAME_ITEM(GUID_LIDSWITCH_STATE_CHANGE, LidSwitchStateChange),
+	VALUE_NAME_ITEM(GUID_SYSTEM_AWAYMODE, SystmAwayMode),
+};
+
+struct PowerNotifyHandleDeleter {
+	using pointer = HPOWERNOTIFY;
+	void operator()(HPOWERNOTIFY handle)
+	{
+		WIN32_EXPECT(UnregisterPowerSettingNotification(handle));
+	}
+};
+
 int _tmain(int argc, TCHAR** argv)
 {
 	_tsetlocale(LC_ALL, _T(""));
 	tsm::Assert::onAssertFailedProc = AssertFailedProc;
 	tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { _putts(msg); };
-
-	WIN32_ASSERT(SetConsoleCtrlHandler(CtrlCHandler, TRUE));
 
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = WndProc;
@@ -35,6 +174,16 @@ int _tmain(int argc, TCHAR** argv)
 	g_hwnd = CreateWindow((LPCTSTR)atom, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
 	WIN32_ASSERT(g_hwnd != NULL);
 
+	// Register power setting notification.
+	using PowerNotifyHandle = std::unique_ptr<HPOWERNOTIFY, PowerNotifyHandleDeleter>;
+	std::vector<PowerNotifyHandle> handles(ARRAYSIZE(PowerSettings));
+	for(auto& s : PowerSettings) {
+		auto h = RegisterPowerSettingNotification(g_hwnd, &s.value, DEVICE_NOTIFY_WINDOW_HANDLE);
+		WIN32_ASSERT(h != NULL);
+		handles.push_back(PowerNotifyHandle(h));
+	}
+
+	WIN32_ASSERT(SetConsoleCtrlHandler(CtrlCHandler, TRUE));
 	_putts(_T("Press CTRL+C to exit."));
 	MSG msg;
 	BOOL getMessageResult;
@@ -64,34 +213,12 @@ static BOOL WINAPI CtrlCHandler(DWORD ctrlType)
 	return (SUCCEEDED(hr) ? TRUE : FALSE);
 }
 
-template<typename T>
-using ParamFunc = void (*)(T*);
-
-void PowerSettingChangePrameFunc(POWERBROADCAST_SETTING* setting)
+static void PowerSettingChangePrameFunc(LPVOID param)
 {
-	static const ValueName<GUID> PowerSettings[] = {
-		VALUE_NAME_ITEM(GUID_ACDC_POWER_SOURCE),
-		VALUE_NAME_ITEM(GUID_BATTERY_PERCENTAGE_REMAINING),
-		VALUE_NAME_ITEM(GUID_CONSOLE_DISPLAY_STATE),
-		VALUE_NAME_ITEM(GUID_IDLE_BACKGROUND_TASK),
-		VALUE_NAME_ITEM(GUID_MONITOR_POWER_ON),
-		VALUE_NAME_ITEM(GUID_POWER_SAVING_STATUS),
-		VALUE_NAME_ITEM(GUID_POWERSCHEME_PERSONALITY),
-		VALUE_NAME_ITEM(GUID_MIN_POWER_SAVINGS),
-		VALUE_NAME_ITEM(GUID_MAX_POWER_SAVINGS),
-		VALUE_NAME_ITEM(GUID_TYPICAL_POWER_SAVINGS),
-		VALUE_NAME_ITEM(GUID_SESSION_DISPLAY_STATUS),
-		VALUE_NAME_ITEM(GUID_SESSION_USER_PRESENCE),
-		VALUE_NAME_ITEM(GUID_SYSTEM_AWAYMODE),
-	};
-
-	DWORD data = 0;
-	switch(setting->DataLength) {
-	case sizeof(BYTE) : data = setting->Data[0]; break;
-	case sizeof(WORD) : data = *(WORD*)(setting->Data); break;
-	case sizeof(DWORD): data = *(DWORD*)(setting->Data); break;
-	}
-	print(_T("%s: DataLength=%d, Data=%d"), ValueToString(PowerSettings, setting->PowerSetting).GetString(), setting->DataLength, data);
+	auto setting = (POWERBROADCAST_SETTING*)param;
+	auto valueName = FindValueName(PowerSettings, setting->PowerSetting);
+	auto func = (PowerSettingFunc)valueName.param;
+	print(_T("%s: %s"), valueName.name, (func ? func(setting) : UnknownPowerStateData(setting)).GetString());
 }
 
 #define HANDLE_WM_POWERBROADCAST(hwnd, wParam, lParam, fn) (LRESULT)(fn)((hwnd), (UINT)(wParam), (LPVOID)(lParam))
@@ -103,30 +230,36 @@ static LRESULT OnWmPowerBroadCast(HWND hwnd, UINT ev, LPVOID param)
 		VALUE_NAME_ITEM(PBT_APMRESUMEAUTOMATIC),
 		VALUE_NAME_ITEM(PBT_APMRESUMESUSPEND),
 		VALUE_NAME_ITEM(PBT_APMSUSPEND),
-		VALUE_NAME_ITEM(PBT_POWERSETTINGCHANGE, nullptr, PowerSettingChangePrameFunc),
+		VALUE_NAME_ITEM(PBT_POWERSETTINGCHANGE, PowerSettingChangePrameFunc),
 	};
 
 	auto& eventValueName = FindValueName(events, ev);
 	print(_T("WM_POWERBROADCAST Event=%s"), eventValueName.toString().GetString());
-	auto paramFunc = (ParamFunc<POWERBROADCAST_SETTING>)eventValueName.param;
+
+	using ParamFunc = void (*)(LPVOID);
+	auto paramFunc = (ParamFunc)eventValueName.param;
 	if(paramFunc) {
-		auto setting = (POWERBROADCAST_SETTING*)param;
-		paramFunc(setting);
+		paramFunc(param);
 	}
 
 	return FALSE;
 }
 
-void OnWmPower(HWND, int code)
+static void OnWmPower(HWND, int code)
 {
 	ValueName<int>::StringFormat = _T("%d");
 	static const ValueName<int> codes[] = {
-		VALUE_NAME_ITEM(PWR_CRITICALRESUME, _T("Resuming after suspended mode without broadcasting PWR_SUSPENDREQUEST.")),
-		VALUE_NAME_ITEM(PWR_SUSPENDREQUEST, _T("About to enter suspended mode.")),
-		VALUE_NAME_ITEM(PWR_SUSPENDRESUME, _T("Resuming after normal suspended mode.")),
+		VALUE_NAME_ITEM(PWR_CRITICALRESUME),
+		VALUE_NAME_ITEM(PWR_SUSPENDREQUEST),
+		VALUE_NAME_ITEM(PWR_SUSPENDRESUME),
 	};
 
 	print(_T("WM_POWER %s"), ValueToString(codes, code).GetString());
+}
+
+static void OnWmClose(HWND)
+{
+	PostQuitMessage(0);
 }
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT id, WPARAM wParam, LPARAM lParam)
@@ -151,9 +284,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT id, WPARAM wParam, LPARAM lParam
 	switch(id) {
 		HANDLE_MSG(hwnd, WM_POWERBROADCAST, OnWmPowerBroadCast);
 		HANDLE_MSG(hwnd, WM_POWER, OnWmPower);
-	case WM_CLOSE:
-		PostQuitMessage(0);
-		return 0;
+		HANDLE_MSG(hwnd, WM_CLOSE, OnWmClose);
 	default:
 		return DefWindowProc(hwnd, id, wParam, lParam);
 	}

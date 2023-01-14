@@ -52,6 +52,7 @@ END_MESSAGE_MAP()
 
 CbtswwinDlg::CbtswwinDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_BTSWWIN_DIALOG, pParent)
+	, m_switchByLcdState(TRUE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -108,6 +109,7 @@ void CbtswwinDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, ID_LIST_LOG, m_ListLog);
+	DDX_Check(pDX, IDC_CHECK_SWITCH_BY_LCD_STATE, m_switchByLcdState);
 }
 
 BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
@@ -257,13 +259,16 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 	if(nPowerEvent == PBT_POWERSETTINGCHANGE) {
 		auto setting = (PPOWERBROADCAST_SETTING)nEventData;
 		if(setting->PowerSetting == GUID_LIDSWITCH_STATE_CHANGE) {
-			switch(setting->Data[0]) {
-			case 0:		// The lid is closed.
-				setRadioState(DRS_SW_RADIO_OFF);
-				break;;
-			case 1:		// The lid is opened.
-				setRadioState(DRS_RADIO_ON);
-				break;
+			UpdateData();
+			if(m_switchByLcdState) {
+				switch(setting->Data[0]) {
+				case 0:		// The lid is closed.
+					setRadioState(DRS_SW_RADIO_OFF);
+					break;;
+				case 1:		// The lid is opened.
+					setRadioState(DRS_RADIO_ON);
+					break;
+				}
 			}
 		}
 	}

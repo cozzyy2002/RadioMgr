@@ -56,4 +56,5 @@ public:
 	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData);
 //	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedEditCopy();
+	BOOL m_switchByLcdState;
 };

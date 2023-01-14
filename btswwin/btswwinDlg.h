@@ -28,6 +28,8 @@ protected:
 	using PowerNotifyHandle = SafeHandle<HPOWERNOTIFY, unregisterPowerNotify>;
 	PowerNotifyHandle m_hPowerNotify;
 
+	HRESULT setRadioState(DEVICE_RADIO_STATE);
+
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_BTSWWIN_DIALOG };

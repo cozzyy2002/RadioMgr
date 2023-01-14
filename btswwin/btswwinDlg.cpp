@@ -162,7 +162,7 @@ BOOL CbtswwinDlg::OnInitDialog()
 	auto hr = createRadioInstance();
 
 	if(SUCCEEDED(hr)) {
-		m_hPowerNotify = RegisterPowerSettingNotification(m_hWnd, &GUID_SESSION_USER_PRESENCE, DEVICE_NOTIFY_WINDOW_HANDLE);
+		m_hPowerNotify = RegisterPowerSettingNotification(m_hWnd, &GUID_LIDSWITCH_STATE_CHANGE, DEVICE_NOTIFY_WINDOW_HANDLE);
 		hr = WIN32_EXPECT(m_hPowerNotify);
 	}
 
@@ -239,16 +239,14 @@ HCURSOR CbtswwinDlg::OnQueryDragIcon()
 
 void CbtswwinDlg::OnBnClickedOn()
 {
-	auto hr = m_radioInstance->SetRadioState(DRS_RADIO_ON, 1);
-	print(_T("Bluetooth ON: 0x%08x"), hr);
+	setRadioState(DRS_RADIO_ON);
 }
 
 
 
 void CbtswwinDlg::OnBnClickedOff()
 {
-	auto hr = m_radioInstance->SetRadioState(DRS_SW_RADIO_OFF, 1);
-	print(_T("Bluetooth OFF: 0x%08x"), hr);
+	setRadioState(DRS_SW_RADIO_OFF);
 }
 
 // String format for Power events.
@@ -256,51 +254,43 @@ template<> LPCTSTR ValueName<UINT>::StringFormat = _T("0x%04X");
 
 UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 {
-	static const ValueName<UINT> powerEvents[] = {
-		VALUE_NAME_ITEM(PBT_APMPOWERSTATUSCHANGE),
-		VALUE_NAME_ITEM(PBT_APMRESUMEAUTOMATIC),
-		VALUE_NAME_ITEM(PBT_APMRESUMESUSPEND),
-		VALUE_NAME_ITEM(PBT_APMSUSPEND),
-		VALUE_NAME_ITEM(PBT_POWERSETTINGCHANGE),
-	};
-
-	print(_T(__FUNCTION__) _T(": PowerEvent=%s"), ValueToString(powerEvents, nPowerEvent).GetString());
-
 	if(nPowerEvent == PBT_POWERSETTINGCHANGE) {
-		static const ValueName<GUID> powerSettingGuids[] = {
-			VALUE_NAME_ITEM(GUID_ACDC_POWER_SOURCE),
-			VALUE_NAME_ITEM(GUID_BATTERY_PERCENTAGE_REMAINING),
-			VALUE_NAME_ITEM(GUID_CONSOLE_DISPLAY_STATE),
-			VALUE_NAME_ITEM(GUID_GLOBAL_USER_PRESENCE),
-			VALUE_NAME_ITEM(GUID_IDLE_BACKGROUND_TASK),
-			VALUE_NAME_ITEM(GUID_MONITOR_POWER_ON),
-			VALUE_NAME_ITEM(GUID_POWER_SAVING_STATUS),
-			VALUE_NAME_ITEM(GUID_POWERSCHEME_PERSONALITY),
-			VALUE_NAME_ITEM(GUID_SESSION_DISPLAY_STATUS),
-			VALUE_NAME_ITEM(GUID_SESSION_USER_PRESENCE),
-			VALUE_NAME_ITEM(GUID_SYSTEM_AWAYMODE),
-		};
-
 		auto setting = (PPOWERBROADCAST_SETTING)nEventData;
-		DWORD data = 0;
-		switch(setting->DataLength) {
-		case sizeof(UCHAR):
-			data = setting->Data[0];
-			break;
-		case sizeof(WORD):
-			data = *((WORD*)(setting->Data));
-			break;
-		case sizeof(DWORD):
-			data = *((DWORD*)(setting->Data));
-			break;
+		if(setting->PowerSetting == GUID_LIDSWITCH_STATE_CHANGE) {
+			switch(setting->Data[0]) {
+			case 0:		// The lid is closed.
+				setRadioState(DRS_SW_RADIO_OFF);
+				break;;
+			case 1:		// The lid is opened.
+				setRadioState(DRS_RADIO_ON);
+				break;
+			}
 		}
-		print(_T("  PowerSetting=%s, size=%d, data=%d"),
-			ValueToString(powerSettingGuids, setting->PowerSetting).GetString(),
-			setting->DataLength, data
-		);
 	}
 
-	return CDialogEx::OnPowerBroadcast(nPowerEvent, nEventData);
+	return TRUE;
+}
+
+HRESULT CbtswwinDlg::setRadioState(DEVICE_RADIO_STATE newState)
+{
+	static const ValueName<DEVICE_RADIO_STATE> states[] = {
+		VALUE_NAME_ITEM(DRS_RADIO_ON),
+		VALUE_NAME_ITEM(DRS_SW_RADIO_OFF),
+		VALUE_NAME_ITEM(DRS_HW_RADIO_OFF),
+		VALUE_NAME_ITEM(DRS_SW_HW_RADIO_OFF),
+		VALUE_NAME_ITEM(DRS_HW_RADIO_ON_UNCONTROLLABLE),
+		VALUE_NAME_ITEM(DRS_RADIO_INVALID),
+		VALUE_NAME_ITEM(DRS_HW_RADIO_OFF_UNCONTROLLABLE),
+	};
+
+	DEVICE_RADIO_STATE currentState;
+	HR_ASSERT_OK(m_radioInstance->GetRadioState(&currentState));
+	auto hr = S_FALSE;
+	if(currentState != newState) {
+		hr = HR_EXPECT_OK(m_radioInstance->SetRadioState(newState, 1));
+		print(_T("Bluetooth %s -> %s: 0x%x"), ValueToString(states, currentState).GetString(), ValueToString(states, newState).GetString(), hr);
+	}
+	return hr;
 }
 
 // Copy text in the log window to clipboard.

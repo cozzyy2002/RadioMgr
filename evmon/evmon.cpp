@@ -10,6 +10,11 @@
 
 #include "../Common/Assert.h"
 #include "ValueName.h"
+#include "NetworkEvents.h"
+
+enum {
+	WM_NETWORK_CONNECTIVITYCHANGED = WM_USER + 1,
+};
 
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static void AssertFailedProc(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int line);
@@ -183,6 +188,10 @@ int _tmain(int argc, TCHAR** argv)
 		handles.push_back(PowerNotifyHandle(h));
 	}
 
+	// Start listening events of INetworkListManager.
+	CComPtr<NetworkListManagerEvents> netEvents(new NetworkListManagerEvents());
+	HR_ASSERT_OK(netEvents->start(g_hwnd, WM_NETWORK_CONNECTIVITYCHANGED));
+
 	WIN32_ASSERT(SetConsoleCtrlHandler(CtrlCHandler, TRUE));
 	_putts(_T("Press CTRL+C to exit."));
 	MSG msg;
@@ -257,6 +266,23 @@ static void OnWmPower(HWND, int code)
 	print(_T("WM_POWER %s"), ValueToString(codes, code).GetString());
 }
 
+static void OnWmNetworkConnectivityChanged(HWND, NLM_CONNECTIVITY conn)
+{
+	static const ValueName<NLM_CONNECTIVITY> values[] = {
+		VALUE_NAME_ITEM(NLM_CONNECTIVITY_DISCONNECTED),
+		VALUE_NAME_ITEM(NLM_CONNECTIVITY_IPV4_NOTRAFFIC),
+		VALUE_NAME_ITEM(NLM_CONNECTIVITY_IPV6_NOTRAFFIC),
+		VALUE_NAME_ITEM(NLM_CONNECTIVITY_IPV4_SUBNET),
+		VALUE_NAME_ITEM(NLM_CONNECTIVITY_IPV4_LOCALNETWORK),
+		VALUE_NAME_ITEM(NLM_CONNECTIVITY_IPV4_INTERNET),
+		VALUE_NAME_ITEM(NLM_CONNECTIVITY_IPV6_SUBNET),
+		VALUE_NAME_ITEM(NLM_CONNECTIVITY_IPV6_LOCALNETWORK),
+		VALUE_NAME_ITEM(NLM_CONNECTIVITY_IPV6_INTERNET),
+	};
+
+	print(_T("WM_NETWORK_CONNECTIVITYCHANGED %s"), ValueToString(values, conn).GetString());
+}
+
 static void OnWmClose(HWND)
 {
 	PostQuitMessage(0);
@@ -278,6 +304,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT id, WPARAM wParam, LPARAM lParam
 		VALUE_NAME_ITEM(WM_CLOSE),
 		VALUE_NAME_ITEM(WM_QUIT),
 		{0x90, _T("WM_UAHDESTROYWINDOW")},
+		VALUE_NAME_ITEM(WM_NETWORK_CONNECTIVITYCHANGED),
 	};
 
 	print(_T(__FUNCTION__ " %s"), ValueToString(msgs, id).GetString());
@@ -285,6 +312,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT id, WPARAM wParam, LPARAM lParam
 		HANDLE_MSG(hwnd, WM_POWERBROADCAST, OnWmPowerBroadCast);
 		HANDLE_MSG(hwnd, WM_POWER, OnWmPower);
 		HANDLE_MSG(hwnd, WM_CLOSE, OnWmClose);
+		HANDLE_MSG(hwnd, WM_NETWORK_CONNECTIVITYCHANGED, OnWmNetworkConnectivityChanged);
 	default:
 		return DefWindowProc(hwnd, id, wParam, lParam);
 	}

@@ -27,6 +27,7 @@ protected:
 	static void unregisterPowerNotify(HPOWERNOTIFY);
 	using PowerNotifyHandle = SafeHandle<HPOWERNOTIFY, unregisterPowerNotify>;
 	PowerNotifyHandle m_hPowerNotify;
+	DEVICE_RADIO_STATE m_radioState;
 
 	HRESULT setRadioState(DEVICE_RADIO_STATE);
 
@@ -57,4 +58,5 @@ public:
 //	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedEditCopy();
 	BOOL m_switchByLcdState;
+	BOOL m_restoreRadioState;
 };

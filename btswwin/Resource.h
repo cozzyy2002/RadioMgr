@@ -11,8 +11,8 @@
 #define IDD_BTSWWIN_DIALOG              102
 #define IDR_MAINFRAME                   128
 #define ID_LIST_LOG                     1001
-#define IDC_CHECK1                      1002
 #define IDC_CHECK_SWITCH_BY_LCD_STATE   1002
+#define IDC_CHECK_RESTORE_RADIO_STATE   1003
 
 // Next default values for new objects
 // 

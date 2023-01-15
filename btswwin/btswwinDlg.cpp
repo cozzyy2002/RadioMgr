@@ -52,7 +52,9 @@ END_MESSAGE_MAP()
 
 CbtswwinDlg::CbtswwinDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_BTSWWIN_DIALOG, pParent)
+	, m_radioState(DRS_RADIO_INVALID)
 	, m_switchByLcdState(TRUE)
+	, m_restoreRadioState(TRUE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -84,10 +86,6 @@ void CbtswwinDlg::print(const CString& text)
 
 void CbtswwinDlg::print(LPCTSTR fmt, ...)
 {
-	if(100 < m_ListLog.GetCount()) {
-		m_ListLog.DeleteString(0);
-	}
-
 	va_list args;
 	va_start(args, fmt);
 	CString text;
@@ -97,6 +95,9 @@ void CbtswwinDlg::print(LPCTSTR fmt, ...)
 	CTime now(CTime::GetCurrentTime());
 	text = now.Format("%F %T ") + text;
 
+	if(100 < m_ListLog.GetCount()) {
+		m_ListLog.DeleteString(0);
+	}
 	m_ListLog.AddString(text);
 }
 
@@ -110,6 +111,7 @@ void CbtswwinDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, ID_LIST_LOG, m_ListLog);
 	DDX_Check(pDX, IDC_CHECK_SWITCH_BY_LCD_STATE, m_switchByLcdState);
+	DDX_Check(pDX, IDC_CHECK_RESTORE_RADIO_STATE, m_restoreRadioState);
 }
 
 BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
@@ -184,6 +186,7 @@ HRESULT CbtswwinDlg::createRadioInstance()
 	HR_ASSERT_OK(col->GetCount(&instanceCount));
 	HR_ASSERT(0 < instanceCount, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
 	HR_ASSERT_OK(col->GetAt(0, &m_radioInstance));
+	HR_ASSERT_OK(m_radioInstance->GetRadioState(&m_radioState));
 
 	return S_OK;
 }
@@ -263,11 +266,17 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 			if(m_switchByLcdState) {
 				switch(setting->Data[0]) {
 				case 0:		// The lid is closed.
+					if(m_restoreRadioState) {
+						HR_EXPECT_OK(m_radioInstance->GetRadioState(&m_radioState));
+					}
 					setRadioState(DRS_SW_RADIO_OFF);
 					break;;
 				case 1:		// The lid is opened.
-					setRadioState(DRS_RADIO_ON);
+				{
+					auto newState = (m_restoreRadioState ? m_radioState : DRS_RADIO_ON);
+					setRadioState(newState);
 					break;
+				}
 				}
 			}
 		}

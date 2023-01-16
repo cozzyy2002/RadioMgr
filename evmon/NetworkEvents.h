@@ -7,7 +7,9 @@ class NetworkListManagerEvents : INetworkListManagerEvents
 {
 public:
     NetworkListManagerEvents();
+
     HRESULT start(HWND hwnd, UINT messageId);
+    HRESULT stop();
 
     virtual HRESULT STDMETHODCALLTYPE ConnectivityChanged(
         /* [in] */ NLM_CONNECTIVITY newConnectivity);
@@ -22,6 +24,8 @@ protected:
     CComPtr<INetworkListManager> m_mgr;
     HWND m_hwnd;
     UINT m_messageId;
+    CComPtr<IConnectionPoint> m_cp;
+    DWORD m_cookie;
     ULONG m_cRef;
 };
 

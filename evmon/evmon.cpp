@@ -188,21 +188,30 @@ int _tmain(int argc, TCHAR** argv)
 		handles.push_back(PowerNotifyHandle(h));
 	}
 
-	// Start listening events of INetworkListManager.
-	CComPtr<NetworkListManagerEvents> netEvents(new NetworkListManagerEvents());
-	HR_ASSERT_OK(netEvents->start(g_hwnd, WM_NETWORK_CONNECTIVITYCHANGED));
+	HR_ASSERT_OK(CoInitializeEx(NULL, COINIT_MULTITHREADED));
+	{
+		// This block ensures that all IUnknown objects held by CComPtr<> are released before calling CoUninitialize().
 
-	WIN32_ASSERT(SetConsoleCtrlHandler(CtrlCHandler, TRUE));
-	_putts(_T("Press CTRL+C to exit."));
-	MSG msg;
-	BOOL getMessageResult;
-	while((getMessageResult = GetMessage(&msg, g_hwnd, 0, 0)) != 0) {
-		if(FAILED(WIN32_EXPECT(getMessageResult != -1))) { break; }
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		// Start listening events of INetworkListManager.
+		CComPtr<NetworkListManagerEvents> netEvents(new NetworkListManagerEvents());
+		HR_ASSERT_OK(netEvents->start(g_hwnd, WM_NETWORK_CONNECTIVITYCHANGED));
+
+		WIN32_ASSERT(SetConsoleCtrlHandler(CtrlCHandler, TRUE));
+		_putts(_T("Press CTRL+C to exit."));
+		MSG msg;
+		BOOL getMessageResult;
+		while((getMessageResult = GetMessage(&msg, g_hwnd, 0, 0)) != 0) {
+			if(FAILED(WIN32_EXPECT(getMessageResult != -1))) { break; }
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		HR_EXPECT_OK(netEvents->stop());
 	}
+	CoUninitialize();
 
-	WIN32_ASSERT(DestroyWindow(g_hwnd));
+	WIN32_EXPECT(DestroyWindow(g_hwnd));
+
+	return 0;
 }
 
 static BOOL WINAPI CtrlCHandler(DWORD ctrlType)
@@ -268,6 +277,7 @@ static void OnWmPower(HWND, int code)
 
 static void OnWmNetworkConnectivityChanged(HWND, NLM_CONNECTIVITY conn)
 {
+	ValueName<NLM_CONNECTIVITY>::StringFormat = _T("0x%x");
 	static const ValueName<NLM_CONNECTIVITY> values[] = {
 		VALUE_NAME_ITEM(NLM_CONNECTIVITY_DISCONNECTED),
 		VALUE_NAME_ITEM(NLM_CONNECTIVITY_IPV4_NOTRAFFIC),
@@ -280,7 +290,7 @@ static void OnWmNetworkConnectivityChanged(HWND, NLM_CONNECTIVITY conn)
 		VALUE_NAME_ITEM(NLM_CONNECTIVITY_IPV6_INTERNET),
 	};
 
-	print(_T("WM_NETWORK_CONNECTIVITYCHANGED %s"), ValueToString(values, conn).GetString());
+	print(_T("WM_NETWORK_CONNECTIVITYCHANGED %s"), FlagValueToString(values, conn).GetString());
 }
 
 static void OnWmClose(HWND)
@@ -337,7 +347,7 @@ static void AssertFailedProc(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int li
 	DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
 	auto formatResult = FormatMessage(flags, NULL, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), (LPTSTR)&msg, 100, NULL);
 	if(formatResult) {
-		_tprintf_s(_T("`%s` failed: %s(0x%08x)\n%s(Line %d)"), exp, trim(msg, formatResult - 1), hr, sourceFile, line);
+		_tprintf_s(_T("`%s` failed: %s(0x%08x)\n%s(Line %d)\n"), exp, trim(msg, formatResult - 1), hr, sourceFile, line);
 		LocalFree(msg);
 	} else {
 		// Call default proc if CbtswwinDlg is not created yet or FormatMessage() failed.

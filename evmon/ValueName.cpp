@@ -3,7 +3,7 @@
 #include <memory>
 #include <atlbase.h>
 
-/*static*/ size_t CString::MaxFormatLength = 100;
+/*static*/ size_t CString::MaxFormatLength = 0x100;
 
 CString& CString::operator=(const CString& that)
 {
@@ -15,6 +15,12 @@ CString CString::operator+(const CString& that) const
 	CString ret(*this);
 	ret += that.c_str();
 	return ret;
+}
+
+CString& CString::operator+=(const CString& that)
+{
+	this->std::tstring::operator+=(that);
+	return *this;
 }
 
 void CString::Format(LPCTSTR fmt, ...)

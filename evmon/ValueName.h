@@ -20,9 +20,11 @@ public:
 	CString() {}
 	CString(LPCTSTR str) : std::tstring(str) {}
 
+	int GetCount() const { return (int)size(); }
 	LPCTSTR GetString() const { return c_str(); }
 	CString& operator=(const CString& that);
 	CString operator+(const CString& that) const;
+	CString& operator+=(const CString& that);
 
 	void Format(LPCTSTR, ...);
 	void FormatV(LPCTSTR, va_list);
@@ -82,6 +84,28 @@ template<typename T, size_t size>
 CString ValueToString(const ValueName<T>(&list)[size], const T& v)
 {
 	return FindValueName(list, v).toString();
+}
+
+template<typename T, size_t size>
+CString FlagValueToString(const ValueName<T>(&list)[size], const T& v)
+{
+	CString str;
+	static const CString plus = _T("+");
+	for(auto& i : list) {
+		if(i.value == v) {
+			return i.toString();
+		}
+		if(i.value & v) {
+			if(0 < str.GetCount()) { str += plus; }
+			str += i.toString();
+		}
+	}
+
+	CString strValue;
+	strValue.Format(ValueName<T>::StringFormat, v);
+	CString ret;
+	ret.Format(_T("%s=0x%s"), str.GetString(), strValue.GetString());
+	return ret;
 }
 
 // Returns string `name(value):description`.

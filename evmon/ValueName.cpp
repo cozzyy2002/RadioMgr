@@ -58,7 +58,7 @@ CString CTime::Format(LPCTSTR fmt)
 
 // Returns a string that represents the GUID value.
 template<>
-CString ValueName<GUID>::valueToString() const
+/*static*/ CString ValueName<GUID>::valueToString(const GUID& value)
 {
 	OLECHAR strGuid[50] = _T("");
 	HR_EXPECT(0 < StringFromGUID2(value, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));

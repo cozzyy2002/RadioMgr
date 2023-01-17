@@ -51,9 +51,11 @@ struct ValueName {
 	LPVOID param;		// User defined value.
 
 	static LPCTSTR StringFormat;
+	static LPCTSTR UnknownValueName;
 
 	CString toString() const;
 	CString valueToString() const;
+	static CString valueToString(const T& v);
 };
 
 // Macro for declaring ValueName table that passed to ValueToString() function.
@@ -62,6 +64,8 @@ struct ValueName {
 
 // Default format for scalar type value used to convert to string.
 template<typename T> LPCTSTR ValueName<T>::StringFormat = _T("%d");
+
+template<typename T> LPCTSTR ValueName<T>::UnknownValueName = _T("Unknown");
 
 // Searches a value in the list and reference to found ValueName object.
 // If a value is not in the list, returns ValueName object whose name is "Unknown".
@@ -74,7 +78,7 @@ const ValueName<T>& FindValueName(const ValueName<T>(&list)[size], const T& v)
 		}
 	}
 
-	static ValueName<T> unknown = {T(), _T("Unknown")};
+	static ValueName<T> unknown = {T(), ValueName<T>::UnknownValueName};
 	unknown.value = v;
 	return unknown;
 }
@@ -101,10 +105,10 @@ CString FlagValueToString(const ValueName<T>(&list)[size], const T& v)
 		}
 	}
 
-	CString strValue;
-	strValue.Format(ValueName<T>::StringFormat, v);
 	CString ret;
-	ret.Format(_T("%s=0x%s"), str.GetString(), strValue.GetString());
+	ret.Format(_T("%s=0x%s"), 
+		(0 < str.GetCount()) ? str.GetString() : ValueName<T>::UnknownValueName,
+		ValueName<T>::valueToString(v).GetString());
 	return ret;
 }
 
@@ -122,11 +126,17 @@ CString ValueName<T>::toString() const
 template<typename T>
 CString ValueName<T>::valueToString() const
 {
-	CString ret;
-	ret.Format(StringFormat, value);
-	return ret;
+	return valueToString(value);
 }
 
 // Returns a string that represents the GUID value.
 template<>
-CString ValueName<GUID>::valueToString() const;
+/*static*/ CString ValueName<GUID>::valueToString(const GUID& value);
+
+template<typename T>
+/*static*/ CString ValueName<T>::valueToString(const T& v)
+{
+	CString ret;
+	ret.Format(StringFormat, v);
+	return ret;
+}

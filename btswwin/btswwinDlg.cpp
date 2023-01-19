@@ -173,7 +173,6 @@ BOOL CbtswwinDlg::OnInitDialog()
 	::pdlg = this;
 	tsm::Assert::onAssertFailedProc = ::AssertFailedProc;
 
-	HR_EXPECT_OK(CoInitializeEx(NULL, COINIT_MULTITHREADED));
 	auto hr = createRadioInstance();
 
 	if(SUCCEEDED(hr)) {

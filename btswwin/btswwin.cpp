@@ -56,6 +56,13 @@ BOOL CbtswwinApp::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
+	// Initialize and Uninitialize COM library.
+	struct CoInitializeDeleter {
+		using pointer = bool;
+		void operator()(bool) { CoUninitialize(); }
+	};
+	std::unique_ptr<bool, CoInitializeDeleter> coinit(SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)));
+
 	CbtswwinDlg dlg;
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();

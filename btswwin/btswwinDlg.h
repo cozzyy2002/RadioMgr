@@ -19,6 +19,8 @@ public:
 
 	void print(const CString&);
 	void print(LPCTSTR, ...);
+	void print(const CTime&, LPCTSTR, ...);
+	void printV(const CTime&, LPCTSTR, va_list);
 
 protected:
 	CComPtr<IMediaRadioManager> m_radioManager;

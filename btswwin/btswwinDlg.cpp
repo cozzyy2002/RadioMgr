@@ -88,11 +88,22 @@ void CbtswwinDlg::print(LPCTSTR fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
+	printV(CTime::GetCurrentTime(), fmt, args);
+	va_end(args);
+}
+
+void CbtswwinDlg::print(const CTime& now, LPCTSTR fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	printV(now, fmt, args);
+	va_end(args);
+}
+
+void CbtswwinDlg::printV(const CTime& now, LPCTSTR fmt, va_list args)
+{
 	CString text;
 	text.FormatV(fmt, args);
-	va_end(args);
-
-	CTime now(CTime::GetCurrentTime());
 	text = now.Format("%F %T ") + text;
 
 	if(100 < m_ListLog.GetCount()) {
@@ -254,8 +265,6 @@ void CbtswwinDlg::OnBnClickedOff()
 	setRadioState(DRS_SW_RADIO_OFF);
 }
 
-// String format for Power events.
-template<> LPCTSTR ValueName<UINT>::StringFormat = _T("0x%04X");
 
 UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 {
@@ -297,12 +306,13 @@ HRESULT CbtswwinDlg::setRadioState(DEVICE_RADIO_STATE newState)
 		VALUE_NAME_ITEM(DRS_HW_RADIO_OFF_UNCONTROLLABLE),
 	};
 
+	CTime now(CTime::GetCurrentTime());
 	DEVICE_RADIO_STATE currentState;
 	HR_ASSERT_OK(m_radioInstance->GetRadioState(&currentState));
 	auto hr = S_FALSE;
 	if(currentState != newState) {
 		hr = HR_EXPECT_OK(m_radioInstance->SetRadioState(newState, 1));
-		print(_T("Bluetooth %s -> %s: 0x%x"), ValueToString(states, currentState).GetString(), ValueToString(states, newState).GetString(), hr);
+		print(now, _T("Bluetooth %s -> %s: 0x%x"), ValueToString(states, currentState).GetString(), ValueToString(states, newState).GetString(), hr);
 	}
 	return hr;
 }

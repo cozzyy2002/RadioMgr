@@ -167,8 +167,6 @@ BOOL CbtswwinDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
-	// TODO: Add extra initialization here
-
 	// Prepare for AssertFailedProc() static function.
 	::pdlg = this;
 	tsm::Assert::onAssertFailedProc = ::AssertFailedProc;
@@ -187,8 +185,7 @@ BOOL CbtswwinDlg::OnInitDialog()
 // Create IRadioInstance object for Bluetooth device.
 HRESULT CbtswwinDlg::createRadioInstance()
 {
-	CLSID clsid;
-	HR_ASSERT_OK(CLSIDFromString(L"{afd198ac-5f30-4e89-a789-5ddf60a69366}", &clsid));
+	static const CLSID clsid = { 0xafd198ac, 0x5f30, 0x4e89, { 0xa7, 0x89, 0x5d, 0xdf, 0x60, 0xa6, 0x93, 0x66 } };
 	HR_ASSERT_OK(m_radioManager.CoCreateInstance(clsid));
 	CComPtr<IRadioInstanceCollection> col;
 	HR_ASSERT_OK(m_radioManager->GetRadioInstances(&col));

@@ -56,7 +56,7 @@ BOOL CbtswwinApp::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
-	// Initialize and Uninitialize COM library.
+	// Initialize COM library and Uninitialize it when this method exits.
 	struct CoInitializeDeleter {
 		using pointer = bool;
 		void operator()(bool) { CoUninitialize(); }

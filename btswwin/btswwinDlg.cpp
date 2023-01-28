@@ -105,7 +105,7 @@ void CbtswwinDlg::printV(const CTime& now, LPCTSTR fmt, va_list args)
 	CString* text = new CString();
 	text->FormatV(fmt, args);
 	*text = now.Format("%F %T ") + *text;
-	if(!PostMessage(WM_USER_PRINT, 0, (LPARAM)text)) {
+	if(PostMessage(WM_USER_PRINT, 0, (LPARAM)text)) {
 		delete text;
 		CString err;
 		err.Format(_T(__FUNCTION__ ": PostMessage(%d) failed. Error=%d\n"), WM_USER_PRINT, GetLastError());

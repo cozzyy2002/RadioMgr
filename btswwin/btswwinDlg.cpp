@@ -109,7 +109,8 @@ void CbtswwinDlg::printV(const CTime& now, LPCTSTR fmt, va_list args)
 	if(100 < m_ListLog.GetCount()) {
 		m_ListLog.DeleteString(0);
 	}
-	m_ListLog.AddString(text);
+	auto index = m_ListLog.AddString(text);
+	m_ListLog.SetTopIndex(index);
 }
 
 void CbtswwinDlg::unregisterPowerNotify(HPOWERNOTIFY h)

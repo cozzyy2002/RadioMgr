@@ -102,16 +102,30 @@ void CbtswwinDlg::print(const CTime& now, LPCTSTR fmt, ...)
 
 void CbtswwinDlg::printV(const CTime& now, LPCTSTR fmt, va_list args)
 {
-	CString text;
-	text.FormatV(fmt, args);
-	text = now.Format("%F %T ") + text;
+	CString* text = new CString();
+	text->FormatV(fmt, args);
+	*text = now.Format("%F %T ") + *text;
+	if(!PostMessage(WM_USER_PRINT, 0, (LPARAM)text)) {
+		delete text;
+		CString err;
+		err.Format(_T(__FUNCTION__ ": PostMessage(%d) failed. Error=%d\n"), WM_USER_PRINT, GetLastError());
+		OutputDebugString(err.GetString());
+	}
+}
+
+afx_msg LRESULT CbtswwinDlg::OnUserPrint(WPARAM wParam, LPARAM lParam)
+{
+	std::unique_ptr<CString> text((CString*)lParam);
 
 	if(100 < m_ListLog.GetCount()) {
 		m_ListLog.DeleteString(0);
 	}
-	auto index = m_ListLog.AddString(text);
+	auto index = m_ListLog.AddString(*text);
 	m_ListLog.SetTopIndex(index);
+
+	return 0;
 }
+
 
 void CbtswwinDlg::unregisterPowerNotify(HPOWERNOTIFY h)
 {
@@ -134,6 +148,8 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_BN_CLICKED(IDO_OFF, &CbtswwinDlg::OnBnClickedOff)
 	ON_WM_POWERBROADCAST()
 	ON_BN_CLICKED(ID_EDIT_COPY, &CbtswwinDlg::OnBnClickedEditCopy)
+	ON_MESSAGE(WM_USER_PRINT, &CbtswwinDlg::OnUserPrint)
+	ON_MESSAGE(WM_USER_RADIO_MANAGER_NOTIFY, &CbtswwinDlg::OnUserRadioManagerNotify)
 END_MESSAGE_MAP()
 
 
@@ -179,7 +195,6 @@ BOOL CbtswwinDlg::OnInitDialog()
 		hr = WIN32_EXPECT(m_hPowerNotify);
 	}
 
-	print(_T("%s to initialize"), SUCCEEDED(hr) ? _T("Succeeded") : _T("Failed"));
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -196,7 +211,26 @@ HRESULT CbtswwinDlg::createRadioInstance()
 	HR_ASSERT_OK(col->GetAt(0, &m_radioInstance));
 	HR_ASSERT_OK(m_radioInstance->GetRadioState(&m_radioState));
 
+	CComPtr<IConnectionPointContainer> cpc;
+	HR_ASSERT_OK(m_radioManager.QueryInterface(&cpc));
+	CComPtr<IConnectionPoint> cp;
+	HR_ASSERT_OK(cpc->FindConnectionPoint(IID_IMediaRadioManagerNotifySink, &cp));
+	m_radioNotifyListener = new RadioNotifyListener(m_hWnd, WM_USER_RADIO_MANAGER_NOTIFY);
+	HR_ASSERT_OK(m_radioNotifyListener->advise(cp));
+
 	return S_OK;
+}
+
+void CbtswwinDlg::PostNcDestroy()
+{
+	// AssertFailedProc() of this dialog no longer works.
+	tsm::Assert::onAssertFailedProc = nullptr;
+
+	if(m_radioNotifyListener) {
+		HR_EXPECT_OK(m_radioNotifyListener->unadvise());
+	}
+
+	CDialogEx::PostNcDestroy();
 }
 
 void CbtswwinDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -268,6 +302,12 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 	if(nPowerEvent == PBT_POWERSETTINGCHANGE) {
 		auto setting = (PPOWERBROADCAST_SETTING)nEventData;
 		if(setting->PowerSetting == GUID_LIDSWITCH_STATE_CHANGE) {
+			static const ValueName<UCHAR> lidSwitchDatas[] = {
+				{0, _T("closed")},
+				{1, _T("opened")},
+			};
+			print(_T("LIDSWITCH_STATE_CHANGE: LID is %s"), ValueToString(lidSwitchDatas, setting->Data[0]).GetString());
+
 			UpdateData();
 			if(m_switchByLcdState) {
 				switch(setting->Data[0]) {
@@ -293,6 +333,16 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 
 HRESULT CbtswwinDlg::setRadioState(DEVICE_RADIO_STATE newState)
 {
+	DEVICE_RADIO_STATE currentState;
+	HR_ASSERT_OK(m_radioInstance->GetRadioState(&currentState));
+	return (currentState != newState) ?
+		HR_EXPECT_OK(m_radioInstance->SetRadioState(newState, 1)) :
+		S_FALSE;
+}
+
+// Process message sent by RadioNotifyListener
+afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lParam)
+{
 	static const ValueName<DEVICE_RADIO_STATE> states[] = {
 		VALUE_NAME_ITEM(DRS_RADIO_ON),
 		VALUE_NAME_ITEM(DRS_SW_RADIO_OFF),
@@ -303,15 +353,8 @@ HRESULT CbtswwinDlg::setRadioState(DEVICE_RADIO_STATE newState)
 		VALUE_NAME_ITEM(DRS_HW_RADIO_OFF_UNCONTROLLABLE),
 	};
 
-	CTime now(CTime::GetCurrentTime());
-	DEVICE_RADIO_STATE currentState;
-	HR_ASSERT_OK(m_radioInstance->GetRadioState(&currentState));
-	auto hr = S_FALSE;
-	if(currentState != newState) {
-		hr = HR_EXPECT_OK(m_radioInstance->SetRadioState(newState, 1));
-		print(now, _T("Bluetooth %s -> %s: 0x%x"), ValueToString(states, currentState).GetString(), ValueToString(states, newState).GetString(), hr);
-	}
-	return hr;
+	print(_T("RadioManagerNotify: state=%s"), ValueToString(states, (DEVICE_RADIO_STATE)wParam).GetString());
+	return 0;
 }
 
 // Copy text in the log window to clipboard.
@@ -329,17 +372,75 @@ void CbtswwinDlg::OnBnClickedEditCopy()
 	EmptyClipboard();
 
 	size_t size = (text.GetLength() + 1) * sizeof(TCHAR);
-	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, size);
-	if(SUCCEEDED(WIN32_EXPECT(hMem))) {
+	auto hMem = GlobalAlloc(GMEM_MOVEABLE, size);
+	if(SUCCEEDED(WIN32_EXPECT(hMem != NULL))) {
 		memcpy_s(GlobalLock(hMem), size, text.LockBuffer(), size);
-		GlobalUnlock(hMem);
+		WIN32_EXPECT(GlobalUnlock(hMem));
 		text.UnlockBuffer();
 
 		UINT format = (sizeof(TCHAR) == sizeof(WCHAR) ? CF_UNICODETEXT : CF_TEXT);
 		WIN32_EXPECT(::SetClipboardData(format, hMem) == hMem);
-		print(_T("Copied %d line(%d bytes) to Clipboard"), line, size);
 	} else {
 		print(_T("Failed to allocate %d bytes memory"), size);
 	}
 	CloseClipboard();
 }
+
+
+HRESULT RadioNotifyListener::advise(IConnectionPoint* cp)
+{
+	m_cp = cp;
+	return cp ?
+		cp->Advise(this, &m_cookie) :
+		E_POINTER;
+}
+
+HRESULT RadioNotifyListener::unadvise()
+{
+	return (m_cp && m_cookie)
+		? m_cp->Unadvise(m_cookie)
+		: S_FALSE;
+}
+
+#pragma region Implementation of IMediaRadioManagerNotifySink
+HRESULT __stdcall RadioNotifyListener::OnInstanceAdd(IRadioInstance* pRadioInstance)
+{
+	return E_NOTIMPL;
+}
+
+HRESULT __stdcall RadioNotifyListener::OnInstanceRemove(BSTR bstrRadioInstanceId)
+{
+	return E_NOTIMPL;
+}
+
+HRESULT __stdcall RadioNotifyListener::OnInstanceRadioChange(BSTR bstrRadioInstanceId, DEVICE_RADIO_STATE radioState)
+{
+	return WIN32_EXPECT(PostMessage(m_hwnd, m_notifyMessageId, radioState, (LPARAM)bstrRadioInstanceId));
+}
+#pragma endregion
+
+
+#pragma region Implementation of IUnknown
+HRESULT __stdcall RadioNotifyListener::QueryInterface(REFIID riid, void** ppvObject)
+{
+	static const QITAB qitab[] = {
+		QITABENT(RadioNotifyListener, IMediaRadioManagerNotifySink),
+		{0}
+	};
+	return QISearch(this, qitab, riid, ppvObject);
+}
+
+ULONG __stdcall RadioNotifyListener::AddRef(void)
+{
+	return InterlockedIncrement(&m_cRef);
+}
+
+ULONG __stdcall RadioNotifyListener::Release(void)
+{
+	auto cRef = InterlockedDecrement(&m_cRef);
+	if(cRef == 0) {
+		delete this;
+	}
+	return cRef;
+}
+#pragma endregion

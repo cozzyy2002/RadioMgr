@@ -8,6 +8,23 @@
 class RadioNotifyListener : public IMediaRadioManagerNotifySink
 {
 public:
+	// Message to be sent to the window.
+	struct Message {
+		enum class Type {
+			InstanceAdd,
+			InstanceRemove,
+			InstanceRadioChange,
+		};
+
+		Message(Type type, IRadioInstance* radioInstance, BSTR radioInstanceId, DEVICE_RADIO_STATE radioState)
+			: type(type), radioInstance(radioInstance), radioInstanceId(radioInstanceId), radioState(radioState) {}
+
+		const Type type;
+		const CComPtr<IRadioInstance> radioInstance;
+		const CString radioInstanceId;
+		const DEVICE_RADIO_STATE radioState;
+	};
+
 	RadioNotifyListener(HWND hwnd, UINT notifyMessageId)
 		: m_cookie(0)
 		, m_hwnd(hwnd), m_notifyMessageId(notifyMessageId)
@@ -33,6 +50,9 @@ public:
 protected:
 	HWND m_hwnd;
 	UINT m_notifyMessageId;
+
+	static const auto UnknownRadioState = (DEVICE_RADIO_STATE)-1;
+	HRESULT postMessage(Message::Type type, IRadioInstance* radioInstance, BSTR radioInstanceId, DEVICE_RADIO_STATE radioState = UnknownRadioState);
 #pragma endregion
 
 #pragma region Implementation of IUnknown

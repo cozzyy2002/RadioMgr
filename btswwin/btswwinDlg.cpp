@@ -105,7 +105,7 @@ void CbtswwinDlg::printV(const CTime& now, LPCTSTR fmt, va_list args)
 	CString* text = new CString();
 	text->FormatV(fmt, args);
 	*text = now.Format("%F %T ") + *text;
-	if(PostMessage(WM_USER_PRINT, 0, (LPARAM)text)) {
+	if(!PostMessage(WM_USER_PRINT, 0, (LPARAM)text)) {
 		delete text;
 		CString err;
 		err.Format(_T(__FUNCTION__ ": PostMessage(%d) failed. Error=%d\n"), WM_USER_PRINT, GetLastError());
@@ -343,6 +343,13 @@ HRESULT CbtswwinDlg::setRadioState(DEVICE_RADIO_STATE newState)
 // Process message sent by RadioNotifyListener
 afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lParam)
 {
+	using Type = RadioNotifyListener::Message::Type;
+	static const ValueName<Type> messageTypes[] = {
+		VALUE_NAME_ITEM(Type::InstanceAdd),
+		VALUE_NAME_ITEM(Type::InstanceRemove),
+		VALUE_NAME_ITEM(Type::InstanceRadioChange),
+	};
+
 	static const ValueName<DEVICE_RADIO_STATE> states[] = {
 		VALUE_NAME_ITEM(DRS_RADIO_ON),
 		VALUE_NAME_ITEM(DRS_SW_RADIO_OFF),
@@ -353,7 +360,32 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 		VALUE_NAME_ITEM(DRS_HW_RADIO_OFF_UNCONTROLLABLE),
 	};
 
-	print(_T("RadioManagerNotify: state=%s"), ValueToString(states, (DEVICE_RADIO_STATE)wParam).GetString());
+	std::unique_ptr<RadioNotifyListener::Message> message((RadioNotifyListener::Message*)lParam);
+	CString name(_T("Unknown"));
+	auto state = message->radioState;
+	if(message->radioInstance) {
+		// RadioNotifyListener::OnInstanceAdd(IRadioInstance* pRadioInstance)
+		// Retrieve FriendlyName, Signature and RadioState from IRadioInstance object.
+		BSTR friendlyName;
+		message->radioInstance->GetFriendlyName(1033, &friendlyName);
+		BSTR id;
+		message->radioInstance->GetInstanceSignature(&id);
+		CString _friendlyName(friendlyName);
+		CString _id(id);
+		name.Format(_T("%s:%s"), _friendlyName.GetString(), _id.GetString());
+		message->radioInstance->GetRadioState(&state);
+	} else if(message->radioInstanceId) {
+		// RadioNotifyListener::OnInstanceRemove(BSTR bstrRadioInstanceId)
+		// state may be shown as "Unknown"
+		//   or
+		// RadioNotifyListener::OnInstanceRadioChange(BSTR bstrRadioInstanceId, DEVICE_RADIO_STATE radioState)
+		name = message->radioInstanceId;
+	}
+
+	print(_T("%s: %s, %s"),
+		ValueToString(messageTypes, message->type).GetString(),
+		name.GetString(),
+		ValueToString(states, state).GetString());
 	return 0;
 }
 

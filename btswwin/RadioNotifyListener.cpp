@@ -22,17 +22,31 @@ HRESULT RadioNotifyListener::unadvise()
 #pragma region Implementation of IMediaRadioManagerNotifySink
 HRESULT __stdcall RadioNotifyListener::OnInstanceAdd(IRadioInstance* pRadioInstance)
 {
-	return E_NOTIMPL;
+	return postMessage(Message::Type::InstanceAdd, pRadioInstance, nullptr);
 }
 
 HRESULT __stdcall RadioNotifyListener::OnInstanceRemove(BSTR bstrRadioInstanceId)
 {
-	return E_NOTIMPL;
+	return postMessage(Message::Type::InstanceRemove, nullptr, bstrRadioInstanceId);
 }
 
 HRESULT __stdcall RadioNotifyListener::OnInstanceRadioChange(BSTR bstrRadioInstanceId, DEVICE_RADIO_STATE radioState)
 {
-	return WIN32_EXPECT(PostMessage(m_hwnd, m_notifyMessageId, radioState, (LPARAM)bstrRadioInstanceId));
+	return postMessage(Message::Type::InstanceRadioChange, nullptr, bstrRadioInstanceId, radioState);
+}
+
+// Posts message to the window with Message object as lParam.
+HRESULT RadioNotifyListener::postMessage(Message::Type type, IRadioInstance* radioInstance, BSTR radioInstanceId, DEVICE_RADIO_STATE radioState)
+{
+	auto message = new Message(type, radioInstance, radioInstanceId, radioState);
+	auto hr = WIN32_EXPECT(PostMessage(m_hwnd, m_notifyMessageId, 0, (LPARAM)message));
+	if(FAILED(hr)) {
+		delete message;
+		CString err;
+		err.Format(_T(__FUNCTION__ ": PostMessage(%d) failed. Error=%d\n"), m_notifyMessageId, GetLastError());
+		OutputDebugString(err.GetString());
+	}
+	return hr;
 }
 #pragma endregion
 

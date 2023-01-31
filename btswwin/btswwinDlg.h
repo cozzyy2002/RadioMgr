@@ -31,6 +31,7 @@ public:
 protected:
 	CComPtr<IMediaRadioManager> m_radioManager;
 	CComPtr<IRadioInstance> m_radioInstance;
+	CString m_radioInstanceId;
 
 	static void unregisterPowerNotify(HPOWERNOTIFY);
 	using PowerNotifyHandle = SafeHandle<HPOWERNOTIFY, unregisterPowerNotify>;

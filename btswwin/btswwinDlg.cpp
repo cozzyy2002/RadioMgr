@@ -135,6 +135,7 @@ void CbtswwinDlg::unregisterPowerNotify(HPOWERNOTIFY h)
 void CbtswwinDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_LIST_RADIO_INSTANCES, m_radioInstances);
 	DDX_Control(pDX, ID_LIST_LOG, m_ListLog);
 	DDX_Check(pDX, IDC_CHECK_SWITCH_BY_LCD_STATE, m_switchByLcdState);
 	DDX_Check(pDX, IDC_CHECK_RESTORE_RADIO_STATE, m_restoreRadioState);
@@ -187,6 +188,8 @@ BOOL CbtswwinDlg::OnInitDialog()
 	// Prepare for AssertFailedProc() static function.
 	::pdlg = this;
 	tsm::Assert::onAssertFailedProc = ::AssertFailedProc;
+
+	m_radioInstances.OnInitCtrl();
 
 	auto hr = createRadioInstance();
 
@@ -362,6 +365,7 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 	case RadioNotifyListener::Message::Type::InstanceAdd:
 		// RadioNotifyListener::OnInstanceAdd(IRadioInstance* pRadioInstance)
 		{
+			type = _T("Add");
 			// Save IRadioInstance object.
 			m_radioInstance = message->radioInstance;
 
@@ -374,9 +378,12 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 			m_radioInstanceId = id;
 			name.Format(_T("%s:%s"), _friendlyName.GetString(), m_radioInstanceId.GetString());
 			message->radioInstance->GetRadioState(&state);
+
+			m_radioInstances.Add(message->radioInstance);
 		}
 		break;
 	case RadioNotifyListener::Message::Type::InstanceRemove:
+		type = _T("Remove");
 		// RadioNotifyListener::OnInstanceRemove(BSTR bstrRadioInstanceId)
 		if(message->radioInstanceId == m_radioInstanceId) {
 			// Release IRadioInstance object.
@@ -385,6 +392,7 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 		name = message->radioInstanceId;
 		break;
 	case RadioNotifyListener::Message::Type::InstanceRadioChange:
+		type = _T("InstanceRadioChange");
 		// RadioNotifyListener::OnInstanceRadioChange(BSTR bstrRadioInstanceId, DEVICE_RADIO_STATE radioState)
 		name = message->radioInstanceId;
 		break;

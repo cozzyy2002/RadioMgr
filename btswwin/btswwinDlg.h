@@ -5,6 +5,7 @@
 #pragma once
 
 #include "RadioNotifyListener.h"
+#include "RadioInstanceList.h"
 #include "../Common/SafeHandle.h"
 
 #include <RadioMgr.h>
@@ -62,6 +63,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
+	CRadioInstanceList m_radioInstances;
 	CListBox m_ListLog;
 	afx_msg void OnBnClickedOn();
 	afx_msg void OnBnClickedOff();

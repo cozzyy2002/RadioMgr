@@ -1,10 +1,16 @@
 #include "pch.h"
 #include "RadioInstanceList.h"
+#include "../Common/Assert.h"
 
 static LPCTSTR columns[] = {
     _T("Signature/ID"),
     _T("State"),
 };
+
+static LPCTSTR stateToStr(DEVICE_RADIO_STATE state)
+{
+    return (state == DRS_RADIO_ON) ? _T("ON") : _T("OFF");
+}
 
 HRESULT CRadioInstanceList::OnInitCtrl()
 {
@@ -19,34 +25,72 @@ HRESULT CRadioInstanceList::OnInitCtrl()
     return S_OK;
 }
 
-HRESULT CRadioInstanceList::Add(IRadioInstance* radioInstance)
+HRESULT CRadioInstanceList::Add(IRadioInstance* radioInstance, const RadioInstanceData** pData /*= nullptr*/)
 {
+    if(pData) { *pData = nullptr; }
+
     // Retrieve FriendlyName, Signature and RadioState from IRadioInstance object.
     BSTR friendlyName;
     radioInstance->GetFriendlyName(1033, &friendlyName);
     BSTR id;
     radioInstance->GetInstanceSignature(&id);
-    CString _friendlyName(friendlyName);
-    CString _id = id;
-    CString name;
-    name.Format(_T("%s:%s"), _friendlyName.GetString(), _id.GetString());
     DEVICE_RADIO_STATE state;
     radioInstance->GetRadioState(&state);
+    RadioInstanceData data({radioInstance, id, friendlyName, state, state});
+    auto& pair = m_datas.insert({data.id, data});
 
     auto nItem = GetItemCount();
-    InsertItem(nItem, _id.GetString());
-    SetItem(nItem, 1, LVIF_TEXT, (state == DRS_RADIO_ON) ? _T("ON") : _T("OFF"), 0, 0, 0, 0);
+    InsertItem(nItem, data.id.GetString());
+    SetItem(nItem, Column_state, LVIF_TEXT, stateToStr(data.state), 0, 0, 0, 0);
     SetCheck(nItem);
     
+    if(pData) { *pData = &(pair.first->second); }
+
     return S_OK;
 }
 
-HRESULT CRadioInstanceList::Remove(BSTR bstrRadioInstanceId)
+HRESULT CRadioInstanceList::Remove(const CString& radioInstanceId)
 {
-    return E_NOTIMPL;
+    auto index = Find(radioInstanceId);
+    HR_ASSERT(-1 < index, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
+    DeleteItem(index);
+
+    HR_ASSERT(0 < m_datas.erase(radioInstanceId), HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
+    return S_OK;
 }
 
-HRESULT CRadioInstanceList::StateChange(BSTR bstrRadioInstanceId, DEVICE_RADIO_STATE radioState)
+HRESULT CRadioInstanceList::StateChange(const CString& radioInstanceId, DEVICE_RADIO_STATE radioState)
 {
-    return E_NOTIMPL;
+    // Update state of the ListCtrl item.
+    auto index = Find(radioInstanceId);
+    HR_ASSERT(-1 < index, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
+    SetItem(index, Column_state, LVIF_TEXT, stateToStr(radioState), 0, 0, 0, 0);
+
+    // Update internal data.
+    auto& data = m_datas[radioInstanceId];
+    data.state = radioState;
+
+    return S_OK;
+}
+
+HRESULT CRadioInstanceList::For(std::function<HRESULT(RadioInstanceData&)> func, bool onlyChecked)
+{
+    auto cItems = GetItemCount();
+    for(auto i = 0; i < cItems; i++) {
+        if(!onlyChecked || GetCheck(i)) {
+            auto id(GetItemText(i, 0));
+            auto& data = m_datas[id];
+            HR_ASSERT_OK(func(data));
+        }
+    }
+
+    return (0 < cItems) ? S_OK : S_FALSE;
+}
+
+// Finds ListCtrl item with id as item text, and returns index of found item.
+// Returns -1 if the item is not found.
+int CRadioInstanceList::Find(const CString& id)
+{
+    LVFINDINFO fi = {LVFI_STRING, id.GetString()};
+    return FindItem(&fi);
 }

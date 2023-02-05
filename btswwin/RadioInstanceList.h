@@ -4,23 +4,37 @@
 #include <RadioMgr.h>
 #include <atlbase.h>
 #include <map>
+#include <functional>
 
+// Structure contains value of IRadioInstance.
+// Initialized by Add() method.
 struct RadioInstanceData
 {
-	CComPtr<IRadioInstance> radioInstance;
-	CString id;
-	CString name;
-	DEVICE_RADIO_STATE state;
+	const CComPtr<IRadioInstance> radioInstance;
+	const CString id;
+	const CString name;
+	DEVICE_RADIO_STATE state;		// Updated by StateChange() method.
+	DEVICE_RADIO_STATE savedState;	// Used by owner to save state at some point.
 };
 
 class CRadioInstanceList : public CListCtrl
 {
 public:
+	// Column index(Sub item index)
+	enum {
+		Column_id = 0,		// ID is used as item text to find ListView item. So this must be 0.
+		Column_state,
+	};
+
 	HRESULT OnInitCtrl();
-	HRESULT Add(IRadioInstance*);
-	HRESULT Remove(BSTR);
-	HRESULT StateChange(BSTR, DEVICE_RADIO_STATE);
+	HRESULT Add(IRadioInstance*, const RadioInstanceData** = nullptr);
+	HRESULT Remove(const CString&);
+	HRESULT StateChange(const CString&, DEVICE_RADIO_STATE);
+
+	HRESULT For(std::function<HRESULT(RadioInstanceData&)> data, bool onlyChecked = true);
 
 protected:
-	std::map<CString, RadioInstanceData> datas;
+	std::map<CString, RadioInstanceData> m_datas;
+
+	int Find(const CString& id);
 };

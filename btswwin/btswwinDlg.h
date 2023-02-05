@@ -31,8 +31,6 @@ public:
 
 protected:
 	CComPtr<IMediaRadioManager> m_radioManager;
-	CComPtr<IRadioInstance> m_radioInstance;
-	CString m_radioInstanceId;
 
 	static void unregisterPowerNotify(HPOWERNOTIFY);
 	using PowerNotifyHandle = SafeHandle<HPOWERNOTIFY, unregisterPowerNotify>;
@@ -41,7 +39,7 @@ protected:
 
 	CComPtr<RadioNotifyListener> m_radioNotifyListener;
 
-	HRESULT setRadioState(DEVICE_RADIO_STATE);
+	HRESULT setRadioState(DEVICE_RADIO_STATE, bool restore = false);
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME

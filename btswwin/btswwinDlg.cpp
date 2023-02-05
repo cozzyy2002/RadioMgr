@@ -307,24 +307,24 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 			};
 			print(_T("LIDSWITCH_STATE_CHANGE: LID is %s"), ValueToString(lidSwitchDatas, setting->Data[0]).GetString());
 
-			// m_radioInstance may be unknown until RadioNotifyListener::OnInstanceAdd() is called.
-			if(!m_radioInstance) return TRUE;
-
 			UpdateData();
 			if(m_switchByLcdState) {
 				switch(setting->Data[0]) {
 				case 0:		// The lid is closed.
 					if(m_restoreRadioState) {
-						HR_EXPECT_OK(m_radioInstance->GetRadioState(&m_radioState));
+						// Save current state to restore when lid will be opened.
+						m_radioInstances.For([](RadioInstanceData& data)
+							{
+								data.savedState = data.state;
+								return S_OK;
+							}
+						);
 					}
 					setRadioState(DRS_SW_RADIO_OFF);
 					break;;
 				case 1:		// The lid is opened.
-				{
-					auto newState = (m_restoreRadioState ? m_radioState : DRS_RADIO_ON);
-					setRadioState(newState);
+					setRadioState(DRS_RADIO_ON, m_restoreRadioState);
 					break;
-				}
 				}
 			}
 		}
@@ -333,15 +333,16 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 	return TRUE;
 }
 
-HRESULT CbtswwinDlg::setRadioState(DEVICE_RADIO_STATE newState)
+HRESULT CbtswwinDlg::setRadioState(DEVICE_RADIO_STATE state, bool restore /*= false*/)
 {
-	if(!m_radioInstance) return S_FALSE;
-
-	DEVICE_RADIO_STATE currentState;
-	HR_ASSERT_OK(m_radioInstance->GetRadioState(&currentState));
-	return (currentState != newState) ?
-		HR_EXPECT_OK(m_radioInstance->SetRadioState(newState, 1)) :
-		S_FALSE;
+	return m_radioInstances.For([state, restore](RadioInstanceData& data)
+		{
+			auto newState = restore ? data.savedState : state;
+			return (data.state != newState) ?
+				HR_EXPECT_OK(data.radioInstance->SetRadioState(newState, 1)) :
+				S_FALSE;
+		}
+	);
 }
 
 // Process message sent by RadioNotifyListener
@@ -360,41 +361,30 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 	std::unique_ptr<RadioNotifyListener::Message> message((RadioNotifyListener::Message*)lParam);
 	CString type(_T("Unknown"));
 	CString name(_T("Unknown"));
-	auto state = message->radioState;
+	auto state = (DEVICE_RADIO_STATE)(-1);
 	switch(message->type) {
 	case RadioNotifyListener::Message::Type::InstanceAdd:
 		// RadioNotifyListener::OnInstanceAdd(IRadioInstance* pRadioInstance)
 		{
 			type = _T("Add");
-			// Save IRadioInstance object.
-			m_radioInstance = message->radioInstance;
-
-			// Retrieve FriendlyName, Signature and RadioState from IRadioInstance object.
-			BSTR friendlyName;
-			message->radioInstance->GetFriendlyName(1033, &friendlyName);
-			BSTR id;
-			message->radioInstance->GetInstanceSignature(&id);
-			CString _friendlyName(friendlyName);
-			m_radioInstanceId = id;
-			name.Format(_T("%s:%s"), _friendlyName.GetString(), m_radioInstanceId.GetString());
-			message->radioInstance->GetRadioState(&state);
-
-			m_radioInstances.Add(message->radioInstance);
+			const RadioInstanceData* pData = nullptr;
+			m_radioInstances.Add(message->radioInstance, &pData);
+			name.Format(_T("%s:%s"), pData->name.GetString(), pData->id.GetString());
+			state = pData->state;
 		}
 		break;
 	case RadioNotifyListener::Message::Type::InstanceRemove:
 		type = _T("Remove");
 		// RadioNotifyListener::OnInstanceRemove(BSTR bstrRadioInstanceId)
-		if(message->radioInstanceId == m_radioInstanceId) {
-			// Release IRadioInstance object.
-			m_radioInstance.Release();
-		}
 		name = message->radioInstanceId;
+		m_radioInstances.Remove(name);
 		break;
 	case RadioNotifyListener::Message::Type::InstanceRadioChange:
 		type = _T("InstanceRadioChange");
 		// RadioNotifyListener::OnInstanceRadioChange(BSTR bstrRadioInstanceId, DEVICE_RADIO_STATE radioState)
 		name = message->radioInstanceId;
+		state = message->radioState;
+		m_radioInstances.StateChange(name, state);
 		break;
 	}
 

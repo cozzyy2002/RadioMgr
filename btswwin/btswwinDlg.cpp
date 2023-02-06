@@ -173,6 +173,9 @@ BOOL CbtswwinDlg::OnInitDialog()
 		CString strAboutMenu;
 		bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
 		ASSERT(bNameValid);
+#ifdef _DEBUG
+		strAboutMenu = _T("LCD open/close");
+#endif
 		if (!strAboutMenu.IsEmpty())
 		{
 			pSysMenu->AppendMenu(MF_SEPARATOR);
@@ -236,8 +239,20 @@ void CbtswwinDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
 	{
+#ifdef _DEBUG
+		// Send debug message for LCD open/close.
+		static BYTE data = 0;
+		data = (data == 0) ? 1 : 0;
+		POWERBROADCAST_SETTING setting = {
+			GUID_LIDSWITCH_STATE_CHANGE,
+			sizeof(BYTE),
+			data
+		};
+		HR_EXPECT_OK(SendMessage(WM_POWERBROADCAST, PBT_POWERSETTINGCHANGE, (LPARAM)&setting));
+#else
 		CAboutDlg dlgAbout;
 		dlgAbout.DoModal();
+#endif
 	}
 	else
 	{

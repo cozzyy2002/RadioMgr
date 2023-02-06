@@ -13,6 +13,8 @@ struct RadioInstanceData
 	const CComPtr<IRadioInstance> radioInstance;
 	const CString id;
 	const CString name;
+	const BOOL isMultiComm{};
+	const BOOL isAssociatingDevice{};
 	DEVICE_RADIO_STATE state;		// Updated by StateChange() method.
 	DEVICE_RADIO_STATE savedState;	// Used by owner to save state at some point.
 };
@@ -24,6 +26,8 @@ public:
 	enum {
 		Column_id = 0,		// ID is used as item text to find ListView item. So this must be 0.
 		Column_state,
+		Column_isMultiComm,
+		Column_isAssociatingDevice,
 	};
 
 	HRESULT OnInitCtrl();

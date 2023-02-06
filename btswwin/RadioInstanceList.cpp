@@ -2,15 +2,19 @@
 #include "RadioInstanceList.h"
 #include "../Common/Assert.h"
 
-static LPCTSTR columns[] = {
-    _T("Signature/ID"),
-    _T("State"),
+struct ColumnTitle
+{
+    LPCTSTR title;
+    int pixelWidth;
 };
 
-static LPCTSTR stateToStr(DEVICE_RADIO_STATE state)
-{
-    return (state == DRS_RADIO_ON) ? _T("ON") : _T("OFF");
-}
+#define COLUMN_TITLE_ITEM(s, l) {_T(s), l * 8}
+static ColumnTitle columns[] = {
+    COLUMN_TITLE_ITEM("Signature/ID", 20),
+    COLUMN_TITLE_ITEM("State", 8),
+    COLUMN_TITLE_ITEM("IsMultiComm", 10),
+    COLUMN_TITLE_ITEM("IsAssocDev", 10),
+};
 
 HRESULT CRadioInstanceList::OnInitCtrl()
 {
@@ -18,12 +22,15 @@ HRESULT CRadioInstanceList::OnInitCtrl()
     SetExtendedStyle(exStyle | GetExtendedStyle());
 
     int nCol = 0;
-    for(auto c : columns) {
-        InsertColumn(nCol++, c, LVCFMT_LEFT, 100);
+    for(auto& c : columns) {
+        InsertColumn(nCol++, c.title, LVCFMT_LEFT, c.pixelWidth);
     }
 
     return S_OK;
 }
+
+static LPCTSTR stateToString(DEVICE_RADIO_STATE state) { return ((state == DRS_RADIO_ON) ? _T("ON") : _T("OFF")); }
+static LPCTSTR boolToString(BOOL b) { return ((b) ? _T("Yes") : _T("No")); }
 
 HRESULT CRadioInstanceList::Add(IRadioInstance* radioInstance, const RadioInstanceData** pData /*= nullptr*/)
 {
@@ -36,12 +43,26 @@ HRESULT CRadioInstanceList::Add(IRadioInstance* radioInstance, const RadioInstan
     radioInstance->GetInstanceSignature(&id);
     DEVICE_RADIO_STATE state;
     radioInstance->GetRadioState(&state);
-    RadioInstanceData data({radioInstance, id, friendlyName, state, state});
+    RadioInstanceData data(
+        {
+            radioInstance, id, friendlyName,
+            radioInstance->IsMultiComm(),
+            radioInstance->IsAssociatingDevice(),
+            state, state
+        });
     auto& pair = m_datas.insert({data.id, data});
 
     auto nItem = GetItemCount();
     InsertItem(nItem, data.id.GetString());
-    SetItem(nItem, Column_state, LVIF_TEXT, stateToStr(data.state), 0, 0, 0, 0);
+    LPCTSTR strs[] = {
+        stateToString(data.state),
+        boolToString(data.isMultiComm),
+        boolToString(data.isAssociatingDevice),
+    };
+    int i = Column_state;
+    for(auto p : strs) {
+        SetItem(nItem, i++, LVIF_TEXT, p, 0, 0, 0, 0);
+    }
     SetCheck(nItem);
     
     if(pData) { *pData = &(pair.first->second); }
@@ -64,7 +85,7 @@ HRESULT CRadioInstanceList::StateChange(const CString& radioInstanceId, DEVICE_R
     // Update state of the ListCtrl item.
     auto index = Find(radioInstanceId);
     HR_ASSERT(-1 < index, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
-    SetItem(index, Column_state, LVIF_TEXT, stateToStr(radioState), 0, 0, 0, 0);
+    SetItem(index, Column_state, LVIF_TEXT, stateToString(radioState), 0, 0, 0, 0);
 
     // Update internal data.
     auto& data = m_datas[radioInstanceId];

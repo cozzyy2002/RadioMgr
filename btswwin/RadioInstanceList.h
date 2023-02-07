@@ -31,7 +31,7 @@ public:
 	};
 
 	HRESULT OnInitCtrl();
-	HRESULT Add(IRadioInstance*, const RadioInstanceData** = nullptr);
+	HRESULT Add(IRadioInstance*, RadioInstanceData** = nullptr);
 	HRESULT Remove(const CString&);
 	HRESULT StateChange(const CString&, DEVICE_RADIO_STATE);
 

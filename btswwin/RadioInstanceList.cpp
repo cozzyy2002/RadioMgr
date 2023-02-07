@@ -32,17 +32,15 @@ HRESULT CRadioInstanceList::OnInitCtrl()
 static LPCTSTR stateToString(DEVICE_RADIO_STATE state) { return ((state == DRS_RADIO_ON) ? _T("ON") : _T("OFF")); }
 static LPCTSTR boolToString(BOOL b) { return ((b) ? _T("Yes") : _T("No")); }
 
-HRESULT CRadioInstanceList::Add(IRadioInstance* radioInstance, const RadioInstanceData** pData /*= nullptr*/)
+HRESULT CRadioInstanceList::Add(IRadioInstance* radioInstance, RadioInstanceData** pData /*= nullptr*/)
 {
-    if(pData) { *pData = nullptr; }
-
     // Retrieve FriendlyName, Signature and RadioState from IRadioInstance object.
     BSTR friendlyName;
     radioInstance->GetFriendlyName(1033, &friendlyName);
     BSTR id;
-    radioInstance->GetInstanceSignature(&id);
+    HR_ASSERT_OK(radioInstance->GetInstanceSignature(&id));
     DEVICE_RADIO_STATE state;
-    radioInstance->GetRadioState(&state);
+    HR_ASSERT_OK(radioInstance->GetRadioState(&state));
     RadioInstanceData data(
         {
             radioInstance, id, friendlyName,
@@ -94,7 +92,7 @@ HRESULT CRadioInstanceList::StateChange(const CString& radioInstanceId, DEVICE_R
     return S_OK;
 }
 
-HRESULT CRadioInstanceList::For(std::function<HRESULT(RadioInstanceData&)> func, bool onlyChecked)
+HRESULT CRadioInstanceList::For(std::function<HRESULT(RadioInstanceData&)> func, bool onlyChecked /*= true*/)
 {
     auto cItems = GetItemCount();
     for(auto i = 0; i < cItems; i++) {

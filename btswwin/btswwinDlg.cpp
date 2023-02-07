@@ -122,6 +122,7 @@ afx_msg LRESULT CbtswwinDlg::OnUserPrint(WPARAM wParam, LPARAM lParam)
 	}
 	auto index = m_ListLog.AddString(*text);
 	m_ListLog.SetTopIndex(index);
+	UpdateData(FALSE);
 
 	return 0;
 }
@@ -248,7 +249,7 @@ void CbtswwinDlg::OnSysCommand(UINT nID, LPARAM lParam)
 			sizeof(BYTE),
 			data
 		};
-		HR_EXPECT_OK(SendMessage(WM_POWERBROADCAST, PBT_POWERSETTINGCHANGE, (LPARAM)&setting));
+		SendMessage(WM_POWERBROADCAST, PBT_POWERSETTINGCHANGE, (LPARAM)&setting);
 #else
 		CAboutDlg dlgAbout;
 		dlgAbout.DoModal();
@@ -300,6 +301,7 @@ HCURSOR CbtswwinDlg::OnQueryDragIcon()
 
 void CbtswwinDlg::OnBnClickedOn()
 {
+	UpdateData();
 	setRadioState(DRS_RADIO_ON);
 }
 
@@ -307,6 +309,7 @@ void CbtswwinDlg::OnBnClickedOn()
 
 void CbtswwinDlg::OnBnClickedOff()
 {
+	UpdateData();
 	setRadioState(DRS_SW_RADIO_OFF);
 }
 
@@ -373,16 +376,18 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 		VALUE_NAME_ITEM(DRS_HW_RADIO_OFF_UNCONTROLLABLE),
 	};
 
+	auto now(CTime::GetCurrentTime());
 	std::unique_ptr<RadioNotifyListener::Message> message((RadioNotifyListener::Message*)lParam);
 	CString type(_T("Unknown"));
 	CString name(_T("Unknown"));
 	auto state = (DEVICE_RADIO_STATE)(-1);
+	UpdateData();
 	switch(message->type) {
 	case RadioNotifyListener::Message::Type::InstanceAdd:
 		// RadioNotifyListener::OnInstanceAdd(IRadioInstance* pRadioInstance)
 		{
 			type = _T("Add");
-			const RadioInstanceData* pData = nullptr;
+			RadioInstanceData* pData = nullptr;
 			m_radioInstances.Add(message->radioInstance, &pData);
 			name.Format(_T("%s:%s"), pData->name.GetString(), pData->id.GetString());
 			state = pData->state;
@@ -402,8 +407,9 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 		m_radioInstances.StateChange(name, state);
 		break;
 	}
+	UpdateData(FALSE);
 
-	print(_T("%s: %s, %s"), type.GetString(), name.GetString(), ValueToString(states, state).GetString());
+	print(now, _T("%s: %s, %s"), type.GetString(), name.GetString(), ValueToString(states, state).GetString());
 	return 0;
 }
 

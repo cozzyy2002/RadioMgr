@@ -12,6 +12,8 @@
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
+
+#define DEBUG_LIDSWITCH
 #endif
 
 
@@ -174,7 +176,7 @@ BOOL CbtswwinDlg::OnInitDialog()
 		CString strAboutMenu;
 		bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
 		ASSERT(bNameValid);
-#ifdef _DEBUG
+#ifdef DEBUG_LIDSWITCH
 		strAboutMenu = _T("LCD open/close");
 #endif
 		if (!strAboutMenu.IsEmpty())
@@ -240,7 +242,7 @@ void CbtswwinDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
 	{
-#ifdef _DEBUG
+#ifdef DEBUG_LIDSWITCH
 		// Send debug message for LCD open/close.
 		static BYTE data = 0;
 		data = (data == 0) ? 1 : 0;
@@ -319,11 +321,7 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 	if(nPowerEvent == PBT_POWERSETTINGCHANGE) {
 		auto setting = (PPOWERBROADCAST_SETTING)nEventData;
 		if(setting->PowerSetting == GUID_LIDSWITCH_STATE_CHANGE) {
-			static const ValueName<UCHAR> lidSwitchDatas[] = {
-				{0, _T("closed")},
-				{1, _T("opened")},
-			};
-			print(_T("LIDSWITCH_STATE_CHANGE: LID is %s"), ValueToString(lidSwitchDatas, setting->Data[0]).GetString());
+			auto now(CTime::GetCurrentTime());
 
 			UpdateData();
 			if(m_switchByLcdState) {
@@ -345,6 +343,12 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 					break;
 				}
 			}
+
+			static const ValueName<UCHAR> lidSwitchDatas[] = {
+				{0, _T("closed")},
+				{1, _T("opened")},
+			};
+			print(now, _T("LIDSWITCH_STATE_CHANGE: LID is %s"), ValueToString(lidSwitchDatas, setting->Data[0]).GetString());
 		}
 	}
 
@@ -381,12 +385,11 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 	CString type(_T("Unknown"));
 	CString name(_T("Unknown"));
 	auto state = (DEVICE_RADIO_STATE)(-1);
-	UpdateData();
 	switch(message->type) {
 	case RadioNotifyListener::Message::Type::InstanceAdd:
 		// RadioNotifyListener::OnInstanceAdd(IRadioInstance* pRadioInstance)
 		{
-			type = _T("Add");
+			type = _T("InstanceAdd");
 			RadioInstanceData* pData = nullptr;
 			m_radioInstances.Add(message->radioInstance, &pData);
 			name.Format(_T("%s:%s"), pData->name.GetString(), pData->id.GetString());
@@ -394,7 +397,7 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 		}
 		break;
 	case RadioNotifyListener::Message::Type::InstanceRemove:
-		type = _T("Remove");
+		type = _T("InstanceRemove");
 		// RadioNotifyListener::OnInstanceRemove(BSTR bstrRadioInstanceId)
 		name = message->radioInstanceId;
 		m_radioInstances.Remove(name);

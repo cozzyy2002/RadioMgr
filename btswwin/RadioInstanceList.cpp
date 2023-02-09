@@ -18,7 +18,7 @@ static ColumnTitle columns[] = {
 
 HRESULT CRadioInstanceList::OnInitCtrl()
 {
-    auto exStyle = LVS_EX_CHECKBOXES | LVS_EX_AUTOSIZECOLUMNS;
+    auto exStyle = LVS_EX_CHECKBOXES | LVS_EX_AUTOSIZECOLUMNS | LVS_EX_FULLROWSELECT;
     SetExtendedStyle(exStyle | GetExtendedStyle());
 
     int nCol = 0;

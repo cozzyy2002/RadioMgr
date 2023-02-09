@@ -16,9 +16,6 @@ public:
 			InstanceRadioChange,
 		};
 
-		Message(Type type, IRadioInstance* radioInstance, BSTR radioInstanceId, DEVICE_RADIO_STATE radioState)
-			: type(type), radioInstance(radioInstance), radioInstanceId(radioInstanceId), radioState(radioState) {}
-
 		const Type type;
 		const CComPtr<IRadioInstance> radioInstance;
 		const CString radioInstanceId;

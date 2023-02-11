@@ -197,7 +197,7 @@ BOOL CbtswwinDlg::OnInitDialog()
 
 	m_radioInstances.OnInitCtrl();
 
-	auto hr = createRadioInstance();
+	auto hr = createRadioManager();
 
 	if(SUCCEEDED(hr)) {
 		m_hPowerNotify = RegisterPowerSettingNotification(m_hWnd, &GUID_LIDSWITCH_STATE_CHANGE, DEVICE_NOTIFY_WINDOW_HANDLE);
@@ -208,7 +208,7 @@ BOOL CbtswwinDlg::OnInitDialog()
 }
 
 // Create IMedioRadioManager object for Bluetooth device and setup RadioNotifyListener.
-HRESULT CbtswwinDlg::createRadioInstance()
+HRESULT CbtswwinDlg::createRadioManager()
 {
 	// Create IMediaRadioManager for Bluetooth.
 	static const CLSID clsid = { 0xafd198ac, 0x5f30, 0x4e89, { 0xa7, 0x89, 0x5d, 0xdf, 0x60, 0xa6, 0x93, 0x66 } };

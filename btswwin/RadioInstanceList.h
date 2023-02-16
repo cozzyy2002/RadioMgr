@@ -39,6 +39,7 @@ public:
 
 protected:
 	std::map<CString, RadioInstanceData> m_datas;
+	CImageList m_imageList;
 
 	int Find(const CString& id);
 };

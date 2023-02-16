@@ -80,5 +80,17 @@
     <Image Include="res\btswwin.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\bitmap_RadioOn.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\bitmap_RadioOff.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\bitmap1.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\bitmap2.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

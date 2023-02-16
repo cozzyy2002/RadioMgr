@@ -10,6 +10,10 @@
 #define IDS_ABOUTBOX                    101
 #define IDD_BTSWWIN_DIALOG              102
 #define IDR_MAINFRAME                   128
+#define IDB_BITMAP1                     134
+#define IDB_BITMAP_RADIO_ON             134
+#define IDB_BITMAP2                     135
+#define IDB_BITMAP_RADIO_OFF            135
 #define ID_LIST_LOG                     1001
 #define IDC_CHECK_SWITCH_BY_LCD_STATE   1002
 #define IDC_CHECK_RESTORE_RADIO_STATE   1003
@@ -19,7 +23,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        132
+#define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         32771
 #define _APS_NEXT_CONTROL_VALUE         1005
 #define _APS_NEXT_SYMED_VALUE           101

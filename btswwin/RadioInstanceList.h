@@ -25,6 +25,7 @@ public:
 	// Column index(Sub item index)
 	enum {
 		Column_id = 0,		// ID is used as item text to find ListView item. So this must be 0.
+		Column_name,
 		Column_state,
 		Column_isMultiComm,
 		Column_isAssociatingDevice,

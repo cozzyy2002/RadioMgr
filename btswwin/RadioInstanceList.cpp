@@ -12,6 +12,7 @@ struct ColumnTitle
 #define COLUMN_TITLE_ITEM(s, l) {_T(s), l * 8}
 static ColumnTitle columns[] = {
     COLUMN_TITLE_ITEM("Signature/ID", 20),
+    COLUMN_TITLE_ITEM("Name", 12),
     COLUMN_TITLE_ITEM("State", 8),
     COLUMN_TITLE_ITEM("IsMultiComm", 10),
     COLUMN_TITLE_ITEM("IsAssocDev", 10),
@@ -50,7 +51,8 @@ HRESULT CRadioInstanceList::Add(const RadioInstanceData& data)
     auto& pair = m_datas.insert({data.id, data});
 
     auto nItem = GetItemCount();
-    InsertItem(LVIF_TEXT | LVIF_IMAGE, nItem, data.id.GetString(), 0, 0, stateToImageIndex(data.state), 0);
+    InsertItem(LVIF_TEXT | LVIF_IMAGE, nItem, data.id, 0, 0, stateToImageIndex(data.state), 0);
+    SetItemText(nItem, Column_name, data.name);
     SetItemText(nItem, Column_state, stateToString(data.state));
     SetItemText(nItem, Column_isMultiComm, boolToString(data.isMultiComm));
     SetItemText(nItem, Column_isAssociatingDevice, boolToString(data.isAssociatingDevice));

@@ -321,7 +321,12 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 	if(nPowerEvent == PBT_POWERSETTINGCHANGE) {
 		auto setting = (PPOWERBROADCAST_SETTING)nEventData;
 		if(setting->PowerSetting == GUID_LIDSWITCH_STATE_CHANGE) {
-			auto now(CTime::GetCurrentTime());
+
+			static const ValueName<UCHAR> lidSwitchDatas[] = {
+				{0, _T("closed")},
+				{1, _T("opened")},
+			};
+			print(_T("LIDSWITCH_STATE_CHANGE: LID is %s"), ValueToString(lidSwitchDatas, setting->Data[0]).GetString());
 
 			UpdateData();
 			if(m_switchByLcdState) {
@@ -343,12 +348,6 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 					break;
 				}
 			}
-
-			static const ValueName<UCHAR> lidSwitchDatas[] = {
-				{0, _T("closed")},
-				{1, _T("opened")},
-			};
-			print(now, _T("LIDSWITCH_STATE_CHANGE: LID is %s"), ValueToString(lidSwitchDatas, setting->Data[0]).GetString());
 		}
 	}
 
@@ -390,10 +389,20 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 		// RadioNotifyListener::OnInstanceAdd(IRadioInstance* pRadioInstance)
 		{
 			type = _T("InstanceAdd");
-			RadioInstanceData* pData = nullptr;
-			m_radioInstances.Add(message->radioInstance, &pData);
-			name.Format(_T("%s:%s"), pData->name.GetString(), pData->id.GetString());
-			state = pData->state;
+			// Retrieve FriendlyName, Signature and RadioState from IRadioInstance object.
+			BSTR friendlyName, id;
+			message->radioInstance->GetFriendlyName(1033, &friendlyName);
+			HR_ASSERT_OK(message->radioInstance->GetInstanceSignature(&id));
+			HR_ASSERT_OK(message->radioInstance->GetRadioState(&state));
+			RadioInstanceData data(
+				{
+					message->radioInstance, id, friendlyName,
+					message->radioInstance->IsMultiComm(),
+					message->radioInstance->IsAssociatingDevice(),
+					state, state
+				});
+			m_radioInstances.Add(data);
+			name.Format(_T("%s:%s"), data.name.GetString(), data.id.GetString());
 		}
 		break;
 	case RadioNotifyListener::Message::Type::InstanceRemove:

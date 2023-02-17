@@ -45,32 +45,16 @@ static int stateToImageIndex(DEVICE_RADIO_STATE state) { return ((state == DRS_R
 static LPCTSTR stateToString(DEVICE_RADIO_STATE state) { return ((state == DRS_RADIO_ON) ? _T("ON") : _T("OFF")); }
 static LPCTSTR boolToString(BOOL b) { return ((b) ? _T("Yes") : _T("No")); }
 
-HRESULT CRadioInstanceList::Add(IRadioInstance* radioInstance, RadioInstanceData** pData /*= nullptr*/)
+HRESULT CRadioInstanceList::Add(const RadioInstanceData& data)
 {
-    // Retrieve FriendlyName, Signature and RadioState from IRadioInstance object.
-    BSTR friendlyName;
-    radioInstance->GetFriendlyName(1033, &friendlyName);
-    BSTR id;
-    HR_ASSERT_OK(radioInstance->GetInstanceSignature(&id));
-    DEVICE_RADIO_STATE state;
-    HR_ASSERT_OK(radioInstance->GetRadioState(&state));
-    RadioInstanceData data(
-        {
-            radioInstance, id, friendlyName,
-            radioInstance->IsMultiComm(),
-            radioInstance->IsAssociatingDevice(),
-            state, state
-        });
     auto& pair = m_datas.insert({data.id, data});
 
     auto nItem = GetItemCount();
-    InsertItem(LVIF_TEXT | LVIF_IMAGE, nItem, data.id.GetString(), 0, 0, stateToImageIndex(state), 0);
-    SetItemText(nItem, Column_state, stateToString(state));
+    InsertItem(LVIF_TEXT | LVIF_IMAGE, nItem, data.id.GetString(), 0, 0, stateToImageIndex(data.state), 0);
+    SetItemText(nItem, Column_state, stateToString(data.state));
     SetItemText(nItem, Column_isMultiComm, boolToString(data.isMultiComm));
     SetItemText(nItem, Column_isAssociatingDevice, boolToString(data.isAssociatingDevice));
     SetCheck(nItem);
-    
-    if(pData) { *pData = &(pair.first->second); }
 
     return S_OK;
 }

@@ -13,8 +13,8 @@ struct RadioInstanceData
 	const CComPtr<IRadioInstance> radioInstance;
 	const CString id;
 	const CString name;
-	const BOOL isMultiComm{};
-	const BOOL isAssociatingDevice{};
+	BOOL isMultiComm;
+	BOOL isAssociatingDevice;
 	DEVICE_RADIO_STATE state;		// Updated by StateChange() method.
 	DEVICE_RADIO_STATE savedState;	// Used by owner to save state at some point.
 };
@@ -37,6 +37,7 @@ public:
 	HRESULT StateChange(const CString&, DEVICE_RADIO_STATE);
 
 	HRESULT For(std::function<HRESULT(RadioInstanceData&)> data, bool onlyChecked = true);
+	HRESULT Update(const RadioInstanceData& data);
 
 protected:
 	std::map<CString, RadioInstanceData> m_datas;

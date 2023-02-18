@@ -51,11 +51,9 @@ HRESULT CRadioInstanceList::Add(const RadioInstanceData& data)
     auto& pair = m_datas.insert({data.id, data});
 
     auto nItem = GetItemCount();
-    InsertItem(LVIF_TEXT | LVIF_IMAGE, nItem, data.id, 0, 0, stateToImageIndex(data.state), 0);
+    InsertItem(nItem, data.id);
     SetItemText(nItem, Column_name, data.name);
-    SetItemText(nItem, Column_state, stateToString(data.state));
-    SetItemText(nItem, Column_isMultiComm, boolToString(data.isMultiComm));
-    SetItemText(nItem, Column_isAssociatingDevice, boolToString(data.isAssociatingDevice));
+    Update(data);
     SetCheck(nItem);
 
     return S_OK;
@@ -63,9 +61,9 @@ HRESULT CRadioInstanceList::Add(const RadioInstanceData& data)
 
 HRESULT CRadioInstanceList::Remove(const CString& radioInstanceId)
 {
-    auto index = Find(radioInstanceId);
-    HR_ASSERT(-1 < index, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
-    DeleteItem(index);
+    auto nItem = Find(radioInstanceId);
+    HR_ASSERT(-1 < nItem, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
+    DeleteItem(nItem);
 
     HR_ASSERT(0 < m_datas.erase(radioInstanceId), HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
     return S_OK;
@@ -73,15 +71,12 @@ HRESULT CRadioInstanceList::Remove(const CString& radioInstanceId)
 
 HRESULT CRadioInstanceList::StateChange(const CString& radioInstanceId, DEVICE_RADIO_STATE radioState)
 {
-    // Update state of the ListCtrl item.
-    auto index = Find(radioInstanceId);
-    HR_ASSERT(-1 < index, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
-    SetItem(index, Column_id, LVIF_IMAGE, nullptr, stateToImageIndex(radioState), 0, 0, 0);
-    SetItemText(index, Column_state, stateToString(radioState));
-
     // Update internal data.
     auto& data = m_datas[radioInstanceId];
     data.state = radioState;
+
+    // Update state of the ListCtrl item.
+    HR_ASSERT_OK(Update(data));
 
     return S_OK;
 }
@@ -98,6 +93,20 @@ HRESULT CRadioInstanceList::For(std::function<HRESULT(RadioInstanceData&)> func,
     }
 
     return (0 < cItems) ? S_OK : S_FALSE;
+}
+
+// Updates ListCtrl item.
+HRESULT CRadioInstanceList::Update(const RadioInstanceData& data)
+{
+    auto nItem = Find(data.id);
+    HR_ASSERT(-1 < nItem, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
+
+    SetItem(nItem, Column_id, LVIF_IMAGE, nullptr, stateToImageIndex(data.state), 0, 0, 0);
+    SetItemText(nItem, Column_state, stateToString(data.state));
+    SetItemText(nItem, Column_isMultiComm, boolToString(data.isMultiComm));
+    SetItemText(nItem, Column_isAssociatingDevice, boolToString(data.isAssociatingDevice));
+
+    return S_OK;
 }
 
 // Finds ListCtrl item with id as item text, and returns index of found item.

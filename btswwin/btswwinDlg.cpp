@@ -154,6 +154,7 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_BN_CLICKED(ID_EDIT_COPY, &CbtswwinDlg::OnBnClickedEditCopy)
 	ON_MESSAGE(WM_USER_PRINT, &CbtswwinDlg::OnUserPrint)
 	ON_MESSAGE(WM_USER_RADIO_MANAGER_NOTIFY, &CbtswwinDlg::OnUserRadioManagerNotify)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -388,8 +389,8 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 	case RadioNotifyListener::Message::Type::InstanceAdd:
 		// RadioNotifyListener::OnInstanceAdd(IRadioInstance* pRadioInstance)
 		{
-			type = _T("InstanceAdd");
 			// Retrieve FriendlyName, Signature and RadioState from IRadioInstance object.
+			type = _T("InstanceAdd");
 			BSTR friendlyName, id;
 			message->radioInstance->GetFriendlyName(1033, &friendlyName);
 			HR_ASSERT_OK(message->radioInstance->GetInstanceSignature(&id));
@@ -402,18 +403,24 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 					state, state
 				});
 			m_radioInstances.Add(data);
-			name.Format(_T("%s:%s"), data.name.GetString(), data.id.GetString());
+			name.Format(_T("%s:%s"), data.id.GetString(), data.name.GetString());
+
+			// Start polling timer when first instance is added.
+			if(m_radioInstances.GetItemCount() == 1) { SetTimer(PollingTimerId, 1000, NULL); }
 		}
 		break;
 	case RadioNotifyListener::Message::Type::InstanceRemove:
-		type = _T("InstanceRemove");
 		// RadioNotifyListener::OnInstanceRemove(BSTR bstrRadioInstanceId)
+		type = _T("InstanceRemove");
 		name = message->radioInstanceId;
 		m_radioInstances.Remove(name);
+
+		// Stop polling timer when last instance is removed.
+		if(m_radioInstances.GetItemCount() == 0) { KillTimer(PollingTimerId); }
 		break;
 	case RadioNotifyListener::Message::Type::InstanceRadioChange:
-		type = _T("InstanceRadioChange");
 		// RadioNotifyListener::OnInstanceRadioChange(BSTR bstrRadioInstanceId, DEVICE_RADIO_STATE radioState)
+		type = _T("InstanceRadioChange");
 		name = message->radioInstanceId;
 		state = message->radioState;
 		m_radioInstances.StateChange(name, state);
@@ -423,6 +430,42 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 
 	print(now, _T("%s: %s, %s"), type.GetString(), name.GetString(), ValueToString(states, state).GetString());
 	return 0;
+}
+
+HRESULT CbtswwinDlg::onPollingTimer()
+{
+	auto hrOnPollingTimer = m_radioInstances.For([this](RadioInstanceData& data)
+		{
+			auto changed = false;
+			auto isMultiComm = data.radioInstance->IsMultiComm();
+			if(data.isMultiComm != isMultiComm) {
+				print(_T("%s: IsMultiComm changed %d -> %d"), data.id.GetString(), data.isMultiComm, isMultiComm);
+				data.isMultiComm = isMultiComm;
+				changed = true;
+			}
+			auto isAssocDev = data.radioInstance->IsAssociatingDevice();
+			if(data.isAssociatingDevice != isAssocDev) {
+				print(_T("%s: IsAssocDev changed %d -> %d"), data.id.GetString(), data.isAssociatingDevice, isAssocDev);
+				data.isAssociatingDevice = isAssocDev;
+				changed = true;
+			}
+			if(changed) { HR_ASSERT_OK(m_radioInstances.Update(data)); }
+			return S_OK;
+		},
+		false
+	);
+	return HR_EXPECT_OK(hrOnPollingTimer);
+}
+
+void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	switch(nIDEvent) {
+	case PollingTimerId:
+		onPollingTimer();
+		break;
+	}
+
+	CDialogEx::OnTimer(nIDEvent);
 }
 
 // Copy text in the log window to clipboard.

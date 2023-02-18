@@ -41,6 +41,9 @@ protected:
 
 	HRESULT setRadioState(DEVICE_RADIO_STATE, bool restore = false);
 
+	static const UINT_PTR PollingTimerId = 1;
+	HRESULT onPollingTimer();
+
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_BTSWWIN_DIALOG };
@@ -75,4 +78,6 @@ protected:
 	afx_msg LRESULT OnUserPrint(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserRadioManagerNotify(WPARAM wParam, LPARAM lParam);
 	virtual void PostNcDestroy();
+public:
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };

@@ -438,20 +438,21 @@ HRESULT CbtswwinDlg::onPollingTimer()
 {
 	auto hrOnPollingTimer = m_radioInstances.For([this](RadioInstanceData& data)
 		{
-			auto changed = false;
+			using um = CRadioInstanceList::UpdateMask;
+			auto updateMask = um::None;
 			auto isMultiComm = data.radioInstance->IsMultiComm();
 			if(data.isMultiComm != isMultiComm) {
 				print(_T("%s: IsMultiComm changed %d -> %d"), data.id.GetString(), data.isMultiComm, isMultiComm);
 				data.isMultiComm = isMultiComm;
-				changed = true;
+				updateMask |= um::IsMultiComm;
 			}
 			auto isAssocDev = data.radioInstance->IsAssociatingDevice();
 			if(data.isAssociatingDevice != isAssocDev) {
 				print(_T("%s: IsAssocDev changed %d -> %d"), data.id.GetString(), data.isAssociatingDevice, isAssocDev);
 				data.isAssociatingDevice = isAssocDev;
-				changed = true;
+				updateMask |= um::IsAssocDev;
 			}
-			if(changed) { HR_ASSERT_OK(m_radioInstances.Update(data)); }
+			if(updateMask != um::None) { HR_ASSERT_OK(m_radioInstances.Update(data, updateMask)); }
 			return S_OK;
 		},
 		false

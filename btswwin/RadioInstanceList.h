@@ -13,22 +13,22 @@ struct RadioInstanceData
 	const CComPtr<IRadioInstance> radioInstance;
 	const CString id;
 	const CString name;
-	BOOL isMultiComm;
-	BOOL isAssociatingDevice;
-	DEVICE_RADIO_STATE state;		// Updated by StateChange() method.
-	DEVICE_RADIO_STATE savedState;	// Used by owner to save state at some point.
+	BOOL isMultiComm{};
+	BOOL isAssociatingDevice{};
+	DEVICE_RADIO_STATE state{};			// Updated by StateChange() method.
+	DEVICE_RADIO_STATE savedState{};	// Used by owner to save state at some point.
 };
 
 class CRadioInstanceList : public CListCtrl
 {
 public:
 	// Column index(Sub item index)
-	enum {
-		Column_id = 0,		// ID is used as item text to find ListView item. So this must be 0.
-		Column_name,
-		Column_state,
-		Column_isMultiComm,
-		Column_isAssociatingDevice,
+	enum class Column {
+		Id = 0,		// ID is used as item text to find ListView item. So this must be 0.
+		Name,
+		State,
+		IsMultiComm,
+		IsAssocDev,
 	};
 
 	HRESULT OnInitCtrl();
@@ -37,7 +37,19 @@ public:
 	HRESULT StateChange(const CString&, DEVICE_RADIO_STATE);
 
 	HRESULT For(std::function<HRESULT(RadioInstanceData&)> data, bool onlyChecked = true);
-	HRESULT Update(const RadioInstanceData& data);
+
+	enum class UpdateMask {
+		None = 0,
+		Id = 1,
+		Name = 2,
+		StateIcon = 4,
+		StateText = 8,
+		State = StateIcon | StateText,
+		IsMultiComm = 0x10,
+		IsAssocDev = 0x20,
+		All = 0xff
+	};
+	HRESULT Update(const RadioInstanceData& data, UpdateMask mask);
 
 protected:
 	std::map<CString, RadioInstanceData> m_datas;
@@ -45,3 +57,21 @@ protected:
 
 	int Find(const CString& id);
 };
+
+#pragma region Operator functions for CRadioInstanceList::UpdateMask to be used as flag.
+inline bool operator&(CRadioInstanceList::UpdateMask a, CRadioInstanceList::UpdateMask b)
+{
+	return bool(int(a) & int (b));
+}
+
+inline CRadioInstanceList::UpdateMask operator|(CRadioInstanceList::UpdateMask a, CRadioInstanceList::UpdateMask b)
+{
+	return CRadioInstanceList::UpdateMask(int(a) | int(b));
+}
+
+inline CRadioInstanceList::UpdateMask& operator|=(CRadioInstanceList::UpdateMask& _this, CRadioInstanceList::UpdateMask _that)
+{
+	_this = _this | _that;
+	return _this;
+}
+#pragma endregion

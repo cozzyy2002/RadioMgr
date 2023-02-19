@@ -5,17 +5,18 @@
 
 struct ColumnTitle
 {
+    int index;
     LPCTSTR title;
     int pixelWidth;
 };
 
-#define COLUMN_TITLE_ITEM(s, l) {_T(s), l * 8}
+#define COLUMN_TITLE_ITEM(c, s, l) {int(CRadioInstanceList::Column::##c), _T(s), l * 8}
 static ColumnTitle columns[] = {
-    COLUMN_TITLE_ITEM("Signature/ID", 20),
-    COLUMN_TITLE_ITEM("Name", 12),
-    COLUMN_TITLE_ITEM("State", 8),
-    COLUMN_TITLE_ITEM("IsMultiComm", 10),
-    COLUMN_TITLE_ITEM("IsAssocDev", 10),
+    COLUMN_TITLE_ITEM(Id, "Signature/ID", 20),
+    COLUMN_TITLE_ITEM(Name, "FriendlyName", 12),
+    COLUMN_TITLE_ITEM(State, "State", 8),
+    COLUMN_TITLE_ITEM(IsMultiComm, "IsMultiComm", 10),
+    COLUMN_TITLE_ITEM(IsAssocDev, "IsAssocDev", 10),
 };
 
 HRESULT CRadioInstanceList::OnInitCtrl()
@@ -24,9 +25,8 @@ HRESULT CRadioInstanceList::OnInitCtrl()
     SetExtendedStyle(exStyle | GetExtendedStyle());
 
     // Setup colums
-    int nCol = 0;
     for(auto& c : columns) {
-        InsertColumn(nCol++, c.title, LVCFMT_LEFT, c.pixelWidth);
+        InsertColumn(c.index, c.title, LVCFMT_LEFT, c.pixelWidth);
     }
 
     // Setup image list for Bluetooth on/off icon.
@@ -52,8 +52,7 @@ HRESULT CRadioInstanceList::Add(const RadioInstanceData& data)
 
     auto nItem = GetItemCount();
     InsertItem(nItem, data.id);
-    SetItemText(nItem, Column_name, data.name);
-    Update(data);
+    Update(data, UpdateMask::All);
     SetCheck(nItem);
 
     return S_OK;
@@ -76,7 +75,7 @@ HRESULT CRadioInstanceList::StateChange(const CString& radioInstanceId, DEVICE_R
     data.state = radioState;
 
     // Update state of the ListCtrl item.
-    HR_ASSERT_OK(Update(data));
+    HR_ASSERT_OK(Update(data, UpdateMask::State));
 
     return S_OK;
 }
@@ -96,15 +95,17 @@ HRESULT CRadioInstanceList::For(std::function<HRESULT(RadioInstanceData&)> func,
 }
 
 // Updates ListCtrl item.
-HRESULT CRadioInstanceList::Update(const RadioInstanceData& data)
+HRESULT CRadioInstanceList::Update(const RadioInstanceData& data, UpdateMask mask)
 {
     auto nItem = Find(data.id);
     HR_ASSERT(-1 < nItem, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
 
-    SetItem(nItem, Column_id, LVIF_IMAGE, nullptr, stateToImageIndex(data.state), 0, 0, 0);
-    SetItemText(nItem, Column_state, stateToString(data.state));
-    SetItemText(nItem, Column_isMultiComm, boolToString(data.isMultiComm));
-    SetItemText(nItem, Column_isAssociatingDevice, boolToString(data.isAssociatingDevice));
+    // NOTE: ID is set by InsertItem() and is never changed, so updating ID is not neccessary.
+    if(mask & UpdateMask::Name) { SetItemText(nItem, int(Column::Name), data.name); }
+    if(mask & UpdateMask::StateIcon) { SetItem(nItem, int(Column::Id), LVIF_IMAGE, nullptr, stateToImageIndex(data.state), 0, 0, 0); }
+    if(mask & UpdateMask::StateText) { SetItemText(nItem, int(Column::State), stateToString(data.state)); }
+    if(mask & UpdateMask::IsMultiComm) { SetItemText(nItem, int(Column::IsMultiComm), boolToString(data.isMultiComm)); }
+    if(mask & UpdateMask::IsAssocDev) { SetItemText(nItem, int(Column::IsAssocDev), boolToString(data.isAssociatingDevice)); }
 
     return S_OK;
 }

@@ -357,9 +357,11 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 
 HRESULT CbtswwinDlg::setRadioState(DEVICE_RADIO_STATE state, bool restore /*= false*/)
 {
-	return m_radioInstances.For([state, restore](RadioInstanceData& data)
+	return m_radioInstances.For([=](RadioInstanceData& data)
 		{
 			auto newState = restore ? data.savedState : state;
+			HR_ASSERT_OK(data.radioInstance->GetRadioState(&data.state));
+			print(_T("setRadioState(%d, %d): %d/%d -> %d"), state, restore, data.state, data.savedState, newState);
 			return (data.state != newState) ?
 				HR_EXPECT_OK(data.radioInstance->SetRadioState(newState, 1)) :
 				S_FALSE;

@@ -361,7 +361,6 @@ HRESULT CbtswwinDlg::setRadioState(DEVICE_RADIO_STATE state, bool restore /*= fa
 		{
 			auto newState = restore ? data.savedState : state;
 			HR_ASSERT_OK(data.radioInstance->GetRadioState(&data.state));
-			print(_T("setRadioState(%d, %d): %d/%d -> %d"), state, restore, data.state, data.savedState, newState);
 			return (data.state != newState) ?
 				HR_EXPECT_OK(data.radioInstance->SetRadioState(newState, 1)) :
 				S_FALSE;

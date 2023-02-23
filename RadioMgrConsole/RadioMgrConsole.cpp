@@ -17,8 +17,13 @@ static const wchar_t* knownClsIDs[] = {
     L"{afd198ac-5f30-4e89-a789-5ddf60a69366}",  //  1 Bluetooth Radio Media Manager
 };
 
+extern HRESULT EnumBluetoothDevices();
+
 int wmain(int argc, wchar_t** argv)
 {
+    tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { _putts(msg); };
+    return EnumBluetoothDevices();
+
     if(argc < 2) {
         _putws(L"Known CLSIDs of IMediaRadioManager are:");
         for(auto x : knownClsIDs) {
@@ -27,8 +32,6 @@ int wmain(int argc, wchar_t** argv)
         return 1;
     }
     auto& strClsid = argv[1];
-
-    tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { _putts(msg); };
 
     HR_ASSERT_OK(CoInitializeEx(NULL, COINIT_MULTITHREADED));
 

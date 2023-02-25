@@ -1,14 +1,4 @@
-#include <Windows.h>
-#include <sal.h>
-#include <bthsdpdef.h>
-#include <bluetoothapis.h>
-
-#include <string>
-#include <sstream>
-
-#include "../Common/Assert.h"
-
-#pragma comment(lib, "Bthprops.lib")
+#include "BluetoothCommon.h"
 
 static std::wstring ClassOfDevice(ULONG value);
 
@@ -23,12 +13,6 @@ struct MajorMinorDeviceClass {
 	MinorDeviceClassFunc minorDeviceClassFunc;
 };
 static std::wstring DefaultMinorDeviceCalssFunc(const MajorMinorDeviceClass&, ULONGLONG);
-
-#define A2ARG(s) \
-	s.Address.rgBytes[5], s.Address.rgBytes[4], s.Address.rgBytes[3],\
-	s.Address.rgBytes[2], s.Address.rgBytes[1], s.Address.rgBytes[0]
-#define B2ARG(s, x) s.f##x ? L#x : L"NOT " L#x
-#define T2ARG(x) x.wYear, x.wMonth, x.wDay, x.wHour, x.wMinute, x.wSecond
 
 HRESULT EnumBluetoothDevices()
 {
@@ -45,7 +29,7 @@ HRESULT EnumBluetoothDevices()
 		wprintf_s(
 			L"%02x:%02x:%02x:%02x:%02x:%02x %04d/%02d/%02d %02d:%02d:%02d %04d/%02d/%02d %02d:%02d:%02d %-20s %s, %s, %s\n"
 			L"  Class of Device = %s\n",
-			A2ARG(info), T2ARG(lastSeen), T2ARG(lastUsed), info.szName,
+			A2ARG(info, Address), T2ARG(lastSeen), T2ARG(lastUsed), info.szName,
 			B2ARG(info, Remembered), B2ARG(info, Authenticated), B2ARG(info, Connected),
 			ClassOfDevice(info.ulClassofDevice).c_str());
 
@@ -67,7 +51,7 @@ static const LPCWSTR MajorServiceClasses[] = {
 	/* 15*/ L"Reserved for future use",
 	/* 16*/ L"Positioning(Location identification)",
 	/* 17*/ L"Networking",
-	/* 18*/ L"Rnedering",
+	/* 18*/ L"Rendering",
 	/* 19*/ L"Capturing",
 	/* 20*/ L"Object Transfer",
 	/* 21*/ L"Audio",
@@ -79,7 +63,7 @@ static const LPCWSTR PhoneMinorDeviceClasses[] = {
 	L"Uncategorized, code for device not assigned",
 	L"Cellular",
 	L"Cordless",
-	L"Smatphone",
+	L"Smartphone",
 	L"Wired modem or void gateway",
 	L"Common ISDN access",
 };

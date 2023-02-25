@@ -28,7 +28,7 @@ static std::wstring DefaultMinorDeviceCalssFunc(const MajorMinorDeviceClass&, UL
 	s.Address.rgBytes[5], s.Address.rgBytes[4], s.Address.rgBytes[3],\
 	s.Address.rgBytes[2], s.Address.rgBytes[1], s.Address.rgBytes[0]
 #define B2ARG(s, x) s.f##x ? L#x : L"NOT " L#x
-#define T2ARG(s, x) s.x.wYear, s.x.wMonth, s.x.wDay, s.x.wHour, s.x.wMinute, s.x.wSecond
+#define T2ARG(x) x.wYear, x.wMonth, x.wDay, x.wHour, x.wMinute, x.wSecond
 
 HRESULT EnumBluetoothDevices()
 {
@@ -39,18 +39,26 @@ HRESULT EnumBluetoothDevices()
 	WIN32_ASSERT(hFind);
 	_putws(L"Address           Last seen           Last used           Name");
 	do {
+		SYSTEMTIME lastSeen, lastUsed;
+		WIN32_ASSERT(SystemTimeToTzSpecificLocalTime(NULL, &info.stLastSeen, &lastSeen));
+		WIN32_ASSERT(SystemTimeToTzSpecificLocalTime(NULL, &info.stLastUsed, &lastUsed));
 		wprintf_s(
 			L"%02x:%02x:%02x:%02x:%02x:%02x %04d/%02d/%02d %02d:%02d:%02d %04d/%02d/%02d %02d:%02d:%02d %-20s %s, %s, %s\n"
 			L"  Class of Device = %s\n",
-			A2ARG(info), T2ARG(info, stLastSeen), T2ARG(info, stLastUsed), info.szName,
+			A2ARG(info), T2ARG(lastSeen), T2ARG(lastUsed), info.szName,
 			B2ARG(info, Remembered), B2ARG(info, Authenticated), B2ARG(info, Connected),
 			ClassOfDevice(info.ulClassofDevice).c_str());
+
+		WIN32_ASSERT(BluetoothDisplayDeviceProperties(NULL, &info));
 	} while(BluetoothFindNextDevice(hFind, &info));
 	auto hr = WIN32_EXPECT(GetLastError() == ERROR_NO_MORE_ITEMS);
 	WIN32_ASSERT(BluetoothFindDeviceClose(hFind));
 
 	return hr;
 }
+
+// TODO: Implement showing Minor Device Class.
+//       Currently implemented for Phone device(not tested) and Audio/Video device.
 
 static const LPCWSTR MajorServiceClasses[] = {
 	/*Bit*/

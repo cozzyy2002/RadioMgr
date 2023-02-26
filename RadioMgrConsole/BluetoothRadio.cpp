@@ -1,7 +1,6 @@
 #include "BluetoothCommon.h"
 
 #include "../Common/SafeHandle.h"
-#include "../Common/Assert.h"
 
 static void HandleDeleteFunc(HANDLE h) { WIN32_EXPECT(CloseHandle(h)); }
 

@@ -2,7 +2,20 @@
 #pragma comment(lib, "Bthprops.lib")
 
 // TODO: Implement showing Minor Device Class.
-//       Currently implemented for Phone device(not tested) and Audio/Video device.
+//       Currently implemented for Computer, Phone(not tested) and Audio/Video device.
+
+// Struct defines Major and Minor Device Class.
+struct MajorMinorDeviceClass {
+	LPCWSTR major;			// Major Device Class.
+	size_t minorSize;		// Array size of Minor Device Classes.
+	const LPCWSTR* pMinor;	// Minor Device Classes array.
+
+	// Function that returns Minor Device Class corresponding to ULONGLONG value.
+	using MinorDeviceClassFunc = std::wstring(*)(const MajorMinorDeviceClass&, ULONGLONG);
+	MinorDeviceClassFunc minorDeviceClassFunc;
+};
+
+extern std::wstring DefaultMinorDeviceCalssFunc(const MajorMinorDeviceClass&, ULONGLONG);
 
 static const LPCWSTR MajorServiceClasses[] = {
 	/*Bit*/

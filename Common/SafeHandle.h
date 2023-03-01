@@ -15,7 +15,6 @@ public:
 	}
 	operator H() const { return m_handle.get(); }
 	operator bool() const { return m_handle.operator bool(); }
-	H* operator &() { return m_handle.operator&(); }
 
 	SafeHandle(SafeHandle&&) = delete;
 	SafeHandle& operator=(SafeHandle&&) = delete;

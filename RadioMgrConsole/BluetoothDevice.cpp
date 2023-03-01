@@ -20,6 +20,11 @@ HRESULT EnumBluetoothDevices()
 			ClassOfDevice(info.ulClassofDevice).c_str());
 
 		WIN32_ASSERT(BluetoothDisplayDeviceProperties(NULL, &info));
+
+		if(info.fAuthenticated && info.fConnected) {
+			//BluetoothSetServiceState();
+		}
+
 	} while(BluetoothFindNextDevice(hFind, &info));
 	auto hr = WIN32_EXPECT(GetLastError() == ERROR_NO_MORE_ITEMS);
 	WIN32_ASSERT(BluetoothFindDeviceClose(hFind));

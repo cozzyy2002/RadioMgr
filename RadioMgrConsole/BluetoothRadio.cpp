@@ -39,8 +39,9 @@ HRESULT SelectBluetoothDevice()
 	};
 
 	BLUETOOTH_SELECT_DEVICE_PARAMS params{sizeof(params)};
-	params.fShowAuthenticated;
-	params.fShowRemembered;
+	params.fShowAuthenticated = TRUE;
+	params.fShowRemembered = TRUE;
+	params.fShowUnknown = TRUE;
 	params.cNumDevices = 1;
 
 	auto bSelect = BluetoothSelectDevices(&params);
@@ -63,9 +64,12 @@ HRESULT SelectBluetoothDevice()
 			wprintf_s(L"  %d %s\n", i, GuidToString(serviceGuids[i]).c_str());
 		}
 
+		// Set Bluetooth service state to ENABLE to connect to the device.
+		// See https://stackoverflow.com/questions/68550324/how-to-connect-to-bluetooth-device-on-windows
 		//auto serviceFlag = deviceInfo.fConnected ? BLUETOOTH_SERVICE_DISABLE : BLUETOOTH_SERVICE_ENABLE;
-		//wprintf_s(L"Setting service of %s to %d\n", deviceInfo.szName, serviceFlag);
-		//HR_ASSERT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &AudioSinkServiceClass_UUID, serviceFlag)));
+		wprintf_s(L"Connecting to the device %s\n", deviceInfo.szName);
+		HR_ASSERT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &AudioSinkServiceClass_UUID, BLUETOOTH_SERVICE_DISABLE)));
+		HR_ASSERT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &AudioSinkServiceClass_UUID, BLUETOOTH_SERVICE_ENABLE)));
 	}
 
 	return S_OK;
@@ -156,6 +160,7 @@ std::wstring GuidToString(REFGUID guid)
 	for(auto& x : GUIDs) {
 		if(x.guid == guid) {
 			name = x.str;
+			break;
 		}
 	}
 

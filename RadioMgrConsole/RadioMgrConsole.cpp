@@ -30,12 +30,11 @@ int wmain(int argc, wchar_t** argv)
     tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { _putts(msg); };
 
 #if USE_BLUETOOTH_API
-    return SelectBluetoothDevice();
-
     _putws(L"---- Enumerating Bluetooth Radios ----");
     HR_ASSERT_OK(EnumBluetoothRadios());
-    //_putws(L"\n---- Enumerating Bluetooth Devices ----");
-    //HR_ASSERT_OK(EnumBluetoothDevices());
+    _putws(L"\n---- Enumerating Bluetooth Devices ----");
+    HR_ASSERT_OK(EnumBluetoothDevices());
+    HR_ASSERT_OK(SelectBluetoothDevice());
 
 #else // USE_BLUETOOTH_API
     if(argc < 2) {

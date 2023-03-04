@@ -19,7 +19,7 @@ HRESULT EnumBluetoothDevices()
 			B2ARG(info, Remembered), B2ARG(info, Authenticated), B2ARG(info, Connected),
 			ClassOfDevice(info.ulClassofDevice).c_str());
 
-		WIN32_ASSERT(BluetoothDisplayDeviceProperties(NULL, &info));
+		//WIN32_ASSERT(BluetoothDisplayDeviceProperties(NULL, &info));
 
 		if(info.fAuthenticated && info.fConnected) {
 			//BluetoothSetServiceState();

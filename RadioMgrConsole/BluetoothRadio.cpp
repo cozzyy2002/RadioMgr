@@ -32,13 +32,17 @@ static std::wstring GuidToString(REFGUID guid);
 
 HRESULT SelectBluetoothDevice()
 {
+	ULONG classOfDevice = 0;
+	SET_COD_MAJOR(classOfDevice, COD_MAJOR_AUDIO);
+	//SET_COD_SERVICE(classOfDevice, COD_SERVICE_AUDIO | COD_SERVICE_RENDERING);
+
 	BLUETOOTH_COD_PAIRS codPairs[] = {
-		{0x240418, L"Headphones"},
-		{0x240404, L"Wearable Headset Device"},
-		{0xffffff, L"All Classes"}
+		{classOfDevice, L"Audio"},
 	};
 
 	BLUETOOTH_SELECT_DEVICE_PARAMS params{sizeof(params)};
+	//params.cNumOfClasses = ARRAYSIZE(codPairs);
+	//params.prgClassOfDevices = codPairs;
 	params.fShowAuthenticated = TRUE;
 	params.fShowRemembered = TRUE;
 	params.fShowUnknown = TRUE;
@@ -59,17 +63,20 @@ HRESULT SelectBluetoothDevice()
 		GUID serviceGuids[10];
 		DWORD serviceCount = ARRAYSIZE(serviceGuids);
 		BluetoothEnumerateInstalledServices(hRadio, &deviceInfo, &serviceCount, serviceGuids);
-		wprintf_s(L"Device %s has %d Services\n", deviceInfo.szName, serviceCount);
+		wprintf_s(L"Device %s has %d Services. Connecting...\n", deviceInfo.szName, serviceCount);
 		for(DWORD i = 0; i < serviceCount; i++) {
-			wprintf_s(L"  %d %s\n", i, GuidToString(serviceGuids[i]).c_str());
+			auto& guid(serviceGuids[i]);
+			wprintf_s(L"  %d %s\n", i, GuidToString(guid).c_str());
+			HR_ASSERT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE)));
+			HR_ASSERT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &guid, BLUETOOTH_SERVICE_ENABLE)));
 		}
 
 		// Set Bluetooth service state to ENABLE to connect to the device.
 		// See https://stackoverflow.com/questions/68550324/how-to-connect-to-bluetooth-device-on-windows
 		//auto serviceFlag = deviceInfo.fConnected ? BLUETOOTH_SERVICE_DISABLE : BLUETOOTH_SERVICE_ENABLE;
-		wprintf_s(L"Connecting to the device %s\n", deviceInfo.szName);
-		HR_ASSERT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &AudioSinkServiceClass_UUID, BLUETOOTH_SERVICE_DISABLE)));
-		HR_ASSERT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &AudioSinkServiceClass_UUID, BLUETOOTH_SERVICE_ENABLE)));
+		//wprintf_s(L"Connecting to the device %s\n", deviceInfo.szName);
+		//HR_ASSERT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &AudioSinkServiceClass_UUID, BLUETOOTH_SERVICE_DISABLE)));
+		//HR_ASSERT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &AudioSinkServiceClass_UUID, BLUETOOTH_SERVICE_ENABLE)));
 	}
 
 	return S_OK;

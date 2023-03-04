@@ -30,6 +30,12 @@ HRESULT EnumBluetoothRadios()
 
 static std::wstring GuidToString(REFGUID guid);
 
+static BOOL WINAPI FilterDevice(LPVOID param, const BLUETOOTH_DEVICE_INFO* info)
+{
+	wprintf_s(L"  %s: fConnected=%d\n", info->szName, info->fConnected);
+	return (info->fConnected ? FALSE : TRUE);
+}
+
 HRESULT SelectBluetoothDevice()
 {
 	ULONG classOfDevice = 0;
@@ -43,9 +49,11 @@ HRESULT SelectBluetoothDevice()
 	BLUETOOTH_SELECT_DEVICE_PARAMS params{sizeof(params)};
 	//params.cNumOfClasses = ARRAYSIZE(codPairs);
 	//params.prgClassOfDevices = codPairs;
+	params.pfnDeviceCallback = FilterDevice;
 	params.fShowAuthenticated = TRUE;
 	params.fShowRemembered = TRUE;
-	params.fShowUnknown = TRUE;
+	//params.fShowUnknown = TRUE;
+	//params.fAddNewDeviceWizard = TRUE;
 	params.cNumDevices = 1;
 
 	auto bSelect = BluetoothSelectDevices(&params);

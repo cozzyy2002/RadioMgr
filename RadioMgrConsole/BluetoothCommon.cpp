@@ -95,12 +95,9 @@ std::wstring ClassOfDevice(ULONG value)
 	std::wostringstream stream;
 	stream << L"0x" << std::hex << value << L" : ";
 
-	value >>= 2;
-	auto minorDeviceClass = value & 0b111111;			// Bit 2 - 7(6 bits)
-	value >>= 6;
-	auto majorDeviceClass = value & 0b11111;			// Bit 8 - 12(5 bits)
-	value >>= 5;
-	auto majorServiceClass = value & 0b11111111111;		// Bit 13 - 23(11 bits)
+	auto majorServiceClass = GET_COD_SERVICE(value);
+	auto majorDeviceClass = GET_COD_MAJOR(value);
+	auto minorDeviceClass = GET_COD_MINOR(value);
 
 	auto var = majorServiceClass;
 	auto separator = L"";

@@ -6,16 +6,14 @@
 
 #include "../Common/Assert.h"
 
+#define USE_RADIO_MANAGER
+
 using namespace ATL;
 
-#define USE_BLUETOOTH_API true
-
-#if USE_BLUETOOTH_API
 extern HRESULT EnumBluetoothRadios();
 extern HRESULT EnumBluetoothDevices();
 extern HRESULT SelectBluetoothDevice();
 
-#else // USE_BLUETOOTH_API
 static const wchar_t* knownClsIDs[] = {
     // CLSID of IMediaRadioManager               Count Name
     L"{1910E202-236A-43E6-9469-FE0B3149F3D9}",  //  0 Wwan Radio Manager
@@ -23,20 +21,12 @@ static const wchar_t* knownClsIDs[] = {
     L"{833A69FB-5E17-4893-85A5-1EF469217372}",  //  1 Wlan Radio Manager
     L"{afd198ac-5f30-4e89-a789-5ddf60a69366}",  //  1 Bluetooth Radio Media Manager
 };
-#endif // USE_BLUETOOTH_API
 
 int wmain(int argc, wchar_t** argv)
 {
     tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { _putts(msg); };
 
-#if USE_BLUETOOTH_API
-    _putws(L"---- Enumerating Bluetooth Radios ----");
-    HR_ASSERT_OK(EnumBluetoothRadios());
-    _putws(L"\n---- Enumerating Bluetooth Devices ----");
-    HR_ASSERT_OK(EnumBluetoothDevices());
-    HR_ASSERT_OK(SelectBluetoothDevice());
-
-#else // USE_BLUETOOTH_API
+#ifdef USE_RADIO_MANAGER
     if(argc < 2) {
         _putws(L"Known CLSIDs of IMediaRadioManager are:");
         for(auto x : knownClsIDs) {
@@ -95,7 +85,13 @@ int wmain(int argc, wchar_t** argv)
         //    wprintf_s(L"Changed state to %d\n", newState);
         //}
     }
-#endif // USE_BLUETOOTH_API
+#endif // USE_RADIO_MANAGER
+
+    _putws(L"---- Enumerating Bluetooth Radios ----");
+    HR_ASSERT_OK(EnumBluetoothRadios());
+    _putws(L"\n---- Enumerating Bluetooth Devices ----");
+    HR_ASSERT_OK(EnumBluetoothDevices());
+    HR_ASSERT_OK(SelectBluetoothDevice());
 
     return S_OK;
 }

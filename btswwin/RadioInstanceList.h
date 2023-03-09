@@ -1,6 +1,7 @@
 #pragma once
 
-#include <afxcmn.h>
+#include "ItemList.h"
+
 #include <RadioMgr.h>
 #include <atlbase.h>
 #include <map>
@@ -19,7 +20,7 @@ struct RadioInstanceData
 	DEVICE_RADIO_STATE savedState{};	// Used by owner to save state at some point.
 };
 
-class CRadioInstanceList : public CListCtrl
+class CRadioInstanceList : public CItemList
 {
 public:
 	// Column index(Sub item index)
@@ -53,7 +54,6 @@ public:
 
 protected:
 	std::map<CString, RadioInstanceData> m_datas;
-	CImageList m_imageList;
 
 	int Find(const CString& id);
 };

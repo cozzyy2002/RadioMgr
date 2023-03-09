@@ -5,6 +5,7 @@
 #define IDO_ON                          3
 #define IDO_ON2                         4
 #define IDO_OFF                         4
+#define IDO_CONNECT                     5
 #define IDM_ABOUTBOX                    0x0010
 #define IDD_ABOUTBOX                    100
 #define IDS_ABOUTBOX                    101
@@ -18,6 +19,8 @@
 #define IDC_CHECK_SWITCH_BY_LCD_STATE   1002
 #define IDC_CHECK_RESTORE_RADIO_STATE   1003
 #define IDC_LIST_RADIO_INSTANCES        1004
+#define IDC_LIST_RADIO_INSTANCES2       1005
+#define IDC_LIST_BLUETOOTH_DEVICE       1005
 
 // Next default values for new objects
 // 

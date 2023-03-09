@@ -6,6 +6,7 @@
 
 #include "RadioNotifyListener.h"
 #include "RadioInstanceList.h"
+#include "BluetoothDeviceList.h"
 #include "../Common/SafeHandle.h"
 
 #include <RadioMgr.h>
@@ -42,7 +43,9 @@ protected:
 	HRESULT setRadioState(DEVICE_RADIO_STATE, bool restore = false);
 
 	static const UINT_PTR PollingTimerId = 1;
-	HRESULT onPollingTimer();
+	HRESULT checkRadioState();
+
+	HRESULT checkBluetoothDevice();
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -65,6 +68,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	CRadioInstanceList m_radioInstances;
+	CBluetoothDeviceList m_bluetoothDevices;
 	CListBox m_ListLog;
 	afx_msg void OnBnClickedOn();
 	afx_msg void OnBnClickedOff();
@@ -80,4 +84,5 @@ protected:
 	virtual void PostNcDestroy();
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnBnClickedConnect();
 };

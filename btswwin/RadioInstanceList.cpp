@@ -3,15 +3,8 @@
 #include "../Common/Assert.h"
 #include "resource.h"
 
-struct ColumnTitle
-{
-    int index;
-    LPCTSTR title;
-    int pixelWidth;
-};
-
 #define COLUMN_TITLE_ITEM(c, s, l) {int(CRadioInstanceList::Column::##c), _T(s), l * 8}
-static ColumnTitle columns[] = {
+static CRadioInstanceList::ColumnTitle columns[] = {
     COLUMN_TITLE_ITEM(Id, "Signature/ID", 20),
     COLUMN_TITLE_ITEM(Name, "FriendlyName", 12),
     COLUMN_TITLE_ITEM(State, "State", 8),
@@ -25,33 +18,23 @@ HRESULT CRadioInstanceList::OnInitCtrl()
     SetExtendedStyle(exStyle | GetExtendedStyle());
 
     // Setup colums
-    for(auto& c : columns) {
-        InsertColumn(c.index, c.title, LVCFMT_LEFT, c.pixelWidth);
-    }
+    setupColumns(columns);
 
     // Setup image list for Bluetooth on/off icon.
     static const UINT bitmaps[] = {IDB_BITMAP_RADIO_ON, IDB_BITMAP_RADIO_OFF};
-    m_imageList.Create(16, 16, ILC_COLOR, ARRAYSIZE(bitmaps), 2);
-    for(auto b : bitmaps) {
-        CBitmap bm;
-        bm.LoadBitmap(b);
-        m_imageList.Add(&bm, RGB(0, 0, 0));
-    }
-    SetImageList(&m_imageList, LVSIL_SMALL);
+    setupImageList(bitmaps);
 
     return S_OK;
 }
 
 static int stateToImageIndex(DEVICE_RADIO_STATE state) { return ((state == DRS_RADIO_ON) ? 0 : 1); }
 static LPCTSTR stateToString(DEVICE_RADIO_STATE state) { return ((state == DRS_RADIO_ON) ? _T("ON") : _T("OFF")); }
-static LPCTSTR boolToString(BOOL b) { return ((b) ? _T("Yes") : _T("No")); }
 
 HRESULT CRadioInstanceList::Add(const RadioInstanceData& data)
 {
     auto& pair = m_datas.insert({data.id, data});
 
-    auto nItem = GetItemCount();
-    InsertItem(nItem, data.id);
+    auto nItem = addItem(data.id);
     Update(data, UpdateMask::All);
     SetCheck(nItem);
 
@@ -60,9 +43,7 @@ HRESULT CRadioInstanceList::Add(const RadioInstanceData& data)
 
 HRESULT CRadioInstanceList::Remove(const CString& radioInstanceId)
 {
-    auto nItem = Find(radioInstanceId);
-    HR_ASSERT(-1 < nItem, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
-    DeleteItem(nItem);
+    removeItem(radioInstanceId);
 
     HR_ASSERT(0 < m_datas.erase(radioInstanceId), HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
     return S_OK;
@@ -114,6 +95,5 @@ HRESULT CRadioInstanceList::Update(const RadioInstanceData& data, UpdateMask mas
 // Returns -1 if the item is not found.
 int CRadioInstanceList::Find(const CString& id)
 {
-    LVFINDINFO fi = {LVFI_STRING, id.GetString()};
-    return FindItem(&fi);
+    return CItemList::findItem(id.GetString());
 }

@@ -227,11 +227,11 @@
     <None Include="res\btswwin.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\bitmap1.bmp" />
-    <Image Include="res\bitmap2.bmp" />
-    <Image Include="res\bitmap_RadioOn.bmp" />
-    <Image Include="res\bitmap_RadioOff.bmp" />
+    <Image Include="res\RadioOn.bmp" />
+    <Image Include="res\RadioOff.bmp" />
     <Image Include="res\btswwin.ico" />
+    <Image Include="res\DeviceConnected.bmp" />
+    <Image Include="res\DeviceDisconnected.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

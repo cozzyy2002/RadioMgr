@@ -92,16 +92,16 @@
     <Image Include="res\btswwin.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="res\bitmap_RadioOn.bmp">
+    <Image Include="res\RadioOn.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="res\bitmap_RadioOff.bmp">
+    <Image Include="res\RadioOff.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="res\bitmap1.bmp">
+    <Image Include="res\DeviceConnected.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="res\bitmap2.bmp">
+    <Image Include="res\DeviceDisconnected.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

@@ -39,6 +39,12 @@ HRESULT CBluetoothDeviceList::Add(const BLUETOOTH_DEVICE_INFO& info)
 
 HRESULT CBluetoothDeviceList::Remove(const BLUETOOTH_DEVICE_INFO& info)
 {
+    auto it = m_infos.find(getListKey(info));
+    HR_ASSERT(it != m_infos.end(), HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
+
+    m_infos.erase(it);
+    removeItem(addressToString(info.Address));
+
     return E_NOTIMPL;
 }
 
@@ -57,7 +63,7 @@ HRESULT CBluetoothDeviceList::Update(const BLUETOOTH_DEVICE_INFO& info, UpdateMa
     auto nItem = findItem(address);
     HR_ASSERT(-1 < nItem, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
 
-    if(mask & UpdateMask::Address) { SetItemText(nItem, int(Column::Name), info.szName); }
+    if(mask & UpdateMask::Name) { SetItemText(nItem, int(Column::Name), info.szName); }
     if(mask & UpdateMask::ConnectText) { SetItemText(nItem, int(Column::Connected), boolToString(info.fConnected)); }
     if(mask & UpdateMask::Authenticated) { SetItemText(nItem, int(Column::Authenticated), boolToString(info.fAuthenticated)); }
     if(mask & UpdateMask::Remembered) { SetItemText(nItem, int(Column::Remembered), boolToString(info.fRemembered)); }

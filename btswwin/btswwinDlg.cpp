@@ -155,6 +155,7 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_BN_CLICKED(ID_EDIT_COPY, &CbtswwinDlg::OnBnClickedEditCopy)
 	ON_MESSAGE(WM_USER_PRINT, &CbtswwinDlg::OnUserPrint)
 	ON_MESSAGE(WM_USER_RADIO_MANAGER_NOTIFY, &CbtswwinDlg::OnUserRadioManagerNotify)
+	ON_MESSAGE(WM_USER_CONNECT_DEVICE_RESULT, &CbtswwinDlg::OnUserConnectDeviceResult)
 	ON_WM_TIMER()
 	ON_BN_CLICKED(IDO_CONNECT, &CbtswwinDlg::OnBnClickedConnect)
 END_MESSAGE_MAP()
@@ -489,8 +490,8 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 		const auto it = currentList.find(x.first);
 		if(it == currentList.end()) {
 			// The device is added.
-			m_bluetoothDevices.Add(x.second);
 			print(_T("DeviceAdd %s"), x.second.szName);
+			m_bluetoothDevices.Add(x.second);
 		} else {
 			// The device already exists.
 			bool changed = false;
@@ -499,20 +500,29 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 			changed |= (x.second.fRemembered != it->second.fRemembered);
 			if(changed) {
 				// State of the device is changed.
-				m_bluetoothDevices.StateChange(x.second);
 				print(_T("DeviceStateChange %s"), x.second.szName);
+				m_bluetoothDevices.StateChange(x.second);
 			}
 		}
 	}
 
 	// Check if any device is removed.
-	for(auto& x : currentList) {
-		const auto it = newList.find(x.first);
-		if(it == newList.end()) {
-			// The device is removed.
-			print(_T("DeviceRemove %s"), x.second.szName);
+	bool removed;
+	do {
+		removed = false;
+		for(auto& x : currentList) {
+			const auto it = newList.find(x.first);
+			if(it == newList.end()) {
+				// The device is removed.
+				print(_T("DeviceRemove %s"), x.second.szName);
+				m_bluetoothDevices.Remove(x.second);
+				// Start from the beginning of currentList
+				// because it has been changed by CBluetoothDeviceList::Remove().
+				removed = true;
+				break;
+			}
 		}
-	}
+	} while(removed);
 
 	return S_OK;
 }
@@ -522,24 +532,44 @@ void CbtswwinDlg::OnBnClickedConnect()
 {
 	auto pDeviceInfo = m_bluetoothDevices.GetSelectedDevice();
 	if(pDeviceInfo) {
-		print(pDeviceInfo->szName);
-		HANDLE hRadio = NULL;		// Search for all local radios.
-		DWORD serviceCount = 0;
-		auto enumError = BluetoothEnumerateInstalledServices(hRadio, pDeviceInfo, &serviceCount, NULL);
-		HR_EXPECT(enumError == ERROR_MORE_DATA, HRESULT_FROM_WIN32(enumError));
-		auto serviceGuids = std::make_unique<GUID[]>(serviceCount);
-		HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothEnumerateInstalledServices(hRadio, pDeviceInfo, &serviceCount, serviceGuids.get())));
-		for(DWORD i = 0; i < serviceCount; i++) {
-			const auto& guid = serviceGuids.get()[i];
-			WCHAR strGuid[40];
-			HR_EXPECT(0 < StringFromGUID2(guid, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
-			print(_T("Setting service state of %s"), strGuid);
-			auto error = BluetoothSetServiceState(hRadio, pDeviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE);
-			//print(_T("Disable: %d"), error);
-			error = BluetoothSetServiceState(hRadio, pDeviceInfo, &guid, BLUETOOTH_SERVICE_ENABLE);
-			//print(_T("Enable : %d"), error);
-		}
+		BeginWaitCursor();
+		GetDlgItem(IDO_CONNECT)->EnableWindow(FALSE);
+		m_connectDeviceThread = std::make_unique<std::thread>([this, pDeviceInfo]
+			{
+				CString deviceName(pDeviceInfo->szName);
+				print(_T("Connecting to %s ..."), deviceName);
+				HANDLE hRadio = NULL;		// Search for all local radios.
+				DWORD serviceCount = 0;
+				auto enumError = BluetoothEnumerateInstalledServices(hRadio, pDeviceInfo, &serviceCount, NULL);
+				HR_EXPECT(enumError == ERROR_MORE_DATA, HRESULT_FROM_WIN32(enumError));
+				auto serviceGuids = std::make_unique<GUID[]>(serviceCount);
+				HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothEnumerateInstalledServices(hRadio, pDeviceInfo, &serviceCount, serviceGuids.get())));
+				for(DWORD i = 0; i < serviceCount; i++) {
+					const auto& guid = serviceGuids.get()[i];
+					//WCHAR strGuid[40];
+					//HR_EXPECT(0 < StringFromGUID2(guid, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
+					//print(_T("Setting service state of %s"), strGuid);
+					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, pDeviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE)));
+					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, pDeviceInfo, &guid, BLUETOOTH_SERVICE_ENABLE)));
+				}
+
+				PostMessage(WM_USER_CONNECT_DEVICE_RESULT, 0, (LPARAM)pDeviceInfo);
+			});
 	}
+}
+
+// Handles WM_USER_CONNECT_DEVICE_RESULT message.
+// Checks whether the device is connected successfully.
+LRESULT CbtswwinDlg::OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam)
+{
+	auto pDeviceInfo = (BLUETOOTH_DEVICE_INFO*)lParam;
+	HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothGetDeviceInfo(nullptr, pDeviceInfo)));
+	print(_T("%s to connect"), pDeviceInfo->fConnected ? _T("Succeeded") : _T("Failed"));
+
+	m_connectDeviceThread->join();
+	GetDlgItem(IDO_CONNECT)->EnableWindow(TRUE);
+	EndWaitCursor();
+	return LRESULT(0);
 }
 
 void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)

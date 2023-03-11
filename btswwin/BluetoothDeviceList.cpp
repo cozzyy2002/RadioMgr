@@ -64,7 +64,7 @@ HRESULT CBluetoothDeviceList::Update(const BLUETOOTH_DEVICE_INFO& info, UpdateMa
     HR_ASSERT(-1 < nItem, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
 
     if(mask & UpdateMask::Name) { SetItemText(nItem, int(Column::Name), info.szName); }
-    if(mask & UpdateMask::ConnectIcon) { SetItem(nItem, int(Column::Address), LVIF_IMAGE, nullptr, info.fConnected ? 0 : 1, 0, 0, 0); }
+    if(mask & UpdateMask::ConnectIcon) { setItemImage(nItem, info.fConnected ? IDB_BITMAP_DEVICE_CONNECTED : IDB_BITMAP_DEVICE_DISCONNECTED); }
     if(mask & UpdateMask::ConnectText) { SetItemText(nItem, int(Column::Connected), boolToString(info.fConnected)); }
     if(mask & UpdateMask::Authenticated) { SetItemText(nItem, int(Column::Authenticated), boolToString(info.fAuthenticated)); }
     if(mask & UpdateMask::Remembered) { SetItemText(nItem, int(Column::Remembered), boolToString(info.fRemembered)); }

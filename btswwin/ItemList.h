@@ -19,11 +19,18 @@ public:
     HRESULT setupImageList(const UINT (&bitmaps)[size]);
 
 protected:
+    CItemList() : m_bitmaps(nullptr), m_bitmapCount(0) {}
+
     CImageList m_imageList;
+    const UINT* m_bitmaps;
+    size_t m_bitmapCount;
 
     int addItem(LPCTSTR);
     void removeItem(LPCTSTR);
     int findItem(LPCTSTR);
+
+    void setItemImage(int nItem, UINT imageId, int nOverlay = 0);
+    void setOverlayImage(UINT imageId, int nOverlay);
 
     LPCTSTR boolToString(BOOL b) { return ((b) ? _T("Yes") : _T("No")); }
 };
@@ -40,6 +47,9 @@ HRESULT CItemList::setupColumns(const ColumnTitle(&columns)[size])
 template<size_t size>
 HRESULT CItemList::setupImageList(const UINT(&bitmaps)[size])
 {
+    m_bitmaps = bitmaps;
+    m_bitmapCount = size;
+
     m_imageList.Create(16, 16, ILC_COLOR, size, size);
     for(auto b : bitmaps) {
         CBitmap bm;

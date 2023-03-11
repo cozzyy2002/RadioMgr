@@ -468,7 +468,6 @@ HRESULT CbtswwinDlg::checkRadioState()
 HRESULT CbtswwinDlg::checkBluetoothDevice()
 {
 	// Find Bluetooth devices and add them to newList.
-	CBluetoothDeviceList::ListData newList;
 	BLUETOOTH_DEVICE_SEARCH_PARAMS params{sizeof(params)};
 	params.fReturnAuthenticated = TRUE;
 	params.fReturnRemembered = TRUE;
@@ -476,12 +475,13 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 	params.fReturnUnknown = TRUE;
 	BLUETOOTH_DEVICE_INFO deviceInfo{sizeof(deviceInfo)};
 	auto hFind = BluetoothFindFirstDevice(&params, &deviceInfo);
-	if(SUCCEEDED(WIN32_EXPECT(hFind))) {
-		do {
-			newList[CBluetoothDeviceList::getListKey(deviceInfo)] = deviceInfo;
-		} while(BluetoothFindNextDevice(hFind, &deviceInfo));
-		WIN32_EXPECT(BluetoothFindDeviceClose(hFind));
-	}
+	if(!hFind) { return S_FALSE; }
+
+	CBluetoothDeviceList::ListData newList;
+	do {
+		newList[CBluetoothDeviceList::getListKey(deviceInfo)] = deviceInfo;
+	} while(BluetoothFindNextDevice(hFind, &deviceInfo));
+	WIN32_EXPECT(BluetoothFindDeviceClose(hFind));
 
 	auto& currentList = m_bluetoothDevices.getDeviceInfoList();
 

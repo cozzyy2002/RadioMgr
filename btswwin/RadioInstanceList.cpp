@@ -27,7 +27,6 @@ HRESULT CRadioInstanceList::OnInitCtrl()
     return S_OK;
 }
 
-static int stateToImageIndex(DEVICE_RADIO_STATE state) { return ((state == DRS_RADIO_ON) ? 0 : 1); }
 static LPCTSTR stateToString(DEVICE_RADIO_STATE state) { return ((state == DRS_RADIO_ON) ? _T("ON") : _T("OFF")); }
 
 HRESULT CRadioInstanceList::Add(const RadioInstanceData& data)
@@ -83,7 +82,7 @@ HRESULT CRadioInstanceList::Update(const RadioInstanceData& data, UpdateMask mas
 
     // NOTE: ID is set by InsertItem() and is never changed, so updating ID is not neccessary.
     if(mask & UpdateMask::Name) { SetItemText(nItem, int(Column::Name), data.name); }
-    if(mask & UpdateMask::StateIcon) { SetItem(nItem, int(Column::Id), LVIF_IMAGE, nullptr, stateToImageIndex(data.state), 0, 0, 0); }
+    if(mask & UpdateMask::StateIcon) { setItemImage(nItem, (data.state == DRS_RADIO_ON) ? IDB_BITMAP_RADIO_ON : IDB_BITMAP_RADIO_OFF); }
     if(mask & UpdateMask::StateText) { SetItemText(nItem, int(Column::State), stateToString(data.state)); }
     if(mask & UpdateMask::IsMultiComm) { SetItemText(nItem, int(Column::IsMultiComm), boolToString(data.isMultiComm)); }
     if(mask & UpdateMask::IsAssocDev) { SetItemText(nItem, int(Column::IsAssocDev), boolToString(data.isAssociatingDevice)); }

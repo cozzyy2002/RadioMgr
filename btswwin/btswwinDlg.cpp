@@ -626,3 +626,16 @@ void CbtswwinDlg::OnBnClickedEditCopy()
 	}
 	CloseClipboard();
 }
+
+void DebugPrint(LPCTSTR fmt, ...)
+{
+	if(IsDebuggerPresent()) {
+		va_list args;
+		va_start(args, fmt);
+		CString msg;
+		msg.FormatV(fmt, args);
+		OutputDebugString(msg.GetString());
+		OutputDebugString(_T("\n"));
+		va_end(args);
+	}
+}

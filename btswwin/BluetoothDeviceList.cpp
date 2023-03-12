@@ -124,6 +124,8 @@ const BLUETOOTH_DEVICE_INFO* CBluetoothDeviceList::GetSelectedDevice()
         }
     }
 
+    DebugPrint(_T(__FUNCTION__ ": Unknown Class of Device 0x%06x, Major=0x%02x, Minor0x%02x"), ulClassofDevice, major, minor);
+
     return IDB_BITMAP_UNKNOWN_DEVICE;
 }
 

@@ -229,11 +229,14 @@
   <ItemGroup>
     <Image Include="res\DeviceConnectedOverlay.bmp" />
     <Image Include="res\DeviceHeadphone.bmp" />
+    <Image Include="res\LaptopComputer.bmp" />
     <Image Include="res\RadioOn.bmp" />
     <Image Include="res\RadioOff.bmp" />
     <Image Include="res\btswwin.ico" />
     <Image Include="res\DeviceConnected.bmp" />
     <Image Include="res\DeviceDisconnected.bmp" />
+    <Image Include="res\UnknownDevice.bmp" />
+    <Image Include="res\WearableHeadset.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

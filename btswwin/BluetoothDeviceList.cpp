@@ -4,7 +4,7 @@
 #include "../Common/Assert.h"
 
 #define COLUMN_TITLE_ITEM(c, s, l) {int(CBluetoothDeviceList::Column::##c), _T(s), l * 8}
-static CBluetoothDeviceList::ColumnTitle columns[] = {
+static const CBluetoothDeviceList::ColumnTitle columns[] = {
     COLUMN_TITLE_ITEM(Address, "Address", 16),
     COLUMN_TITLE_ITEM(Name, "Name", 16),
 	COLUMN_TITLE_ITEM(ClassOfDevice, "Class of Device", 20),
@@ -13,7 +13,30 @@ static CBluetoothDeviceList::ColumnTitle columns[] = {
     COLUMN_TITLE_ITEM(Remembered, "Remembered", 8),
 };
 
-static const UINT bitmaps[] = {IDB_BITMAP_DEVICE_HEADPHONE, IDB_BITMAP_DEVICE_CONNECTED_OVERLAY};
+// Array of Bitmap ID to be shown in each item.
+static const UINT bitmaps[] = {
+    IDB_BITMAP_UNKNOWN_DEVICE,
+    IDB_BITMAP_DEVICE_HEADPHONE,
+    IDB_BITMAP_WEARABLE_HEADSET,
+    IDB_BITMAP_LAPTOP_COMPUTER,
+    IDB_BITMAP_DEVICE_CONNECTED_OVERLAY     // Overlay image to display connected device.
+};
+
+// Structure to map Major/Minor code of ClassofDevice value and image ID.
+struct DeviceImageId {
+    BYTE major;
+    BYTE minor;
+    UINT imageId;
+};
+
+// Image IDs for each Major/Minor code of the device.
+static const DeviceImageId deviceImageIdList[] = {
+    {COD_MAJOR_AUDIO, COD_AUDIO_MINOR_HEADSET, IDB_BITMAP_WEARABLE_HEADSET},
+    {COD_MAJOR_AUDIO, COD_AUDIO_MINOR_HEADPHONES, IDB_BITMAP_DEVICE_HEADPHONE},
+    {COD_MAJOR_COMPUTER, COD_COMPUTER_MINOR_LAPTOP, IDB_BITMAP_LAPTOP_COMPUTER},
+};
+
+static UINT getDeviceImageId(ULONG ulClassofDevice);
 
 HRESULT CBluetoothDeviceList::OnInitCtrl()
 {
@@ -67,7 +90,7 @@ HRESULT CBluetoothDeviceList::Update(const BLUETOOTH_DEVICE_INFO& info, UpdateMa
 
     if(mask & UpdateMask::Name) { SetItemText(nItem, int(Column::Name), info.szName); }
     if(mask & UpdateMask::ConnectIcon) {
-        setItemImage(nItem, IDB_BITMAP_DEVICE_HEADPHONE, info.fConnected ? 1 : 0);
+        setItemImage(nItem, getDeviceImageId(info.ulClassofDevice), info.fConnected ? 1 : 0);
     }
     if(mask & UpdateMask::ConnectText) { SetItemText(nItem, int(Column::Connected), boolToString(info.fConnected)); }
     if(mask & UpdateMask::Authenticated) { SetItemText(nItem, int(Column::Authenticated), boolToString(info.fAuthenticated)); }
@@ -86,6 +109,22 @@ const BLUETOOTH_DEVICE_INFO* CBluetoothDeviceList::GetSelectedDevice()
         ret = (BLUETOOTH_DEVICE_INFO*)GetItemData(i);
     }
     return ret;
+}
+
+// Returns image ID suitable for ClassofDevice value.
+/*static*/ UINT getDeviceImageId(ULONG ulClassofDevice)
+{
+    auto major = GET_COD_MAJOR(ulClassofDevice);
+    auto minor = GET_COD_MINOR(ulClassofDevice);
+
+    UINT id = 0;
+    for(auto& x : deviceImageIdList) {
+        if((x.major == major) && (x.minor == minor)) {
+            return x.imageId;
+        }
+    }
+
+    return IDB_BITMAP_UNKNOWN_DEVICE;
 }
 
 CString addressToString(const BLUETOOTH_ADDRESS& address)

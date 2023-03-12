@@ -110,5 +110,14 @@
     <Image Include="res\DeviceHeadphone.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\WearableHeadset.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\LaptopComputer.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\UnknownDevice.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

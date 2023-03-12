@@ -4,7 +4,7 @@
 #include "resource.h"
 
 #define COLUMN_TITLE_ITEM(c, s, l) {int(CRadioInstanceList::Column::##c), _T(s), l * 8}
-static CRadioInstanceList::ColumnTitle columns[] = {
+static const CRadioInstanceList::ColumnTitle columns[] = {
     COLUMN_TITLE_ITEM(Id, "Signature/ID", 20),
     COLUMN_TITLE_ITEM(Name, "FriendlyName", 12),
     COLUMN_TITLE_ITEM(State, "State", 8),

@@ -13,6 +13,8 @@ static CBluetoothDeviceList::ColumnTitle columns[] = {
     COLUMN_TITLE_ITEM(Remembered, "Remembered", 8),
 };
 
+static const UINT bitmaps[] = {IDB_BITMAP_DEVICE_HEADPHONE, IDB_BITMAP_DEVICE_CONNECTED_OVERLAY};
+
 HRESULT CBluetoothDeviceList::OnInitCtrl()
 {
     auto exStyle = LVS_EX_AUTOSIZECOLUMNS | LVS_EX_FULLROWSELECT;
@@ -22,8 +24,8 @@ HRESULT CBluetoothDeviceList::OnInitCtrl()
     setupColumns(columns);
 
     // Setup image list for Bluetooth on/off icon.
-    static const UINT bitmaps[] = {IDB_BITMAP_DEVICE_CONNECTED, IDB_BITMAP_DEVICE_DISCONNECTED};
     setupImageList(bitmaps);
+    setOverlayImage(IDB_BITMAP_DEVICE_CONNECTED_OVERLAY, 1);
 
     return S_OK;
 }
@@ -64,7 +66,9 @@ HRESULT CBluetoothDeviceList::Update(const BLUETOOTH_DEVICE_INFO& info, UpdateMa
     HR_ASSERT(-1 < nItem, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
 
     if(mask & UpdateMask::Name) { SetItemText(nItem, int(Column::Name), info.szName); }
-    if(mask & UpdateMask::ConnectIcon) { setItemImage(nItem, info.fConnected ? IDB_BITMAP_DEVICE_CONNECTED : IDB_BITMAP_DEVICE_DISCONNECTED); }
+    if(mask & UpdateMask::ConnectIcon) {
+        setItemImage(nItem, IDB_BITMAP_DEVICE_HEADPHONE, info.fConnected ? 1 : 0);
+    }
     if(mask & UpdateMask::ConnectText) { SetItemText(nItem, int(Column::Connected), boolToString(info.fConnected)); }
     if(mask & UpdateMask::Authenticated) { SetItemText(nItem, int(Column::Authenticated), boolToString(info.fAuthenticated)); }
     if(mask & UpdateMask::Remembered) { SetItemText(nItem, int(Column::Remembered), boolToString(info.fRemembered)); }

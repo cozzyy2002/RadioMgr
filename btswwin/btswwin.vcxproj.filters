@@ -104,5 +104,11 @@
     <Image Include="res\DeviceDisconnected.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\DeviceConnectedOverlay.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\DeviceHeadphone.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

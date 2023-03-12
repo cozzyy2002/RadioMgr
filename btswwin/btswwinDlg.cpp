@@ -445,19 +445,27 @@ HRESULT CbtswwinDlg::checkRadioState()
 		{
 			using um = CRadioInstanceList::UpdateMask;
 			auto updateMask = um::None;
+			CStringArray changes;
 			auto isMultiComm = data.radioInstance->IsMultiComm();
 			if(data.isMultiComm != isMultiComm) {
-				print(_T("%s: IsMultiComm changed %d -> %d"), data.id.GetString(), data.isMultiComm, isMultiComm);
+				CString str;
+				str.Format(_T("%s: IsMultiComm %s"), data.id.GetString(), boolToString(isMultiComm));
+				changes.Add(str);
 				data.isMultiComm = isMultiComm;
 				updateMask |= um::IsMultiComm;
 			}
 			auto isAssocDev = data.radioInstance->IsAssociatingDevice();
 			if(data.isAssociatingDevice != isAssocDev) {
-				print(_T("%s: IsAssocDev changed %d -> %d"), data.id.GetString(), data.isAssociatingDevice, isAssocDev);
+				CString str;
+				str.Format(_T("%s: IsAssociatingDevice %s"), data.id.GetString(), boolToString(isAssocDev));
+				changes.Add(str);
 				data.isAssociatingDevice = isAssocDev;
 				updateMask |= um::IsAssocDev;
 			}
-			if(updateMask != um::None) { HR_ASSERT_OK(m_radioInstances.Update(data, updateMask)); }
+			if(updateMask != um::None) {
+				print(_T("%s: %s"), data.id.GetString(), join(changes).GetString());
+				HR_ASSERT_OK(m_radioInstances.Update(data, updateMask));
+			}
 			return S_OK;
 		},
 		false
@@ -494,13 +502,19 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 			m_bluetoothDevices.Add(x.second);
 		} else {
 			// The device already exists.
-			bool changed = false;
-			changed |= (x.second.fConnected != it->second.fConnected);
-			changed |= (x.second.fAuthenticated != it->second.fAuthenticated);
-			changed |= (x.second.fRemembered != it->second.fRemembered);
-			if(changed) {
+			CStringArray changes;
+			if(x.second.fConnected != it->second.fConnected) {
+				changes.Add(x.second.fConnected ? _T("Connected") : _T("Disconnected"));
+			}
+			if(x.second.fAuthenticated != it->second.fAuthenticated) {
+				changes.Add(x.second.fAuthenticated ? _T("Authenticated") : _T("Unauthenticated"));
+			}
+			if(x.second.fRemembered != it->second.fRemembered) {
+				changes.Add(x.second.fRemembered ? _T("Remembered") : _T("Unremembered"));
+			}
+			if(!changes.IsEmpty()) {
 				// State of the device is changed.
-				print(_T("DeviceStateChange %s"), x.second.szName);
+				print(_T("DeviceStateChange %s: %s"), x.second.szName, join(changes).GetString());
 				m_bluetoothDevices.StateChange(x.second);
 			}
 		}

@@ -31,8 +31,7 @@ protected:
 
     void setItemImage(int nItem, UINT imageId, int nOverlay = 0);
     void setOverlayImage(UINT imageId, int nOverlay);
-
-    LPCTSTR boolToString(BOOL b) { return ((b) ? _T("Yes") : _T("No")); }
+    int findImage(UINT imageId);
 };
 
 template<size_t size>
@@ -56,7 +55,13 @@ HRESULT CItemList::setupImageList(const UINT(&bitmaps)[size])
         bm.LoadBitmap(b);
         m_imageList.Add(&bm, RGB(0, 0, 0));
     }
+    //m_imageList.SetOverlayImage(1, 1);
+    //SetImageList(&m_imageList, LVSIL_STATE);
     SetImageList(&m_imageList, LVSIL_SMALL);
 
     return S_OK;
 }
+
+inline LPCTSTR boolToString(BOOL b) { return ((b) ? _T("Yes") : _T("No")); }
+
+CString join(const CStringArray& array, LPCTSTR separator = _T(","));

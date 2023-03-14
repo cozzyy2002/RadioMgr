@@ -70,7 +70,7 @@ HRESULT CBluetoothDeviceList::Remove(const BLUETOOTH_DEVICE_INFO& info)
     m_infos.erase(it);
     removeItem(addressToString(info.Address));
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 HRESULT CBluetoothDeviceList::StateChange(const BLUETOOTH_DEVICE_INFO& info)
@@ -88,7 +88,10 @@ HRESULT CBluetoothDeviceList::Update(const BLUETOOTH_DEVICE_INFO& info, UpdateMa
     auto nItem = findItem(address);
     HR_ASSERT(-1 < nItem, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
 
-    if(mask & UpdateMask::Name) { SetItemText(nItem, int(Column::Name), info.szName); }
+    if(mask & UpdateMask::Name) {
+        CString deviceName(info.szName);
+        SetItemText(nItem, int(Column::Name), deviceName);
+    }
     if(mask & UpdateMask::ConnectIcon) {
         setItemImage(nItem, getDeviceImageId(info.ulClassofDevice), info.fConnected ? 1 : 0);
     }
@@ -117,7 +120,6 @@ const BLUETOOTH_DEVICE_INFO* CBluetoothDeviceList::GetSelectedDevice()
     auto major = GET_COD_MAJOR(ulClassofDevice);
     auto minor = GET_COD_MINOR(ulClassofDevice);
 
-    UINT id = 0;
     for(auto& x : deviceImageIdList) {
         if((x.major == major) && (x.minor == minor)) {
             return x.imageId;

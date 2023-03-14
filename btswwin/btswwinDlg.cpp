@@ -449,7 +449,7 @@ HRESULT CbtswwinDlg::checkRadioState()
 			auto isMultiComm = data.radioInstance->IsMultiComm();
 			if(data.isMultiComm != isMultiComm) {
 				CString str;
-				str.Format(_T("%s: IsMultiComm %s"), data.id.GetString(), boolToString(isMultiComm));
+				str.Format(_T("IsMultiComm %s"), boolToString(isMultiComm));
 				changes.Add(str);
 				data.isMultiComm = isMultiComm;
 				updateMask |= um::IsMultiComm;
@@ -457,7 +457,7 @@ HRESULT CbtswwinDlg::checkRadioState()
 			auto isAssocDev = data.radioInstance->IsAssociatingDevice();
 			if(data.isAssociatingDevice != isAssocDev) {
 				CString str;
-				str.Format(_T("%s: IsAssociatingDevice %s"), data.id.GetString(), boolToString(isAssocDev));
+				str.Format(_T("IsAssociatingDevice %s"), boolToString(isAssocDev));
 				changes.Add(str);
 				data.isAssociatingDevice = isAssocDev;
 				updateMask |= um::IsAssocDev;
@@ -498,7 +498,8 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 		const auto it = currentList.find(x.first);
 		if(it == currentList.end()) {
 			// The device is added.
-			print(_T("DeviceAdd %s"), x.second.szName);
+			CString deviceName(x.second.szName);
+			print(_T("DeviceAdd %s"), deviceName.GetString());
 			m_bluetoothDevices.Add(x.second);
 		} else {
 			// The device already exists.
@@ -514,7 +515,8 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 			}
 			if(!changes.IsEmpty()) {
 				// State of the device is changed.
-				print(_T("DeviceStateChange %s: %s"), x.second.szName, join(changes).GetString());
+				CString deviceName(x.second.szName);
+				print(_T("DeviceStateChange %s: %s"), deviceName.GetString(), join(changes).GetString());
 				m_bluetoothDevices.StateChange(x.second);
 			}
 		}
@@ -528,7 +530,8 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 			const auto it = newList.find(x.first);
 			if(it == newList.end()) {
 				// The device is removed.
-				print(_T("DeviceRemove %s"), x.second.szName);
+				CString deviceName(x.second.szName);
+				print(_T("DeviceRemove %s"), deviceName.GetString());
 				m_bluetoothDevices.Remove(x.second);
 				// Start from the beginning of currentList
 				// because it has been changed by CBluetoothDeviceList::Remove().
@@ -634,8 +637,8 @@ void DebugPrint(LPCTSTR fmt, ...)
 		va_start(args, fmt);
 		CString msg;
 		msg.FormatV(fmt, args);
+		va_end(args);
 		OutputDebugString(msg.GetString());
 		OutputDebugString(_T("\n"));
-		va_end(args);
 	}
 }

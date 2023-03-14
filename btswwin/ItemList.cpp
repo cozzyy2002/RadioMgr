@@ -62,14 +62,14 @@ int CItemList::findImage(UINT imageId)
 
 CString join(const CStringArray& array, LPCTSTR separator /*= _T(",")*/)
 {
-    switch(array.GetCount()) {
+    auto arrayCount = array.GetCount();
+    switch(arrayCount) {
     case 0:
         return _T("");
     case 1:
         return array[0];
     }
 
-    auto arrayCount = array.GetCount();
     auto separatorLength = _tcslen(separator);
     size_t allCharLength = (separatorLength * arrayCount);
     for(int i = 0; i < arrayCount; i++) {

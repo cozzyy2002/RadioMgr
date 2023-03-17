@@ -158,6 +158,9 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_MESSAGE(WM_USER_RADIO_MANAGER_NOTIFY, &CbtswwinDlg::OnUserRadioManagerNotify)
 	ON_MESSAGE(WM_USER_CONNECT_DEVICE_RESULT, &CbtswwinDlg::OnUserConnectDeviceResult)
 	ON_WM_TIMER()
+	ON_UPDATE_COMMAND_UI(ID_DEVICE_CONNECT, &CbtswwinDlg::OnUpdateCommandUI)
+	ON_COMMAND_EX(ID_DEVICE_CONNECT, &CbtswwinDlg::OnCommandEx)
+	ON_WM_INITMENUPOPUP()
 END_MESSAGE_MAP()
 
 
@@ -523,23 +526,26 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 	}
 
 	// Check if any device is removed.
-	bool removed;
-	do {
-		removed = false;
-		for(auto& x : currentList) {
-			const auto it = newList.find(x.first);
-			if(it == newList.end()) {
-				// The device is removed.
-				CString deviceName(x.second.szName);
-				print(_T("DeviceRemove %s"), deviceName.GetString());
-				m_bluetoothDevices.Remove(x.second);
-				// Start from the beginning of currentList
-				// because it has been changed by CBluetoothDeviceList::Remove().
-				removed = true;
-				break;
+	// While connecting thread is running, any device can not be removed.
+	if(!m_connectDeviceThread) {
+		bool removed;
+		do {
+			removed = false;
+			for(auto& x : currentList) {
+				const auto it = newList.find(x.first);
+				if(it == newList.end()) {
+					// The device is removed.
+					CString deviceName(x.second.szName);
+					print(_T("DeviceRemove %s"), deviceName.GetString());
+					m_bluetoothDevices.Remove(x.second);
+					// Start from the beginning of currentList
+					// because it has been changed by CBluetoothDeviceList::Remove().
+					removed = true;
+					break;
+				}
 			}
-		}
-	} while(removed);
+		} while(removed);
+	}
 
 	return S_OK;
 }
@@ -569,13 +575,13 @@ HRESULT CbtswwinDlg::Connect(const BLUETOOTH_DEVICE_INFO& deviceInfo)
 	BeginWaitCursor();
 	m_connectDeviceThread = std::make_unique<std::thread>([this, &deviceInfo]
 		{
-			CString deviceName(deviceInfo.szName);
-			print(_T("Connecting to %s ..."), deviceName);
 			HANDLE hRadio = NULL;		// Search for all local radios.
 			DWORD serviceCount = 0;
 			auto enumError = BluetoothEnumerateInstalledServices(hRadio, &deviceInfo, &serviceCount, NULL);
 			HR_EXPECT(enumError == ERROR_MORE_DATA, HRESULT_FROM_WIN32(enumError));
+			CString deviceName(deviceInfo.szName);
 			if(serviceCount) {
+				print(_T("Connecting to %s(%d services) ..."), deviceName.GetString(), serviceCount);
 				auto serviceGuids = std::make_unique<GUID[]>(serviceCount);
 				HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothEnumerateInstalledServices(hRadio, &deviceInfo, &serviceCount, serviceGuids.get())));
 				for(DWORD i = 0; i < serviceCount; i++) {
@@ -586,6 +592,8 @@ HRESULT CbtswwinDlg::Connect(const BLUETOOTH_DEVICE_INFO& deviceInfo)
 					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE)));
 					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &guid, BLUETOOTH_SERVICE_ENABLE)));
 				}
+			} else {
+				print(_T("No installed service to connect for %s"), deviceName.GetString());
 			}
 
 			PostMessage(WM_USER_CONNECT_DEVICE_RESULT, serviceCount, (LPARAM)&deviceInfo);
@@ -602,14 +610,48 @@ LRESULT CbtswwinDlg::OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam)
 		auto pDeviceInfo = (BLUETOOTH_DEVICE_INFO*)lParam;
 		HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothGetDeviceInfo(nullptr, pDeviceInfo)));
 		print(_T("%s to connect"), pDeviceInfo->fConnected ? _T("Succeeded") : _T("Failed"));
-	} else {
-		print(_T("No Installed service to connect"));
 	}
 
 	m_connectDeviceThread->join();
 	m_connectDeviceThread.reset();
 	EndWaitCursor();
 	return LRESULT(0);
+}
+
+void CbtswwinDlg::OnUpdateCommandUI(CCmdUI* pCmdUI)
+{
+	auto id = pCmdUI->m_nID;
+	auto enable = FALSE;
+	switch(id) {
+	case ID_DEVICE_CONNECT:
+		{
+			auto device = m_bluetoothDevices.GetSelectedDevice();
+			enable = (device && CanConnect(*device)) ? TRUE : FALSE;
+		}
+		break;
+	default:
+		DebugPrint(_T(__FUNCTION__ "Unknown menu ID: %d"), id);
+		break;
+	}
+	pCmdUI->Enable(enable);
+}
+
+BOOL CbtswwinDlg::OnCommandEx(UINT id)
+{
+	switch(id) {
+	case ID_DEVICE_CONNECT:
+		{
+			auto device = m_bluetoothDevices.GetSelectedDevice();
+			if(device) {
+				Connect(*device);
+			}
+		}
+		break;
+	default:
+		DebugPrint(_T(__FUNCTION__ "Unknown menu ID: %d"), id);
+		break;
+	}
+	return TRUE;
 }
 
 void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)
@@ -664,4 +706,93 @@ void DebugPrint(LPCTSTR fmt, ...)
 		OutputDebugString(msg.GetString());
 		OutputDebugString(_T("\n"));
 	}
+}
+
+// Work-around for ON_UPDATE_COMMAND_UI
+// See https://learn.microsoft.com/en-us/troubleshoot/developer/visualstudio/cpp/libraries/cannot-change-state-menu-item
+void CbtswwinDlg::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
+{
+    // Make sure this is actually a menu. When clicking the program icon
+    // in the window title bar this function will trigger and pPopupMenu 
+    // will NOT be a menu.
+    if (!IsMenu(pPopupMenu->m_hMenu))
+		return;
+        
+    ASSERT(pPopupMenu != NULL);
+    // Check the enabled state of various menu items.
+
+    CCmdUI state;
+    state.m_pMenu = pPopupMenu;
+    ASSERT(state.m_pOther == NULL);
+    ASSERT(state.m_pParentMenu == NULL);
+
+    // Determine if menu is popup in top-level menu and set m_pOther to
+    // it if so (m_pParentMenu == NULL indicates that it is secondary popup).
+    HMENU hParentMenu;
+    if (AfxGetThreadState()->m_hTrackingMenu == pPopupMenu->m_hMenu)
+    state.m_pParentMenu = pPopupMenu; // Parent == child for tracking popup.
+    else if ((hParentMenu = ::GetMenu(m_hWnd))!= NULL)
+    {
+        CWnd* pParent = this;
+        // Child windows don't have menus--need to go to the top!
+        if (pParent != NULL &&
+        (hParentMenu = ::GetMenu(pParent->m_hWnd))!= NULL)
+        {
+            int nIndexMax = ::GetMenuItemCount(hParentMenu);
+            for (int nIndex = 0; nIndex < nIndexMax; nIndex++)
+            {
+                if (::GetSubMenu(hParentMenu, nIndex) == pPopupMenu->m_hMenu)
+            {
+                // When popup is found, m_pParentMenu is containing menu.
+                state.m_pParentMenu = CMenu::FromHandle(hParentMenu);
+                break;
+            }
+            }
+        }
+    }
+
+    state.m_nIndexMax = pPopupMenu->GetMenuItemCount();
+    for (state.m_nIndex = 0; state.m_nIndex < state.m_nIndexMax;
+    state.m_nIndex++)
+    {
+        state.m_nID = pPopupMenu->GetMenuItemID(state.m_nIndex);
+        if (state.m_nID == 0)
+        continue; // Menu separator or invalid cmd - ignore it.
+
+        ASSERT(state.m_pOther == NULL);
+        ASSERT(state.m_pMenu != NULL);
+        if (state.m_nID == (UINT)-1)
+        {
+            // Possibly a popup menu, route to first item of that popup.
+            state.m_pSubMenu = pPopupMenu->GetSubMenu(state.m_nIndex);
+            if (state.m_pSubMenu == NULL ||
+            (state.m_nID = state.m_pSubMenu->GetMenuItemID(0)) == 0 ||
+            state.m_nID == (UINT)-1)
+            {
+            continue; // First item of popup can't be routed to.
+            }
+            state.DoUpdate(this, TRUE); // Popups are never auto disabled.
+        }
+        else
+        {
+            // Normal menu item.
+            // Auto enable/disable if frame window has m_bAutoMenuEnable
+            // set and command is _not_ a system command.
+            state.m_pSubMenu = NULL;
+            state.DoUpdate(this, FALSE);
+        }
+
+        // Adjust for menu deletions and additions.
+        UINT nCount = pPopupMenu->GetMenuItemCount();
+        if (nCount < state.m_nIndexMax)
+        {
+            state.m_nIndex -= (state.m_nIndexMax - nCount);
+            while (state.m_nIndex < nCount &&
+            pPopupMenu->GetMenuItemID(state.m_nIndex) == state.m_nID)
+            {
+                state.m_nIndex++;
+            }
+        }
+        state.m_nIndexMax = nCount;
+    }
 }

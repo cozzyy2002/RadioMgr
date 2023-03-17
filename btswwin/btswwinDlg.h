@@ -95,4 +95,7 @@ protected:
 	virtual void PostNcDestroy();
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnUpdateCommandUI(CCmdUI*);
+	afx_msg BOOL OnCommandEx(UINT);
+	void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
 };

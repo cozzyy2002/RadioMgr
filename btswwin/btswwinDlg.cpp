@@ -57,6 +57,7 @@ CbtswwinDlg::CbtswwinDlg(CWnd* pParent /*=nullptr*/)
 	, m_radioState(DRS_RADIO_INVALID)
 	, m_switchByLcdState(TRUE)
 	, m_restoreRadioState(TRUE)
+	, m_bluetoothDevices(this)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -157,7 +158,6 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_MESSAGE(WM_USER_RADIO_MANAGER_NOTIFY, &CbtswwinDlg::OnUserRadioManagerNotify)
 	ON_MESSAGE(WM_USER_CONNECT_DEVICE_RESULT, &CbtswwinDlg::OnUserConnectDeviceResult)
 	ON_WM_TIMER()
-	ON_BN_CLICKED(IDO_CONNECT, &CbtswwinDlg::OnBnClickedConnect)
 END_MESSAGE_MAP()
 
 
@@ -544,47 +544,70 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 	return S_OK;
 }
 
-// Connects the device selected by the user.
-void CbtswwinDlg::OnBnClickedConnect()
+// Check if the device can be connected.
+bool CbtswwinDlg::CanConnect(const BLUETOOTH_DEVICE_INFO& deviceInfo)
 {
-	auto pDeviceInfo = m_bluetoothDevices.GetSelectedDevice();
-	if(pDeviceInfo) {
-		BeginWaitCursor();
-		GetDlgItem(IDO_CONNECT)->EnableWindow(FALSE);
-		m_connectDeviceThread = std::make_unique<std::thread>([this, pDeviceInfo]
-			{
-				CString deviceName(pDeviceInfo->szName);
-				print(_T("Connecting to %s ..."), deviceName);
-				HANDLE hRadio = NULL;		// Search for all local radios.
-				DWORD serviceCount = 0;
-				auto enumError = BluetoothEnumerateInstalledServices(hRadio, pDeviceInfo, &serviceCount, NULL);
-				HR_EXPECT(enumError == ERROR_MORE_DATA, HRESULT_FROM_WIN32(enumError));
+	// While connecting thread is running, new connection can be started.
+	if(m_connectDeviceThread) { return false; }
+
+	// Check if the device is not connected yet.
+	if(deviceInfo.fConnected) { return false; }
+
+	// Check if at least one radio instance is on.
+	auto ret = false;
+	m_radioInstances.For([this, &ret](RadioInstanceData& data)
+		{
+			if(data.state == DRS_RADIO_ON) { ret = true; }
+			return S_OK;
+		}, false);
+	return ret;
+}
+
+// Connects the device selected by the user.
+HRESULT CbtswwinDlg::Connect(const BLUETOOTH_DEVICE_INFO& deviceInfo)
+{
+	BeginWaitCursor();
+	m_connectDeviceThread = std::make_unique<std::thread>([this, &deviceInfo]
+		{
+			CString deviceName(deviceInfo.szName);
+			print(_T("Connecting to %s ..."), deviceName);
+			HANDLE hRadio = NULL;		// Search for all local radios.
+			DWORD serviceCount = 0;
+			auto enumError = BluetoothEnumerateInstalledServices(hRadio, &deviceInfo, &serviceCount, NULL);
+			HR_EXPECT(enumError == ERROR_MORE_DATA, HRESULT_FROM_WIN32(enumError));
+			if(serviceCount) {
 				auto serviceGuids = std::make_unique<GUID[]>(serviceCount);
-				HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothEnumerateInstalledServices(hRadio, pDeviceInfo, &serviceCount, serviceGuids.get())));
+				HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothEnumerateInstalledServices(hRadio, &deviceInfo, &serviceCount, serviceGuids.get())));
 				for(DWORD i = 0; i < serviceCount; i++) {
 					const auto& guid = serviceGuids.get()[i];
 					//WCHAR strGuid[40];
 					//HR_EXPECT(0 < StringFromGUID2(guid, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
 					//print(_T("Setting service state of %s"), strGuid);
-					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, pDeviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE)));
-					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, pDeviceInfo, &guid, BLUETOOTH_SERVICE_ENABLE)));
+					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE)));
+					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &guid, BLUETOOTH_SERVICE_ENABLE)));
 				}
+			}
 
-				PostMessage(WM_USER_CONNECT_DEVICE_RESULT, 0, (LPARAM)pDeviceInfo);
-			});
-	}
+			PostMessage(WM_USER_CONNECT_DEVICE_RESULT, serviceCount, (LPARAM)&deviceInfo);
+		});
+	return S_OK;
 }
 
 // Handles WM_USER_CONNECT_DEVICE_RESULT message.
 // Checks whether the device is connected successfully.
 LRESULT CbtswwinDlg::OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam)
 {
-	auto pDeviceInfo = (BLUETOOTH_DEVICE_INFO*)lParam;
-	HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothGetDeviceInfo(nullptr, pDeviceInfo)));
-	print(_T("%s to connect"), pDeviceInfo->fConnected ? _T("Succeeded") : _T("Failed"));
+	auto serviceCount = (DWORD)wParam;
+	if(serviceCount) {
+		auto pDeviceInfo = (BLUETOOTH_DEVICE_INFO*)lParam;
+		HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothGetDeviceInfo(nullptr, pDeviceInfo)));
+		print(_T("%s to connect"), pDeviceInfo->fConnected ? _T("Succeeded") : _T("Failed"));
+	} else {
+		print(_T("No Installed service to connect"));
+	}
 
 	m_connectDeviceThread->join();
-	GetDlgItem(IDO_CONNECT)->EnableWindow(TRUE);
+	m_connectDeviceThread.reset();
 	EndWaitCursor();
 	return LRESULT(0);
 }

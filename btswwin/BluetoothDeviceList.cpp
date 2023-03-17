@@ -138,3 +138,36 @@ CString addressToString(const BLUETOOTH_ADDRESS& address)
     str.Format(_T("%02x:%02x:%02x:%02x:%02x:%02x"), adr[5], adr[4], adr[3], adr[2], adr[1], adr[0]);
     return str;
 }
+
+BEGIN_MESSAGE_MAP(CBluetoothDeviceList, CItemList)
+    ON_WM_CONTEXTMENU()
+END_MESSAGE_MAP()
+
+void CBluetoothDeviceList::OnContextMenu(CWnd* pWnd, CPoint point)
+{
+    if(m_menuHandler) {
+        CMenu menu;
+        if(menu.LoadMenu(IDR_MENU_DEVICE_LIST)) {
+            auto pSubMenu = menu.GetSubMenu(0);
+            if(pSubMenu) {
+                auto device = GetSelectedDevice();
+                auto canConnect = (device && m_menuHandler->CanConnect(*device)) ? MF_ENABLED : MF_DISABLED;
+                pSubMenu->EnableMenuItem(ID_DEVICE_CONNECT, canConnect);
+                auto ret = (UINT)pSubMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, point.x, point.y, this);
+                switch(ret) {
+                case ID_DEVICE_CONNECT:
+                    if(device) {
+                        m_menuHandler->Connect(*device);
+                    }
+                    break;
+                case 0:
+                    // No menu item is selected.
+                    break;
+                default:
+                    DebugPrint(_T(__FUNCTION__ "Unknown menu ID: %d"), ret);
+                    break;
+                }
+            }
+        }
+    }
+}

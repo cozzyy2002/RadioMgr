@@ -21,7 +21,7 @@ enum {
 };
 
 // CbtswwinDlg dialog
-class CbtswwinDlg : public CDialogEx
+class CbtswwinDlg : public CDialogEx, public CBluetoothDeviceList::IMenuHandler
 {
 // Construction
 public:
@@ -51,6 +51,11 @@ protected:
 
 	// Worker thread to connect to the device.
 	std::unique_ptr<std::thread> m_connectDeviceThread;
+
+#pragma region Implementation of CBluetoothDeviceList::IMenuHandler
+	virtual bool CanConnect(const BLUETOOTH_DEVICE_INFO&) override;
+	virtual HRESULT Connect(const BLUETOOTH_DEVICE_INFO&) override;
+#pragma endregion
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -90,5 +95,4 @@ protected:
 	virtual void PostNcDestroy();
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
-	afx_msg void OnBnClickedConnect();
 };

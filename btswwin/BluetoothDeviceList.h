@@ -18,15 +18,6 @@ public:
 		Remembered,
 	};
 
-	class IMenuHandler
-	{
-	public:
-		virtual bool CanConnect(const BLUETOOTH_DEVICE_INFO&) = 0;
-		virtual HRESULT Connect(const BLUETOOTH_DEVICE_INFO&) = 0;
-	};
-
-	CBluetoothDeviceList(IMenuHandler* menuHandler = nullptr) : m_menuHandler(menuHandler) {}
-
 	HRESULT OnInitCtrl();
 	HRESULT Add(const BLUETOOTH_DEVICE_INFO&);
 	HRESULT Remove(const BLUETOOTH_DEVICE_INFO&);
@@ -60,12 +51,6 @@ public:
 protected:
 	// Bluetooth device info added.
 	ListData m_infos;
-	IMenuHandler* m_menuHandler;
-
-public:
-	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
-
-	DECLARE_MESSAGE_MAP()
 };
 
 CString addressToString(const BLUETOOTH_ADDRESS&);

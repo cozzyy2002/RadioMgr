@@ -57,7 +57,6 @@ CbtswwinDlg::CbtswwinDlg(CWnd* pParent /*=nullptr*/)
 	, m_radioState(DRS_RADIO_INVALID)
 	, m_switchByLcdState(TRUE)
 	, m_restoreRadioState(TRUE)
-	, m_bluetoothDevices(this)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -161,6 +160,7 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_UPDATE_COMMAND_UI(ID_DEVICE_CONNECT, &CbtswwinDlg::OnUpdateCommandUI)
 	ON_COMMAND_EX(ID_DEVICE_CONNECT, &CbtswwinDlg::OnCommandEx)
 	ON_WM_INITMENUPOPUP()
+	ON_WM_CONTEXTMENU()
 END_MESSAGE_MAP()
 
 
@@ -551,7 +551,7 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 }
 
 // Check if the device can be connected.
-bool CbtswwinDlg::CanConnect(const BLUETOOTH_DEVICE_INFO& deviceInfo)
+bool CbtswwinDlg::CanConnectDevice(const BLUETOOTH_DEVICE_INFO& deviceInfo)
 {
 	// While connecting thread is running, new connection can be started.
 	if(m_connectDeviceThread) { return false; }
@@ -570,7 +570,7 @@ bool CbtswwinDlg::CanConnect(const BLUETOOTH_DEVICE_INFO& deviceInfo)
 }
 
 // Connects the device selected by the user.
-HRESULT CbtswwinDlg::Connect(const BLUETOOTH_DEVICE_INFO& deviceInfo)
+HRESULT CbtswwinDlg::ConnectDevice(const BLUETOOTH_DEVICE_INFO& deviceInfo)
 {
 	BeginWaitCursor();
 	m_connectDeviceThread = std::make_unique<std::thread>([this, &deviceInfo]
@@ -626,7 +626,7 @@ void CbtswwinDlg::OnUpdateCommandUI(CCmdUI* pCmdUI)
 	case ID_DEVICE_CONNECT:
 		{
 			auto device = m_bluetoothDevices.GetSelectedDevice();
-			enable = (device && CanConnect(*device)) ? TRUE : FALSE;
+			enable = (device && CanConnectDevice(*device)) ? TRUE : FALSE;
 		}
 		break;
 	default:
@@ -643,7 +643,7 @@ BOOL CbtswwinDlg::OnCommandEx(UINT id)
 		{
 			auto device = m_bluetoothDevices.GetSelectedDevice();
 			if(device) {
-				Connect(*device);
+				ConnectDevice(*device);
 			}
 		}
 		break;
@@ -652,6 +652,43 @@ BOOL CbtswwinDlg::OnCommandEx(UINT id)
 		break;
 	}
 	return TRUE;
+}
+
+// Shows context menu of Bluetooth device list, and handles selected menu item.
+HRESULT CbtswwinDlg::OnBluetoothDeviceListContextMenu(CWnd* pWnd, CPoint point)
+{
+	auto hr = S_FALSE;
+	CMenu menu;
+	if(menu.LoadMenu(IDR_MENU_DEVICE_LIST)) {
+		auto pSubMenu = menu.GetSubMenu(0);
+		if(pSubMenu) {
+			auto device = m_bluetoothDevices.GetSelectedDevice();
+			auto canConnect = (device && CanConnectDevice(*device)) ? MF_ENABLED : MF_DISABLED;
+			pSubMenu->EnableMenuItem(ID_DEVICE_CONNECT, canConnect);
+			auto ret = (UINT)pSubMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, point.x, point.y, this);
+			switch(ret) {
+			case ID_DEVICE_CONNECT:
+				if(device) {
+					hr = HR_EXPECT_OK(ConnectDevice(*device));
+				}
+				break;
+			case 0:
+				// No menu item is selected.
+				break;
+			default:
+				DebugPrint(_T(__FUNCTION__ "Unknown menu ID: %d"), ret);
+				break;
+			}
+		}
+	}
+	return hr;
+}
+
+void CbtswwinDlg::OnContextMenu(CWnd* pWnd, CPoint point)
+{
+	if(pWnd->m_hWnd == m_bluetoothDevices.m_hWnd) {
+		OnBluetoothDeviceListContextMenu(pWnd, point);
+	}
 }
 
 void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)

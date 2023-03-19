@@ -44,17 +44,21 @@ protected:
 	CComPtr<RadioNotifyListener> m_radioNotifyListener;
 
 	HRESULT setRadioState(DEVICE_RADIO_STATE, bool restore = false);
+	HRESULT setRadioState(RadioInstanceData& data, DEVICE_RADIO_STATE, bool restore = false);
 
 	static const UINT_PTR PollingTimerId = 1;
 	HRESULT checkRadioState();
 	HRESULT checkBluetoothDevice();
-	HRESULT OnBluetoothDeviceListContextMenu(CWnd* pWnd, CPoint point);
 
 	// Worker thread to connect to the device.
 	std::unique_ptr<std::thread> m_connectDeviceThread;
 
-	bool CanConnectDevice(const BLUETOOTH_DEVICE_INFO&);
-	HRESULT ConnectDevice(const BLUETOOTH_DEVICE_INFO&);
+	HRESULT OnRadioInstanceListContextMenu(CPoint point);
+	bool CanSwitchRadio(DEVICE_RADIO_STATE state);
+	bool SwitchRadio(DEVICE_RADIO_STATE state);
+	HRESULT OnBluetoothDeviceListContextMenu(CPoint point);
+	bool CanConnectDevice(const BLUETOOTH_DEVICE_INFO* deviceInfo = nullptr);
+	HRESULT ConnectDevice(const BLUETOOTH_DEVICE_INFO* deviceInfo = nullptr);
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -79,8 +83,6 @@ public:
 	CRadioInstanceList m_radioInstances;
 	CBluetoothDeviceList m_bluetoothDevices;
 	CListBox m_ListLog;
-	afx_msg void OnBnClickedOn();
-	afx_msg void OnBnClickedOff();
 	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData);
 //	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedEditCopy();
@@ -95,7 +97,8 @@ protected:
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnUpdateCommandUI(CCmdUI*);
-	afx_msg BOOL OnCommandEx(UINT);
+	BOOL OnLocalRadioSwitchCommand(UINT);
+	void OnConnectDeviceCommand() { ConnectDevice(); }
 	void OnContextMenu(CWnd* pWnd, CPoint point);
 	void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
 };

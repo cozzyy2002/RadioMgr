@@ -38,6 +38,7 @@ public:
 	HRESULT StateChange(const CString&, DEVICE_RADIO_STATE);
 
 	HRESULT For(std::function<HRESULT(RadioInstanceData&)> data, bool onlyChecked = true);
+	RadioInstanceData* GetSelectedInstance();
 
 	enum class UpdateMask {
 		None = 0,

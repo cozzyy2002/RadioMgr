@@ -34,6 +34,7 @@ HRESULT CRadioInstanceList::Add(const RadioInstanceData& data)
     auto& pair = m_datas.insert({data.id, data});
 
     auto nItem = addItem(data.id);
+    SetItemData(nItem, (DWORD_PTR)&pair.first->second);
     Update(data, UpdateMask::All);
     SetCheck(nItem);
 
@@ -72,6 +73,17 @@ HRESULT CRadioInstanceList::For(std::function<HRESULT(RadioInstanceData&)> func,
     }
 
     return (0 < cItems) ? S_OK : S_FALSE;
+}
+
+RadioInstanceData* CRadioInstanceList::GetSelectedInstance()
+{
+    RadioInstanceData* ret = nullptr;
+    auto pos = GetFirstSelectedItemPosition();
+    if(pos) {
+        auto i = GetNextSelectedItem(pos);
+        ret = (RadioInstanceData*)GetItemData(i);
+    }
+    return ret;
 }
 
 // Updates ListCtrl item.

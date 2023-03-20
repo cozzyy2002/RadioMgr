@@ -53,13 +53,6 @@ protected:
 	// Worker thread to connect to the device.
 	std::unique_ptr<std::thread> m_connectDeviceThread;
 
-	HRESULT OnRadioInstanceListContextMenu(CPoint point);
-	bool CanSwitchRadio(DEVICE_RADIO_STATE state);
-	bool SwitchRadio(DEVICE_RADIO_STATE state);
-	HRESULT OnBluetoothDeviceListContextMenu(CPoint point);
-	bool CanConnectDevice(const BLUETOOTH_DEVICE_INFO* deviceInfo = nullptr);
-	HRESULT ConnectDevice(const BLUETOOTH_DEVICE_INFO* deviceInfo = nullptr);
-
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_BTSWWIN_DIALOG };
@@ -96,9 +89,10 @@ protected:
 	virtual void PostNcDestroy();
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
-	afx_msg void OnUpdateCommandUI(CCmdUI*);
-	BOOL OnLocalRadioSwitchCommand(UINT);
-	void OnConnectDeviceCommand() { ConnectDevice(); }
+	afx_msg void OnSwitchRadioUpdateCommandUI(CCmdUI*);
+	afx_msg BOOL OnSwitchRadioCommand(UINT);
+	void OnConnectDeviceUpdateCommandUI(CCmdUI*);
+	void OnConnectDeviceCommand();
 	void OnContextMenu(CWnd* pWnd, CPoint point);
 	void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
 };

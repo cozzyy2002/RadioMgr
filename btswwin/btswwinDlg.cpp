@@ -155,11 +155,11 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_MESSAGE(WM_USER_RADIO_MANAGER_NOTIFY, &CbtswwinDlg::OnUserRadioManagerNotify)
 	ON_MESSAGE(WM_USER_CONNECT_DEVICE_RESULT, &CbtswwinDlg::OnUserConnectDeviceResult)
 	ON_WM_TIMER()
-	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnUpdateCommandUI)
-	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnUpdateCommandUI)
-	ON_UPDATE_COMMAND_UI(ID_REMOTE_DEVICE_CONNECT, &CbtswwinDlg::OnUpdateCommandUI)
-	ON_COMMAND_EX(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnLocalRadioSwitchCommand)
-	ON_COMMAND_EX(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnLocalRadioSwitchCommand)
+	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
+	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
+	ON_UPDATE_COMMAND_UI(ID_REMOTE_DEVICE_CONNECT, &CbtswwinDlg::OnConnectDeviceUpdateCommandUI)
+	ON_COMMAND_EX(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnSwitchRadioCommand)
+	ON_COMMAND_EX(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnSwitchRadioCommand)
 	ON_COMMAND(ID_REMOTE_DEVICE_CONNECT, &CbtswwinDlg::OnConnectDeviceCommand)
 	ON_WM_INITMENUPOPUP()
 	ON_WM_CONTEXTMENU()
@@ -311,87 +311,65 @@ HCURSOR CbtswwinDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-// Shows context menu of Radio instance list, and handles selected menu item.
-HRESULT CbtswwinDlg::OnRadioInstanceListContextMenu(CPoint point)
-{
-	auto hr = S_FALSE;
-	CMenu menu;
-	if(menu.LoadMenu(IDR_MENU_RADIO_LIST)) {
-		auto pSubMenu = menu.GetSubMenu(0);
-		if(pSubMenu) {
-			auto ret = (UINT)pSubMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, point.x, point.y, this);
-			switch(ret) {
-			case ID_LOCAL_RADIO_ON:
-				SwitchRadio(DRS_RADIO_ON);
-				break;
-			case ID_LOCAL_RADIO_OFF:
-				SwitchRadio(DRS_SW_RADIO_OFF);
-				break;
-			case 0:
-				// No menu item is selected.
-				break;
-			default:
-				DebugPrint(_T(__FUNCTION__ "Unknown menu ID: %d"), ret);
-				break;
-			}
-		}
-	}
-	return hr;
-}
-
 // Checks if one or more Radio instances can be switched on/off.
-bool CbtswwinDlg::CanSwitchRadio(DEVICE_RADIO_STATE state)
+void CbtswwinDlg::OnSwitchRadioUpdateCommandUI(CCmdUI* pCmdUI)
 {
-	auto ret = false;
+	DEVICE_RADIO_STATE state;
+	switch(pCmdUI->m_nID) {
+	case ID_LOCAL_RADIO_ON:
+		state = DRS_RADIO_ON;
+		break;
+	case ID_LOCAL_RADIO_OFF:
+		state = DRS_SW_RADIO_OFF;
+		break;
+	default:
+		DebugPrint(_T(__FUNCTION__ ": Unkown ID %d"), pCmdUI->m_nID);
+		return;
+	}
+	auto enable = FALSE;
 	auto data = m_radioInstances.GetSelectedInstance();
 	if(data) {
 		// A Radio instance selected in the ListCtrl.
-		ret = (state != data->state);
+		if(state != data->state) { enable = TRUE; }
 	} else {
 		// All Radio instances checked in the ListCtrl.
 		m_radioInstances.For([&](RadioInstanceData& data)
 			{
-				if(state != data.state) { ret = true; }
+				if(state != data.state) { enable = TRUE; }
 				return S_OK;
 			});
 	}
-	DebugPrint(_T(__FUNCTION__ "(%d, %p) -> %s"), state, data, ret ? _T("true") : _T("false"));
-	return ret;
+
+	pCmdUI->Enable(enable);
 }
 
 // Switchs one or more Radio instances on/off
-bool CbtswwinDlg::SwitchRadio(DEVICE_RADIO_STATE state)
+BOOL CbtswwinDlg::OnSwitchRadioCommand(UINT id)
 {
-	auto hr = S_FALSE;
+	DEVICE_RADIO_STATE state;
+	switch(id) {
+	case ID_LOCAL_RADIO_ON:
+		state = DRS_RADIO_ON;
+		break;
+	case ID_LOCAL_RADIO_OFF:
+		state = DRS_SW_RADIO_OFF;
+		break;
+	default:
+		DebugPrint(_T(__FUNCTION__ ": Unkown ID %d"), id);
+		return FALSE;
+	}
+
 	auto data = m_radioInstances.GetSelectedInstance();
 	if(data) {
 		// Switch radio instance selected in the ListCtrl.
-		hr = setRadioState(*data, state);
+		HR_EXPECT_OK(setRadioState(*data, state));
 	} else {
 		// Switch all radio instances checked in the ListCtrl.
-		hr = setRadioState(state);
+		HR_EXPECT_OK(setRadioState(state));
 	}
-	return SUCCEEDED(hr);
-}
 
-// Invoked by Local Radio On/Off menu.
-BOOL CbtswwinDlg::OnLocalRadioSwitchCommand(UINT id)
-{
-	auto ret = TRUE;
-	switch(id) {
-	case ID_LOCAL_RADIO_ON:
-		SwitchRadio(DRS_RADIO_ON);
-		break;
-	case ID_LOCAL_RADIO_OFF:
-		SwitchRadio(DRS_SW_RADIO_OFF);
-		break;
-	default:
-		ret = FALSE;
-		break;
-	}
-	return ret;
+	return TRUE;
 }
-
 
 UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 {
@@ -625,36 +603,38 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 }
 
 // Checks if the device can be connected.
-bool CbtswwinDlg::CanConnectDevice(const BLUETOOTH_DEVICE_INFO* deviceInfo /*= nullptr*/)
+void CbtswwinDlg::OnConnectDeviceUpdateCommandUI(CCmdUI* pCmdUI)
 {
+	BOOL enable = TRUE;
+
 	// While connecting thread is running, new connection can be started.
-	if(m_connectDeviceThread) { return false; }
+	if(m_connectDeviceThread) { enable = FALSE; }
 
 	// Check if the device is not connected yet.
-	if(!deviceInfo) { deviceInfo = m_bluetoothDevices.GetSelectedDevice(); }
-	if(!deviceInfo || (deviceInfo->fConnected)) { return false; }
+	auto deviceInfo = m_bluetoothDevices.GetSelectedDevice();
+	if(!deviceInfo || (deviceInfo->fConnected)) { enable = FALSE; }
 
 	// Check if at least one radio instance is on.
-	auto ret = false;
-	m_radioInstances.For([this, &ret](RadioInstanceData& data)
+	auto onCount = 0;
+	m_radioInstances.For([this, &onCount](RadioInstanceData& data)
 		{
-			if(data.state == DRS_RADIO_ON) { ret = true; }
+			if(data.state == DRS_RADIO_ON) { onCount++; }
 			return S_OK;
 		}, false);
-	return ret;
+	if(onCount == 0) { enable = FALSE; }
+
+	pCmdUI->Enable(enable);
 }
 
 // Connects the device selected by the user.
-HRESULT CbtswwinDlg::ConnectDevice(const BLUETOOTH_DEVICE_INFO* deviceInfo /*= nullptr*/)
+void CbtswwinDlg::OnConnectDeviceCommand()
 {
-	if(!deviceInfo) { deviceInfo = m_bluetoothDevices.GetSelectedDevice(); }
-	if(!CanConnectDevice(deviceInfo)) { return S_FALSE; }
-
 	BeginWaitCursor();
-	m_connectDeviceThread = std::make_unique<std::thread>([this, deviceInfo]
+	m_connectDeviceThread = std::make_unique<std::thread>([this]
 		{
 			HANDLE hRadio = NULL;		// Search for all local radios.
 			DWORD serviceCount = 0;
+			auto deviceInfo = m_bluetoothDevices.GetSelectedDevice();
 			auto enumError = BluetoothEnumerateInstalledServices(hRadio, deviceInfo, &serviceCount, NULL);
 			HR_EXPECT(enumError == ERROR_MORE_DATA, HRESULT_FROM_WIN32(enumError));
 			CString deviceName(deviceInfo->szName);
@@ -676,7 +656,6 @@ HRESULT CbtswwinDlg::ConnectDevice(const BLUETOOTH_DEVICE_INFO* deviceInfo /*= n
 
 			PostMessage(WM_USER_CONNECT_DEVICE_RESULT, serviceCount, (LPARAM)deviceInfo);
 		});
-	return S_OK;
 }
 
 // Handles WM_USER_CONNECT_DEVICE_RESULT message.
@@ -696,63 +675,24 @@ LRESULT CbtswwinDlg::OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam)
 	return LRESULT(0);
 }
 
-void CbtswwinDlg::OnUpdateCommandUI(CCmdUI* pCmdUI)
-{
-	DebugPrint(_T(__FUNCTION__ "(%d)"), pCmdUI->m_nID);
-	auto enable = FALSE;
-	switch(pCmdUI->m_nID) {
-	case ID_LOCAL_RADIO_ON:
-		enable = CanSwitchRadio(DRS_RADIO_ON);
-		break;
-	case ID_LOCAL_RADIO_OFF:
-		enable = CanSwitchRadio(DRS_SW_RADIO_OFF);
-		break;
-	case ID_REMOTE_DEVICE_CONNECT:
-		enable = CanConnectDevice() ? TRUE : FALSE;
-		break;
-	default:
-		DebugPrint(_T(__FUNCTION__ "Unknown menu ID: %d"), pCmdUI->m_nID);
-		break;
-	}
-	pCmdUI->Enable(enable);
-}
-
-// Shows context menu of Bluetooth device list, and handles selected menu item.
-HRESULT CbtswwinDlg::OnBluetoothDeviceListContextMenu(CPoint point)
-{
-	auto hr = S_FALSE;
-	CMenu menu;
-	if(menu.LoadMenu(IDR_MENU_DEVICE_LIST)) {
-		auto pSubMenu = menu.GetSubMenu(0);
-		if(pSubMenu) {
-			auto device = m_bluetoothDevices.GetSelectedDevice();
-			auto canConnect = (device && CanConnectDevice(device)) ? MF_ENABLED : MF_DISABLED;
-			pSubMenu->EnableMenuItem(ID_REMOTE_DEVICE_CONNECT, canConnect);
-			auto ret = (UINT)pSubMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, point.x, point.y, this);
-			switch(ret) {
-			case ID_REMOTE_DEVICE_CONNECT:
-				if(device) {
-					hr = HR_EXPECT_OK(ConnectDevice(device));
-				}
-				break;
-			case 0:
-				// No menu item is selected.
-				break;
-			default:
-				DebugPrint(_T(__FUNCTION__ "Unknown menu ID: %d"), ret);
-				break;
-			}
-		}
-	}
-	return hr;
-}
-
+// Shows context menu.
 void CbtswwinDlg::OnContextMenu(CWnd* pWnd, CPoint point)
 {
-	if(pWnd->m_hWnd == m_bluetoothDevices.m_hWnd) {
-		OnBluetoothDeviceListContextMenu(point);
-	} else if(pWnd->m_hWnd == m_radioInstances.m_hWnd) {
-		OnRadioInstanceListContextMenu(point);
+	UINT menuId;
+	if(pWnd->m_hWnd == m_radioInstances.m_hWnd) {
+		menuId = IDR_MENU_RADIO_LIST;
+	} else if(pWnd->m_hWnd == m_bluetoothDevices.m_hWnd) {
+		menuId = IDR_MENU_DEVICE_LIST;
+	} else {
+		return;
+	}
+
+	CMenu menu;
+	if(menu.LoadMenu(menuId)) {
+		auto pSubMenu = menu.GetSubMenu(0);
+		if(SUCCEEDED(HR_EXPECT(pSubMenu, E_UNEXPECTED))) {
+			WIN32_EXPECT(pSubMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this));
+		}
 	}
 }
 

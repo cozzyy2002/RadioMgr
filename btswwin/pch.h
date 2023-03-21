@@ -12,4 +12,10 @@
 
 #endif //PCH_H
 
+#include <log4cpp/Category.hh>
+#include <log4cpp/Appender.hh>
+#include <log4cpp/Layout.hh>
+#include <log4cpp/BasicLayout.hh>
+#include <log4cpp/Priority.hh>
+
 void DebugPrint(LPCTSTR fmt, ...);

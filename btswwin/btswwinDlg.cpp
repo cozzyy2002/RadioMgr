@@ -61,7 +61,7 @@ CbtswwinDlg::CbtswwinDlg(CWnd* pParent /*=nullptr*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
-static auto& logger(log4cpp::Category::getInstance("btswwin.CbtswinDlg"));
+static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CbtswinDlg")));
 static CbtswwinDlg* pdlg = nullptr;
 
 // Show failed message in log list control with formatted HRESULT.
@@ -108,8 +108,7 @@ void CbtswwinDlg::printV(const CTime& now, LPCTSTR fmt, va_list args)
 	CString* text = new CString();
 	text->FormatV(fmt, args);
 	*text = now.Format("%F %T ") + *text;
-	CT2A _text(text->GetString());
-	logger.info((LPCSTR)_text);
+	LOG4CXX_INFO(logger, text->GetString());
 	if(!PostMessage(WM_USER_PRINT, 0, (LPARAM)text)) {
 		delete text;
 		CString err;

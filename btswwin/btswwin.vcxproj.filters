@@ -122,6 +122,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="log4cpp.properties" />
+    <CopyFileToFolders Include="log4cxx.properties" />
   </ItemGroup>
 </Project>

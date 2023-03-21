@@ -7,8 +7,6 @@
 #include "btswwin.h"
 #include "btswwinDlg.h"
 
-#include <log4cpp/PropertyConfigurator.hh>
-
 #include <pathcch.h>
 #pragma comment(lib, "pathcch.lib")
 
@@ -36,7 +34,7 @@ CbtswwinApp::CbtswwinApp()
 // The one and only CbtswwinApp object
 
 CbtswwinApp theApp;
-static auto& logger(log4cpp::Category::getInstance("btswwin"));
+static auto logger(log4cxx::Logger::getLogger(_T("btswwin")));
 
 // CbtswwinApp initialization
 
@@ -48,10 +46,9 @@ BOOL CbtswwinApp::InitInstance()
 	GetModuleFileName(NULL, path, pathLength);
 	PathCchRemoveFileSpec(path, pathLength);
 	WCHAR configFileName[MAX_PATH];
-	PathCchCombine(configFileName, ARRAYSIZE(configFileName), path, L"log4cpp.properties");
-	CW2A _config(configFileName);
-	log4cpp::PropertyConfigurator::configure((LPSTR)_config);
-	logger.info("log4cpp is configured: %s", (LPSTR)_config);
+	PathCchCombine(configFileName, ARRAYSIZE(configFileName), path, L"log4cxx.properties");
+	log4cxx::PropertyConfigurator::configure(configFileName);
+	LOG4CXX_INFO(logger, L"log4cpp is configured: " << configFileName);
 
 	CWinApp::InitInstance();
 

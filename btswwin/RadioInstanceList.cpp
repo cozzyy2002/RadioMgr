@@ -108,3 +108,8 @@ int CRadioInstanceList::Find(const CString& id)
 {
     return CItemList::findItem(id.GetString());
 }
+
+UINT CRadioInstanceList::getContextMenuId() const
+{
+    return IDR_MENU_RADIO_LIST;
+}

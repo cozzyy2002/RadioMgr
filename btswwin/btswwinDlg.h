@@ -93,6 +93,5 @@ public:
 	afx_msg BOOL OnSwitchRadioCommand(UINT);
 	void OnConnectDeviceUpdateCommandUI(CCmdUI*);
 	void OnConnectDeviceCommand();
-	void OnContextMenu(CWnd* pWnd, CPoint point);
 	void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
 };

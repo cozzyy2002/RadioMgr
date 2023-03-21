@@ -162,7 +162,6 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_COMMAND_EX(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnSwitchRadioCommand)
 	ON_COMMAND(ID_REMOTE_DEVICE_CONNECT, &CbtswwinDlg::OnConnectDeviceCommand)
 	ON_WM_INITMENUPOPUP()
-	ON_WM_CONTEXTMENU()
 END_MESSAGE_MAP()
 
 
@@ -673,27 +672,6 @@ LRESULT CbtswwinDlg::OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam)
 	m_connectDeviceThread.reset();
 	EndWaitCursor();
 	return LRESULT(0);
-}
-
-// Shows context menu.
-void CbtswwinDlg::OnContextMenu(CWnd* pWnd, CPoint point)
-{
-	UINT menuId;
-	if(pWnd->m_hWnd == m_radioInstances.m_hWnd) {
-		menuId = IDR_MENU_RADIO_LIST;
-	} else if(pWnd->m_hWnd == m_bluetoothDevices.m_hWnd) {
-		menuId = IDR_MENU_DEVICE_LIST;
-	} else {
-		return;
-	}
-
-	CMenu menu;
-	if(menu.LoadMenu(menuId)) {
-		auto pSubMenu = menu.GetSubMenu(0);
-		if(SUCCEEDED(HR_EXPECT(pSubMenu, E_UNEXPECTED))) {
-			WIN32_EXPECT(pSubMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this));
-		}
-	}
 }
 
 void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)

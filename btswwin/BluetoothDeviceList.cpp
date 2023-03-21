@@ -138,3 +138,8 @@ CString addressToString(const BLUETOOTH_ADDRESS& address)
     str.Format(_T("%02x:%02x:%02x:%02x:%02x:%02x"), adr[5], adr[4], adr[3], adr[2], adr[1], adr[0]);
     return str;
 }
+
+UINT CBluetoothDeviceList::getContextMenuId() const
+{
+    return IDR_MENU_DEVICE_LIST;
+}

@@ -51,6 +51,8 @@ public:
 protected:
 	// Bluetooth device info added.
 	ListData m_infos;
+
+	virtual UINT getContextMenuId() const override;
 };
 
 CString addressToString(const BLUETOOTH_ADDRESS&);

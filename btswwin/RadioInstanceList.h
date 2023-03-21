@@ -57,6 +57,8 @@ protected:
 	std::map<CString, RadioInstanceData> m_datas;
 
 	int Find(const CString& id);
+
+	virtual UINT getContextMenuId() const override;
 };
 
 #pragma region Operator functions for CRadioInstanceList::UpdateMask to be used as flag.

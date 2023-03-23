@@ -87,6 +87,7 @@
     <None Include="res\btswwin.rc2">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\btswwin.ico">
@@ -119,5 +120,8 @@
     <Image Include="res\UnknownDevice.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="log4cxx.properties" />
   </ItemGroup>
 </Project>

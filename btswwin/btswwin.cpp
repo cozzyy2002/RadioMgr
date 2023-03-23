@@ -7,6 +7,9 @@
 #include "btswwin.h"
 #include "btswwinDlg.h"
 
+#include <pathcch.h>
+#pragma comment(lib, "pathcch.lib")
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -31,12 +34,22 @@ CbtswwinApp::CbtswwinApp()
 // The one and only CbtswwinApp object
 
 CbtswwinApp theApp;
-
+static auto logger(log4cxx::Logger::getLogger(_T("btswwin")));
 
 // CbtswwinApp initialization
 
 BOOL CbtswwinApp::InitInstance()
 {
+	// Configure log4cpp using log4cpp.properties file in the folder of exe file.
+	WCHAR path[MAX_PATH];
+	static const auto pathLength = ARRAYSIZE(path);
+	GetModuleFileName(NULL, path, pathLength);
+	PathCchRemoveFileSpec(path, pathLength);
+	WCHAR configFileName[MAX_PATH];
+	PathCchCombine(configFileName, ARRAYSIZE(configFileName), path, L"log4cxx.properties");
+	log4cxx::PropertyConfigurator::configure(configFileName);
+	LOG4CXX_INFO(logger, L"log4cpp is configured: " << configFileName);
+
 	CWinApp::InitInstance();
 
 

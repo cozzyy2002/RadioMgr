@@ -30,8 +30,6 @@ public:
 
 	void print(const CString&);
 	void print(LPCTSTR, ...);
-	void print(const CTime&, LPCTSTR, ...);
-	void printV(const CTime&, LPCTSTR, va_list);
 
 protected:
 	CComPtr<IMediaRadioManager> m_radioManager;
@@ -44,6 +42,7 @@ protected:
 	CComPtr<RadioNotifyListener> m_radioNotifyListener;
 
 	HRESULT setRadioState(DEVICE_RADIO_STATE, bool restore = false);
+	HRESULT setRadioState(RadioInstanceData& data, DEVICE_RADIO_STATE, bool restore = false);
 
 	static const UINT_PTR PollingTimerId = 1;
 	HRESULT checkRadioState();
@@ -74,12 +73,9 @@ protected:
 public:
 	CRadioInstanceList m_radioInstances;
 	CBluetoothDeviceList m_bluetoothDevices;
-	CListBox m_ListLog;
-	afx_msg void OnBnClickedOn();
-	afx_msg void OnBnClickedOff();
+	CStatic m_StatusText;
 	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData);
 //	afx_msg void OnDestroy();
-	afx_msg void OnBnClickedEditCopy();
 	BOOL m_switchByLcdState;
 	BOOL m_restoreRadioState;
 //	virtual void OnFinalRelease();
@@ -90,5 +86,10 @@ protected:
 	virtual void PostNcDestroy();
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
-	afx_msg void OnBnClickedConnect();
+	afx_msg void OnSwitchRadioUpdateCommandUI(CCmdUI*);
+	afx_msg BOOL OnSwitchRadioCommand(UINT);
+	void OnConnectDeviceUpdateCommandUI(CCmdUI*);
+	void OnConnectDeviceCommand();
+	void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

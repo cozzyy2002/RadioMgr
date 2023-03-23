@@ -38,6 +38,7 @@ public:
 	HRESULT StateChange(const CString&, DEVICE_RADIO_STATE);
 
 	HRESULT For(std::function<HRESULT(RadioInstanceData&)> data, bool onlyChecked = true);
+	RadioInstanceData* GetSelectedInstance();
 
 	enum class UpdateMask {
 		None = 0,
@@ -56,6 +57,8 @@ protected:
 	std::map<CString, RadioInstanceData> m_datas;
 
 	int Find(const CString& id);
+
+	virtual UINT getContextMenuId() const override;
 };
 
 #pragma region Operator functions for CRadioInstanceList::UpdateMask to be used as flag.

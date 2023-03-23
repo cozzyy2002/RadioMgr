@@ -32,6 +32,12 @@ protected:
     void setItemImage(int nItem, UINT imageId, int nOverlay = 0);
     void setOverlayImage(UINT imageId, int nOverlay);
     int findImage(UINT imageId);
+
+    virtual UINT getContextMenuId() const { return 0; }
+    DECLARE_MESSAGE_MAP()
+
+public:
+    void OnContextMenu(CWnd* pWnd, CPoint point);
 };
 
 template<size_t size>

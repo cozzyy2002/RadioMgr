@@ -5,6 +5,10 @@
 
 #include <memory>
 
+BEGIN_MESSAGE_MAP(CItemList, CListCtrl)
+    ON_WM_CONTEXTMENU()
+END_MESSAGE_MAP()
+
 int CItemList::addItem(LPCTSTR key)
 {
     auto nItem = GetItemCount();
@@ -58,6 +62,20 @@ int CItemList::findImage(UINT imageId)
         }
     }
     return nImage;
+}
+
+void CItemList::OnContextMenu(CWnd* pWnd, CPoint point)
+{
+    UINT menuId = getContextMenuId();
+    if(!menuId) { return; }
+
+    CMenu menu;
+    if(menu.LoadMenu(menuId)) {
+        auto pSubMenu = menu.GetSubMenu(0);
+        if(SUCCEEDED(HR_EXPECT(pSubMenu, E_UNEXPECTED))) {
+            WIN32_EXPECT(pSubMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, GetParent()));
+        }
+    }
 }
 
 CString join(const CStringArray& array, LPCTSTR separator /*= _T(",")*/)

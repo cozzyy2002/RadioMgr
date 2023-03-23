@@ -61,24 +61,22 @@ CbtswwinDlg::CbtswwinDlg(CWnd* pParent /*=nullptr*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
-static CbtswwinDlg* pdlg = nullptr;
+static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CbtswinDlg")));
 
 // Show failed message in log list control with formatted HRESULT.
 static void AssertFailedProc(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int line)
 {
-	if(pdlg) {
-		LPTSTR msg;
-		DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
-		auto formatResult = FormatMessage(flags, NULL, hr, 0, (LPTSTR)&msg, 100, NULL);
-		if(formatResult) {
-			pdlg->print(_T("`%s` failed: %s(0x%08x)"), exp, msg, hr);
-			LocalFree(msg);
-			return;
-		}
+	CString _msg;
+	LPTSTR msg;
+	DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
+	auto formatResult = FormatMessage(flags, NULL, hr, 0, (LPTSTR)&msg, 100, NULL);
+	if(formatResult) {
+		_msg.Format(_T("%s(0x%x)"), msg, hr);
+		LocalFree(msg);
+	} else {
+		_msg.Format(_T("0x%x"), hr);
 	}
-
-	// Call default proc if CbtswwinDlg is not created yet or FormatMessage() failed.
-	tsm::Assert::defaultAssertFailedProc(hr, exp, sourceFile, line);
+	LOG4CXX_ERROR(logger, _T("`") << exp << _T("` failed: ") << _msg.GetString() << _T("(0x") << std::hex << hr << _T(")"));
 }
 
 void CbtswwinDlg::print(const CString& text)
@@ -90,42 +88,21 @@ void CbtswwinDlg::print(LPCTSTR fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	printV(CTime::GetCurrentTime(), fmt, args);
-	va_end(args);
-}
-
-void CbtswwinDlg::print(const CTime& now, LPCTSTR fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	printV(now, fmt, args);
-	va_end(args);
-}
-
-void CbtswwinDlg::printV(const CTime& now, LPCTSTR fmt, va_list args)
-{
 	CString* text = new CString();
 	text->FormatV(fmt, args);
-	*text = now.Format("%F %T ") + *text;
+	LOG4CXX_INFO(logger, text->GetString());
 	if(!PostMessage(WM_USER_PRINT, 0, (LPARAM)text)) {
 		delete text;
 		CString err;
 		err.Format(_T(__FUNCTION__ ": PostMessage(%d) failed. Error=%d\n"), WM_USER_PRINT, GetLastError());
-		OutputDebugString(err.GetString());
+		LOG4CXX_ERROR(logger, err.GetString());
 	}
 }
 
 afx_msg LRESULT CbtswwinDlg::OnUserPrint(WPARAM wParam, LPARAM lParam)
 {
 	std::unique_ptr<CString> text((CString*)lParam);
-
-	if(100 < m_ListLog.GetCount()) {
-		m_ListLog.DeleteString(0);
-	}
-	auto index = m_ListLog.AddString(*text);
-	m_ListLog.SetTopIndex(index);
-	UpdateData(FALSE);
-
+	m_StatusText.SetWindowText(text->GetString());
 	return 0;
 }
 
@@ -140,7 +117,7 @@ void CbtswwinDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_RADIO_INSTANCES, m_radioInstances);
 	DDX_Control(pDX, IDC_LIST_BLUETOOTH_DEVICE, m_bluetoothDevices);
-	DDX_Control(pDX, ID_LIST_LOG, m_ListLog);
+	DDX_Control(pDX, IDC_STATIC_STATUS, m_StatusText);
 	DDX_Check(pDX, IDC_CHECK_SWITCH_BY_LCD_STATE, m_switchByLcdState);
 	DDX_Check(pDX, IDC_CHECK_RESTORE_RADIO_STATE, m_restoreRadioState);
 }
@@ -149,15 +126,18 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDO_ON, &CbtswwinDlg::OnBnClickedOn)
-	ON_BN_CLICKED(IDO_OFF, &CbtswwinDlg::OnBnClickedOff)
 	ON_WM_POWERBROADCAST()
-	ON_BN_CLICKED(ID_EDIT_COPY, &CbtswwinDlg::OnBnClickedEditCopy)
 	ON_MESSAGE(WM_USER_PRINT, &CbtswwinDlg::OnUserPrint)
 	ON_MESSAGE(WM_USER_RADIO_MANAGER_NOTIFY, &CbtswwinDlg::OnUserRadioManagerNotify)
 	ON_MESSAGE(WM_USER_CONNECT_DEVICE_RESULT, &CbtswwinDlg::OnUserConnectDeviceResult)
 	ON_WM_TIMER()
-	ON_BN_CLICKED(IDO_CONNECT, &CbtswwinDlg::OnBnClickedConnect)
+	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
+	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
+	ON_UPDATE_COMMAND_UI(ID_REMOTE_DEVICE_CONNECT, &CbtswwinDlg::OnConnectDeviceUpdateCommandUI)
+	ON_COMMAND_EX(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnSwitchRadioCommand)
+	ON_COMMAND_EX(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnSwitchRadioCommand)
+	ON_COMMAND(ID_REMOTE_DEVICE_CONNECT, &CbtswwinDlg::OnConnectDeviceCommand)
+	ON_WM_INITMENUPOPUP()
 END_MESSAGE_MAP()
 
 
@@ -196,7 +176,6 @@ BOOL CbtswwinDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// Prepare for AssertFailedProc() static function.
-	::pdlg = this;
 	tsm::Assert::onAssertFailedProc = ::AssertFailedProc;
 
 	m_radioInstances.OnInitCtrl();
@@ -306,22 +285,65 @@ HCURSOR CbtswwinDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
-
-void CbtswwinDlg::OnBnClickedOn()
+// Checks if one or more Radio instances can be switched on/off.
+void CbtswwinDlg::OnSwitchRadioUpdateCommandUI(CCmdUI* pCmdUI)
 {
-	UpdateData();
-	setRadioState(DRS_RADIO_ON);
+	DEVICE_RADIO_STATE state;
+	switch(pCmdUI->m_nID) {
+	case ID_LOCAL_RADIO_ON:
+		state = DRS_RADIO_ON;
+		break;
+	case ID_LOCAL_RADIO_OFF:
+		state = DRS_SW_RADIO_OFF;
+		break;
+	default:
+		DebugPrint(_T(__FUNCTION__ ": Unkown ID %d"), pCmdUI->m_nID);
+		return;
+	}
+	auto enable = FALSE;
+	auto data = m_radioInstances.GetSelectedInstance();
+	if(data) {
+		// A Radio instance selected in the ListCtrl.
+		if(state != data->state) { enable = TRUE; }
+	} else {
+		// All Radio instances checked in the ListCtrl.
+		m_radioInstances.For([&](RadioInstanceData& data)
+			{
+				if(state != data.state) { enable = TRUE; }
+				return S_OK;
+			});
+	}
+
+	pCmdUI->Enable(enable);
 }
 
-
-
-void CbtswwinDlg::OnBnClickedOff()
+// Switchs one or more Radio instances on/off
+BOOL CbtswwinDlg::OnSwitchRadioCommand(UINT id)
 {
-	UpdateData();
-	setRadioState(DRS_SW_RADIO_OFF);
-}
+	DEVICE_RADIO_STATE state;
+	switch(id) {
+	case ID_LOCAL_RADIO_ON:
+		state = DRS_RADIO_ON;
+		break;
+	case ID_LOCAL_RADIO_OFF:
+		state = DRS_SW_RADIO_OFF;
+		break;
+	default:
+		DebugPrint(_T(__FUNCTION__ ": Unkown ID %d"), id);
+		return FALSE;
+	}
 
+	auto data = m_radioInstances.GetSelectedInstance();
+	if(data) {
+		// Switch radio instance selected in the ListCtrl.
+		HR_EXPECT_OK(setRadioState(*data, state));
+	} else {
+		// Switch all radio instances checked in the ListCtrl.
+		HR_EXPECT_OK(setRadioState(state));
+	}
+
+	return TRUE;
+}
 
 UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 {
@@ -361,17 +383,24 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 	return TRUE;
 }
 
+// Sets state of all Radio instances checked in the ListCtrl.
 HRESULT CbtswwinDlg::setRadioState(DEVICE_RADIO_STATE state, bool restore /*= false*/)
 {
 	return m_radioInstances.For([=](RadioInstanceData& data)
 		{
-			auto newState = restore ? data.savedState : state;
-			HR_ASSERT_OK(data.radioInstance->GetRadioState(&data.state));
-			return (data.state != newState) ?
-				HR_EXPECT_OK(data.radioInstance->SetRadioState(newState, 1)) :
-				S_FALSE;
+			return setRadioState(data, state, restore);
 		}
 	);
+}
+
+// Sets state of specified Radio instance.
+HRESULT CbtswwinDlg::setRadioState(RadioInstanceData& data, DEVICE_RADIO_STATE state, bool restore /*= false*/)
+{
+	auto newState = restore ? data.savedState : state;
+	HR_ASSERT_OK(data.radioInstance->GetRadioState(&data.state));
+	return (data.state != newState) ?
+		HR_EXPECT_OK(data.radioInstance->SetRadioState(state, 1)) :
+		S_FALSE;
 }
 
 // Process message sent by RadioNotifyListener
@@ -387,7 +416,6 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 		VALUE_NAME_ITEM(DRS_HW_RADIO_OFF_UNCONTROLLABLE),
 	};
 
-	auto now(CTime::GetCurrentTime());
 	std::unique_ptr<RadioNotifyListener::Message> message((RadioNotifyListener::Message*)lParam);
 	CString type(_T("Unknown"));
 	CString name(_T("Unknown"));
@@ -435,7 +463,7 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 	}
 	UpdateData(FALSE);
 
-	print(now, _T("%s: %s, %s"), type.GetString(), name.GetString(), ValueToString(states, state).GetString());
+	print(_T("%s: %s, %s"), type.GetString(), name.GetString(), ValueToString(states, state).GetString());
 	return 0;
 }
 
@@ -523,68 +551,99 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 	}
 
 	// Check if any device is removed.
-	bool removed;
-	do {
-		removed = false;
-		for(auto& x : currentList) {
-			const auto it = newList.find(x.first);
-			if(it == newList.end()) {
-				// The device is removed.
-				CString deviceName(x.second.szName);
-				print(_T("DeviceRemove %s"), deviceName.GetString());
-				m_bluetoothDevices.Remove(x.second);
-				// Start from the beginning of currentList
-				// because it has been changed by CBluetoothDeviceList::Remove().
-				removed = true;
-				break;
+	// While connecting thread is running, any device can not be removed.
+	if(!m_connectDeviceThread) {
+		bool removed;
+		do {
+			removed = false;
+			for(auto& x : currentList) {
+				const auto it = newList.find(x.first);
+				if(it == newList.end()) {
+					// The device is removed.
+					CString deviceName(x.second.szName);
+					print(_T("DeviceRemove %s"), deviceName.GetString());
+					m_bluetoothDevices.Remove(x.second);
+					// Start from the beginning of currentList
+					// because it has been changed by CBluetoothDeviceList::Remove().
+					removed = true;
+					break;
+				}
 			}
-		}
-	} while(removed);
+		} while(removed);
+	}
 
 	return S_OK;
 }
 
-// Connects the device selected by the user.
-void CbtswwinDlg::OnBnClickedConnect()
+// Checks if the device can be connected.
+void CbtswwinDlg::OnConnectDeviceUpdateCommandUI(CCmdUI* pCmdUI)
 {
-	auto pDeviceInfo = m_bluetoothDevices.GetSelectedDevice();
-	if(pDeviceInfo) {
-		BeginWaitCursor();
-		GetDlgItem(IDO_CONNECT)->EnableWindow(FALSE);
-		m_connectDeviceThread = std::make_unique<std::thread>([this, pDeviceInfo]
-			{
-				CString deviceName(pDeviceInfo->szName);
-				print(_T("Connecting to %s ..."), deviceName);
-				HANDLE hRadio = NULL;		// Search for all local radios.
-				DWORD serviceCount = 0;
-				auto enumError = BluetoothEnumerateInstalledServices(hRadio, pDeviceInfo, &serviceCount, NULL);
-				HR_EXPECT(enumError == ERROR_MORE_DATA, HRESULT_FROM_WIN32(enumError));
+	BOOL enable = TRUE;
+
+	// While connecting thread is running, new connection can be started.
+	if(m_connectDeviceThread) { enable = FALSE; }
+
+	// Check if the device is not connected yet.
+	auto deviceInfo = m_bluetoothDevices.GetSelectedDevice();
+	if(!deviceInfo || (deviceInfo->fConnected)) { enable = FALSE; }
+
+	// Check if at least one radio instance is on.
+	auto onCount = 0;
+	m_radioInstances.For([this, &onCount](RadioInstanceData& data)
+		{
+			if(data.state == DRS_RADIO_ON) { onCount++; }
+			return S_OK;
+		}, false);
+	if(onCount == 0) { enable = FALSE; }
+
+	pCmdUI->Enable(enable);
+}
+
+// Connects the device selected by the user.
+void CbtswwinDlg::OnConnectDeviceCommand()
+{
+	BeginWaitCursor();
+	m_connectDeviceThread = std::make_unique<std::thread>([this]
+		{
+			HANDLE hRadio = NULL;		// Search for all local radios.
+			DWORD serviceCount = 0;
+			auto deviceInfo = m_bluetoothDevices.GetSelectedDevice();
+			auto enumError = BluetoothEnumerateInstalledServices(hRadio, deviceInfo, &serviceCount, NULL);
+			HR_EXPECT(enumError == ERROR_MORE_DATA, HRESULT_FROM_WIN32(enumError));
+			CString deviceName(deviceInfo->szName);
+			if(serviceCount) {
+				print(_T("Connecting to %s(%d services) ..."), deviceName.GetString(), serviceCount);
 				auto serviceGuids = std::make_unique<GUID[]>(serviceCount);
-				HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothEnumerateInstalledServices(hRadio, pDeviceInfo, &serviceCount, serviceGuids.get())));
+				HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothEnumerateInstalledServices(hRadio, deviceInfo, &serviceCount, serviceGuids.get())));
 				for(DWORD i = 0; i < serviceCount; i++) {
 					const auto& guid = serviceGuids.get()[i];
 					//WCHAR strGuid[40];
 					//HR_EXPECT(0 < StringFromGUID2(guid, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
 					//print(_T("Setting service state of %s"), strGuid);
-					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, pDeviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE)));
-					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, pDeviceInfo, &guid, BLUETOOTH_SERVICE_ENABLE)));
+					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, deviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE)));
+					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, deviceInfo, &guid, BLUETOOTH_SERVICE_ENABLE)));
 				}
+			} else {
+				print(_T("No installed service to connect for %s"), deviceName.GetString());
+			}
 
-				PostMessage(WM_USER_CONNECT_DEVICE_RESULT, 0, (LPARAM)pDeviceInfo);
-			});
-	}
+			PostMessage(WM_USER_CONNECT_DEVICE_RESULT, serviceCount, (LPARAM)deviceInfo);
+		});
 }
 
 // Handles WM_USER_CONNECT_DEVICE_RESULT message.
 // Checks whether the device is connected successfully.
 LRESULT CbtswwinDlg::OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam)
 {
-	auto pDeviceInfo = (BLUETOOTH_DEVICE_INFO*)lParam;
-	HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothGetDeviceInfo(nullptr, pDeviceInfo)));
-	print(_T("%s to connect"), pDeviceInfo->fConnected ? _T("Succeeded") : _T("Failed"));
+	auto serviceCount = (DWORD)wParam;
+	if(serviceCount) {
+		auto pDeviceInfo = (BLUETOOTH_DEVICE_INFO*)lParam;
+		HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothGetDeviceInfo(nullptr, pDeviceInfo)));
+		print(_T("%s to connect"), pDeviceInfo->fConnected ? _T("Succeeded") : _T("Failed"));
+	}
 
 	m_connectDeviceThread->join();
-	GetDlgItem(IDO_CONNECT)->EnableWindow(TRUE);
+	m_connectDeviceThread.reset();
 	EndWaitCursor();
 	return LRESULT(0);
 }
@@ -601,35 +660,6 @@ void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)
 	CDialogEx::OnTimer(nIDEvent);
 }
 
-// Copy text in the log window to clipboard.
-void CbtswwinDlg::OnBnClickedEditCopy()
-{
-	auto line = m_ListLog.GetCount();
-	CString text;
-	for(int i = 0; i < line; i++) {
-		CString t;
-		m_ListLog.GetText(i, t);
-		text += (t + _T("\n"));
-	}
-
-	OpenClipboard();
-	EmptyClipboard();
-
-	size_t size = (text.GetLength() + 1) * sizeof(TCHAR);
-	auto hMem = GlobalAlloc(GMEM_MOVEABLE, size);
-	if(SUCCEEDED(WIN32_EXPECT(hMem != NULL))) {
-		memcpy_s(GlobalLock(hMem), size, text.LockBuffer(), size);
-		WIN32_EXPECT(GlobalUnlock(hMem));
-		text.UnlockBuffer();
-
-		UINT format = (sizeof(TCHAR) == sizeof(WCHAR) ? CF_UNICODETEXT : CF_TEXT);
-		WIN32_EXPECT(::SetClipboardData(format, hMem) == hMem);
-	} else {
-		print(_T("Failed to allocate %d bytes memory"), size);
-	}
-	CloseClipboard();
-}
-
 void DebugPrint(LPCTSTR fmt, ...)
 {
 	if(IsDebuggerPresent()) {
@@ -641,4 +671,107 @@ void DebugPrint(LPCTSTR fmt, ...)
 		OutputDebugString(msg.GetString());
 		OutputDebugString(_T("\n"));
 	}
+}
+
+// Work-around for ON_UPDATE_COMMAND_UI
+// See https://learn.microsoft.com/en-us/troubleshoot/developer/visualstudio/cpp/libraries/cannot-change-state-menu-item
+void CbtswwinDlg::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
+{
+    // Make sure this is actually a menu. When clicking the program icon
+    // in the window title bar this function will trigger and pPopupMenu 
+    // will NOT be a menu.
+    if (!IsMenu(pPopupMenu->m_hMenu))
+		return;
+        
+    ASSERT(pPopupMenu != NULL);
+    // Check the enabled state of various menu items.
+
+    CCmdUI state;
+    state.m_pMenu = pPopupMenu;
+    ASSERT(state.m_pOther == NULL);
+    ASSERT(state.m_pParentMenu == NULL);
+
+    // Determine if menu is popup in top-level menu and set m_pOther to
+    // it if so (m_pParentMenu == NULL indicates that it is secondary popup).
+    HMENU hParentMenu;
+    if (AfxGetThreadState()->m_hTrackingMenu == pPopupMenu->m_hMenu)
+    state.m_pParentMenu = pPopupMenu; // Parent == child for tracking popup.
+    else if ((hParentMenu = ::GetMenu(m_hWnd))!= NULL)
+    {
+        CWnd* pParent = this;
+        // Child windows don't have menus--need to go to the top!
+        if (pParent != NULL &&
+        (hParentMenu = ::GetMenu(pParent->m_hWnd))!= NULL)
+        {
+            int nIndexMax = ::GetMenuItemCount(hParentMenu);
+            for (int nIndex = 0; nIndex < nIndexMax; nIndex++)
+            {
+                if (::GetSubMenu(hParentMenu, nIndex) == pPopupMenu->m_hMenu)
+            {
+                // When popup is found, m_pParentMenu is containing menu.
+                state.m_pParentMenu = CMenu::FromHandle(hParentMenu);
+                break;
+            }
+            }
+        }
+    }
+
+    state.m_nIndexMax = pPopupMenu->GetMenuItemCount();
+    for (state.m_nIndex = 0; state.m_nIndex < state.m_nIndexMax;
+    state.m_nIndex++)
+    {
+        state.m_nID = pPopupMenu->GetMenuItemID(state.m_nIndex);
+        if (state.m_nID == 0)
+        continue; // Menu separator or invalid cmd - ignore it.
+
+        ASSERT(state.m_pOther == NULL);
+        ASSERT(state.m_pMenu != NULL);
+        if (state.m_nID == (UINT)-1)
+        {
+            // Possibly a popup menu, route to first item of that popup.
+            state.m_pSubMenu = pPopupMenu->GetSubMenu(state.m_nIndex);
+            if (state.m_pSubMenu == NULL ||
+            (state.m_nID = state.m_pSubMenu->GetMenuItemID(0)) == 0 ||
+            state.m_nID == (UINT)-1)
+            {
+            continue; // First item of popup can't be routed to.
+            }
+            state.DoUpdate(this, TRUE); // Popups are never auto disabled.
+        }
+        else
+        {
+            // Normal menu item.
+            // Auto enable/disable if frame window has m_bAutoMenuEnable
+            // set and command is _not_ a system command.
+            state.m_pSubMenu = NULL;
+            state.DoUpdate(this, FALSE);
+        }
+
+        // Adjust for menu deletions and additions.
+        UINT nCount = pPopupMenu->GetMenuItemCount();
+        if (nCount < state.m_nIndexMax)
+        {
+            state.m_nIndex -= (state.m_nIndexMax - nCount);
+            while (state.m_nIndex < nCount &&
+            pPopupMenu->GetMenuItemID(state.m_nIndex) == state.m_nID)
+            {
+                state.m_nIndex++;
+            }
+        }
+        state.m_nIndexMax = nCount;
+    }
+}
+
+
+BOOL CbtswwinDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if(pMsg->message == WM_KEYDOWN) {
+		switch(pMsg->wParam) {
+		case VK_RETURN:
+		case VK_ESCAPE:
+			return FALSE;
+		}
+	}
+
+	return CDialogEx::PreTranslateMessage(pMsg);
 }

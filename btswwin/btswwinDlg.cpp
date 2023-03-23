@@ -62,24 +62,21 @@ CbtswwinDlg::CbtswwinDlg(CWnd* pParent /*=nullptr*/)
 }
 
 static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CbtswinDlg")));
-static CbtswwinDlg* pdlg = nullptr;
 
 // Show failed message in log list control with formatted HRESULT.
 static void AssertFailedProc(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int line)
 {
-	if(pdlg) {
-		LPTSTR msg;
-		DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
-		auto formatResult = FormatMessage(flags, NULL, hr, 0, (LPTSTR)&msg, 100, NULL);
-		if(formatResult) {
-			pdlg->print(_T("`%s` failed: %s(0x%08x)"), exp, msg, hr);
-			LocalFree(msg);
-			return;
-		}
+	CString _msg;
+	LPTSTR msg;
+	DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
+	auto formatResult = FormatMessage(flags, NULL, hr, 0, (LPTSTR)&msg, 100, NULL);
+	if(formatResult) {
+		_msg.Format(_T("%s(0x%x)"), msg, hr);
+		LocalFree(msg);
+	} else {
+		_msg.Format(_T("0x%x"), hr);
 	}
-
-	// Call default proc if CbtswwinDlg is not created yet or FormatMessage() failed.
-	tsm::Assert::defaultAssertFailedProc(hr, exp, sourceFile, line);
+	LOG4CXX_ERROR(logger, _T("`") << exp << _T("` failed: ") << _msg.GetString() << _T("(0x") << std::hex << hr << _T(")"));
 }
 
 void CbtswwinDlg::print(const CString& text)
@@ -91,43 +88,21 @@ void CbtswwinDlg::print(LPCTSTR fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	printV(CTime::GetCurrentTime(), fmt, args);
-	va_end(args);
-}
-
-void CbtswwinDlg::print(const CTime& now, LPCTSTR fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	printV(now, fmt, args);
-	va_end(args);
-}
-
-void CbtswwinDlg::printV(const CTime& now, LPCTSTR fmt, va_list args)
-{
 	CString* text = new CString();
 	text->FormatV(fmt, args);
-	*text = now.Format("%F %T ") + *text;
 	LOG4CXX_INFO(logger, text->GetString());
 	if(!PostMessage(WM_USER_PRINT, 0, (LPARAM)text)) {
 		delete text;
 		CString err;
 		err.Format(_T(__FUNCTION__ ": PostMessage(%d) failed. Error=%d\n"), WM_USER_PRINT, GetLastError());
-		OutputDebugString(err.GetString());
+		LOG4CXX_ERROR(logger, err.GetString());
 	}
 }
 
 afx_msg LRESULT CbtswwinDlg::OnUserPrint(WPARAM wParam, LPARAM lParam)
 {
 	std::unique_ptr<CString> text((CString*)lParam);
-
-	if(100 < m_ListLog.GetCount()) {
-		m_ListLog.DeleteString(0);
-	}
-	auto index = m_ListLog.AddString(*text);
-	m_ListLog.SetTopIndex(index);
-	UpdateData(FALSE);
-
+	m_StatusText.SetWindowText(text->GetString());
 	return 0;
 }
 
@@ -142,7 +117,7 @@ void CbtswwinDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_RADIO_INSTANCES, m_radioInstances);
 	DDX_Control(pDX, IDC_LIST_BLUETOOTH_DEVICE, m_bluetoothDevices);
-	DDX_Control(pDX, ID_LIST_LOG, m_ListLog);
+	DDX_Control(pDX, IDC_STATIC_STATUS, m_StatusText);
 	DDX_Check(pDX, IDC_CHECK_SWITCH_BY_LCD_STATE, m_switchByLcdState);
 	DDX_Check(pDX, IDC_CHECK_RESTORE_RADIO_STATE, m_restoreRadioState);
 }
@@ -152,7 +127,6 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_WM_POWERBROADCAST()
-	ON_BN_CLICKED(ID_EDIT_COPY, &CbtswwinDlg::OnBnClickedEditCopy)
 	ON_MESSAGE(WM_USER_PRINT, &CbtswwinDlg::OnUserPrint)
 	ON_MESSAGE(WM_USER_RADIO_MANAGER_NOTIFY, &CbtswwinDlg::OnUserRadioManagerNotify)
 	ON_MESSAGE(WM_USER_CONNECT_DEVICE_RESULT, &CbtswwinDlg::OnUserConnectDeviceResult)
@@ -202,7 +176,6 @@ BOOL CbtswwinDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// Prepare for AssertFailedProc() static function.
-	::pdlg = this;
 	tsm::Assert::onAssertFailedProc = ::AssertFailedProc;
 
 	m_radioInstances.OnInitCtrl();
@@ -443,7 +416,6 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 		VALUE_NAME_ITEM(DRS_HW_RADIO_OFF_UNCONTROLLABLE),
 	};
 
-	auto now(CTime::GetCurrentTime());
 	std::unique_ptr<RadioNotifyListener::Message> message((RadioNotifyListener::Message*)lParam);
 	CString type(_T("Unknown"));
 	CString name(_T("Unknown"));
@@ -491,7 +463,7 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 	}
 	UpdateData(FALSE);
 
-	print(now, _T("%s: %s, %s"), type.GetString(), name.GetString(), ValueToString(states, state).GetString());
+	print(_T("%s: %s, %s"), type.GetString(), name.GetString(), ValueToString(states, state).GetString());
 	return 0;
 }
 
@@ -688,35 +660,6 @@ void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)
 	CDialogEx::OnTimer(nIDEvent);
 }
 
-// Copy text in the log window to clipboard.
-void CbtswwinDlg::OnBnClickedEditCopy()
-{
-	auto line = m_ListLog.GetCount();
-	CString text;
-	for(int i = 0; i < line; i++) {
-		CString t;
-		m_ListLog.GetText(i, t);
-		text += (t + _T("\n"));
-	}
-
-	OpenClipboard();
-	EmptyClipboard();
-
-	size_t size = (text.GetLength() + 1) * sizeof(TCHAR);
-	auto hMem = GlobalAlloc(GMEM_MOVEABLE, size);
-	if(SUCCEEDED(WIN32_EXPECT(hMem != NULL))) {
-		memcpy_s(GlobalLock(hMem), size, text.LockBuffer(), size);
-		WIN32_EXPECT(GlobalUnlock(hMem));
-		text.UnlockBuffer();
-
-		UINT format = (sizeof(TCHAR) == sizeof(WCHAR) ? CF_UNICODETEXT : CF_TEXT);
-		WIN32_EXPECT(::SetClipboardData(format, hMem) == hMem);
-	} else {
-		print(_T("Failed to allocate %d bytes memory"), size);
-	}
-	CloseClipboard();
-}
-
 void DebugPrint(LPCTSTR fmt, ...)
 {
 	if(IsDebuggerPresent()) {
@@ -817,4 +760,18 @@ void CbtswwinDlg::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
         }
         state.m_nIndexMax = nCount;
     }
+}
+
+
+BOOL CbtswwinDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if(pMsg->message == WM_KEYDOWN) {
+		switch(pMsg->wParam) {
+		case VK_RETURN:
+		case VK_ESCAPE:
+			return FALSE;
+		}
+	}
+
+	return CDialogEx::PreTranslateMessage(pMsg);
 }

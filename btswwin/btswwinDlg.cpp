@@ -69,14 +69,15 @@ static void AssertFailedProc(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int li
 	CString _msg;
 	LPTSTR msg;
 	DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
-	auto formatResult = FormatMessage(flags, NULL, hr, 0, (LPTSTR)&msg, 100, NULL);
+	auto formatResult = FormatMessage(flags, NULL, hr, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPTSTR)&msg, 100, NULL);
 	if(formatResult) {
-		_msg.Format(_T("%s(0x%x)"), msg, hr);
+		CString formattedMsg(msg);
+		_msg.Format(_T("%s(0x%x)"), formattedMsg.TrimRight(_T("\r\n")).GetString(), hr);
 		LocalFree(msg);
 	} else {
 		_msg.Format(_T("0x%x"), hr);
 	}
-	LOG4CXX_ERROR(logger, _T("`") << exp << _T("` failed: ") << _msg.GetString() << _T("(0x") << std::hex << hr << _T(")"));
+	LOG4CXX_ERROR(logger, _T("`") << exp << _T("` failed: ") << _msg.GetString());
 }
 
 void CbtswwinDlg::print(const CString& text)
@@ -137,6 +138,8 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_COMMAND_EX(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnSwitchRadioCommand)
 	ON_COMMAND_EX(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnSwitchRadioCommand)
 	ON_COMMAND(ID_REMOTE_DEVICE_CONNECT, &CbtswwinDlg::OnConnectDeviceCommand)
+	ON_COMMAND(ID_EDIT_COPYRADIOLIST, &CbtswwinDlg::OnCopyRadioList)
+	ON_COMMAND(ID_EDIT_COPYDEVICELIST, &CbtswwinDlg::OnCopyDeviceList)
 	ON_WM_INITMENUPOPUP()
 END_MESSAGE_MAP()
 

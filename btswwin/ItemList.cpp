@@ -78,6 +78,63 @@ void CItemList::OnContextMenu(CWnd* pWnd, CPoint point)
     }
 }
 
+// Copy all column text and item text to clipboard.
+HRESULT CItemList::Copy()
+{
+    // setupColumns() method should have been called
+    // to know how many columns in this list.
+    HR_ASSERT(0 < m_columnCount, E_ILLEGAL_METHOD_CALL);
+
+    static const LPCTSTR ItemSeparator = _T("\t");
+    static const LPCTSTR LineSeparator = _T("\n");
+
+    CStringArray array;
+    TCHAR text[100];
+
+    // Get column text.
+    LVCOLUMN column{0};
+    column.mask = LVCF_TEXT;
+    column.pszText = text;
+    column.cchTextMax = ARRAYSIZE(text);
+    CStringArray columnArray;
+    for(int nCol = 0; nCol < m_columnCount; nCol++) {
+        GetColumn(nCol, &column);
+        columnArray.Add(text);
+    }
+    array.Add(join(columnArray, ItemSeparator));
+
+    // Get item text.
+    for(int nItem = 0; nItem < GetItemCount(); nItem++) {
+        CStringArray itemArray;
+        for(int nSubItem = 0; nSubItem < m_columnCount; nSubItem++) {
+            GetItemText(nItem, nSubItem, text, ARRAYSIZE(text));
+            itemArray.Add(text);
+        }
+        array.Add(join(itemArray, ItemSeparator));
+    }
+    array.Add(_T("\n"));
+
+    // Copy column and item text to the clipboard.
+    HR_ASSERT(OpenClipboard(), E_UNEXPECTED);
+    WIN32_ASSERT(EmptyClipboard());
+
+    auto str = join(array, LineSeparator);
+    auto size = str.GetLength() * sizeof(TCHAR);
+    auto hMem = GlobalAlloc(GMEM_MOVEABLE, size);
+    if(SUCCEEDED(WIN32_EXPECT(hMem != NULL))) {
+        memcpy_s(GlobalLock(hMem), size, str.LockBuffer(), size);
+        WIN32_EXPECT(GlobalUnlock(hMem));
+        str.UnlockBuffer();
+
+        UINT format = (sizeof(TCHAR) == sizeof(WCHAR) ? CF_UNICODETEXT : CF_TEXT);
+        WIN32_EXPECT(::SetClipboardData(format, hMem) == hMem);
+    }
+
+    WIN32_ASSERT(CloseClipboard());
+
+    return S_OK;
+}
+
 CString join(const CStringArray& array, LPCTSTR separator /*= _T(",")*/)
 {
     auto arrayCount = array.GetCount();

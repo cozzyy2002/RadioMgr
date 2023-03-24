@@ -90,6 +90,8 @@ public:
 	afx_msg BOOL OnSwitchRadioCommand(UINT);
 	void OnConnectDeviceUpdateCommandUI(CCmdUI*);
 	void OnConnectDeviceCommand();
+	void OnCopyDeviceList() { m_bluetoothDevices.Copy(); }
+	void OnCopyRadioList() { m_radioInstances.Copy(); }
 	void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

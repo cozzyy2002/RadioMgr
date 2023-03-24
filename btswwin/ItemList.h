@@ -19,8 +19,9 @@ public:
     HRESULT setupImageList(const UINT (&bitmaps)[size]);
 
 protected:
-    CItemList() : m_bitmaps(nullptr), m_bitmapCount(0) {}
+    CItemList() : m_columnCount(0), m_bitmaps(nullptr), m_bitmapCount(0) {}
 
+    size_t m_columnCount;
     CImageList m_imageList;
     const UINT* m_bitmaps;
     size_t m_bitmapCount;
@@ -38,11 +39,14 @@ protected:
 
 public:
     void OnContextMenu(CWnd* pWnd, CPoint point);
+    HRESULT Copy();
 };
 
 template<size_t size>
 HRESULT CItemList::setupColumns(const ColumnTitle(&columns)[size])
 {
+    m_columnCount = size;
+
     for(auto& c : columns) {
         InsertColumn(c.index, c.title, LVCFMT_LEFT, c.pixelWidth);
     }

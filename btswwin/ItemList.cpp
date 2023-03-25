@@ -45,10 +45,9 @@ void CItemList::setItemImage(int nItem, UINT imageId, int nOverlay /*= 0*/)
 
 void CItemList::setOverlayImage(UINT imageId, int nOverlay)
 {
-    HRESULT hr;
     auto nImage = findImage(imageId);
     if(SUCCEEDED(HR_EXPECT(0 <= nImage, HRESULT_FROM_WIN32(ERROR_NOT_FOUND)))) {
-        hr = WIN32_EXPECT(m_imageList.SetOverlayImage(nImage, nOverlay));
+        WIN32_EXPECT(m_imageList.SetOverlayImage(nImage, nOverlay));
     }
 }
 

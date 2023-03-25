@@ -72,8 +72,8 @@ static void AssertFailedProc(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int li
 	auto formatResult = FormatMessage(flags, NULL, hr, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPTSTR)&msg, 100, NULL);
 	if(formatResult) {
 		CString formattedMsg(msg);
-		_msg.Format(_T("%s(0x%x)"), formattedMsg.TrimRight(_T("\r\n")).GetString(), hr);
 		LocalFree(msg);
+		_msg.Format(_T("%s(0x%x)"), formattedMsg.TrimRight(_T("\r\n")).GetString(), hr);
 	} else {
 		_msg.Format(_T("0x%x"), hr);
 	}
@@ -91,12 +91,10 @@ void CbtswwinDlg::print(LPCTSTR fmt, ...)
 	va_start(args, fmt);
 	CString* text = new CString();
 	text->FormatV(fmt, args);
+	va_end(args);
 	LOG4CXX_INFO(logger, text->GetString());
-	if(!PostMessage(WM_USER_PRINT, 0, (LPARAM)text)) {
+	if(FAILED(WIN32_EXPECT(PostMessage(WM_USER_PRINT, 0, (LPARAM)text)))) {
 		delete text;
-		CString err;
-		err.Format(_T(__FUNCTION__ ": PostMessage(%d) failed. Error=%d\n"), WM_USER_PRINT, GetLastError());
-		LOG4CXX_ERROR(logger, err.GetString());
 	}
 }
 
@@ -216,9 +214,6 @@ HRESULT CbtswwinDlg::createRadioManager()
 
 void CbtswwinDlg::PostNcDestroy()
 {
-	// AssertFailedProc() of this dialog no longer works.
-	tsm::Assert::onAssertFailedProc = nullptr;
-
 	// Disconnect RadioNotifyListener from IConnectionPoint.
 	if(m_radioNotifyListener) {
 		HR_EXPECT_OK(m_radioNotifyListener->unadvise());
@@ -665,7 +660,7 @@ void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)
 
 void DebugPrint(LPCTSTR fmt, ...)
 {
-	if(IsDebuggerPresent()) {
+	if(IsDebuggerPresent() || logger->isDebugEnabled()) {
 		va_list args;
 		va_start(args, fmt);
 		CString msg;
@@ -673,6 +668,7 @@ void DebugPrint(LPCTSTR fmt, ...)
 		va_end(args);
 		OutputDebugString(msg.GetString());
 		OutputDebugString(_T("\n"));
+		LOG4CXX_DEBUG(logger, msg.GetString());
 	}
 }
 

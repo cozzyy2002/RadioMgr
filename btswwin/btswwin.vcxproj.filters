@@ -122,6 +122,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="log4cxx.properties" />
+    <Xml Include="log4cxx.config.xml" />
   </ItemGroup>
 </Project>

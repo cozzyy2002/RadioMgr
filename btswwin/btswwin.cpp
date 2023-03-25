@@ -46,8 +46,8 @@ BOOL CbtswwinApp::InitInstance()
 	GetModuleFileName(NULL, path, pathLength);
 	PathCchRemoveFileSpec(path, pathLength);
 	WCHAR configFileName[MAX_PATH];
-	PathCchCombine(configFileName, ARRAYSIZE(configFileName), path, L"log4cxx.properties");
-	log4cxx::PropertyConfigurator::configure(configFileName);
+	PathCchCombine(configFileName, ARRAYSIZE(configFileName), path, L"log4cxx.config.xml");
+	log4cxx::xml::DOMConfigurator::configure(configFileName);
 	LOG4CXX_INFO(logger, L"Logger is configured: " << configFileName);
 
 	CWinApp::InitInstance();

@@ -225,13 +225,6 @@
     <ResourceCompile Include="btswwin.rc" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="log4cxx.properties">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <FileType>Document</FileType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </CopyFileToFolders>
     <None Include="packages.config" />
     <None Include="res\btswwin.rc2" />
   </ItemGroup>
@@ -246,6 +239,18 @@
     <Image Include="res\DeviceDisconnected.bmp" />
     <Image Include="res\UnknownDevice.bmp" />
     <Image Include="res\WearableHeadset.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="log4cxx.config.xml">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </ExcludedFromBuild>
+    </Xml>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

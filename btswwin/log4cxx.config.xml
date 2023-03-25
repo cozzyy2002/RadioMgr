@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<log4j:configuration debug="true" xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+  <appender name="FileAppender" class="org.apache.log4j.RollingFileAppender">
+    <param name="file" value="${LOCALAPPDATA}/btswwin/btswwin.log" />
+    <param name="MaxFileSize" value="100KB" />
+    <param name="MaxBackupIndex" value="2" />
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%p] %m%n" />
+    </layout>
+  </appender>
+ 
+  <root>
+     <priority value="info" />
+     <appender-ref ref="FileAppender"/>
+  </root>
+ 
+</log4j:configuration>

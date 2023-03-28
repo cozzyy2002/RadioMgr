@@ -3,6 +3,8 @@
 #include "resource.h"
 #include "../Common/Assert.h"
 
+static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CBluetoothDeviceList")));
+
 #define COLUMN_TITLE_ITEM(c, s, l) {int(CBluetoothDeviceList::Column::##c), _T(s), l * 8}
 static const CBluetoothDeviceList::ColumnTitle columns[] = {
     COLUMN_TITLE_ITEM(Address, "Address", 16),
@@ -37,6 +39,8 @@ static const DeviceImageId deviceImageIdList[] = {
 };
 
 static UINT getDeviceImageId(ULONG ulClassofDevice);
+static void ClassOfDeviceToString(ULONG value, CString* pServiceClasses, CString* pMajorDeviceClass, CString* pMinorDeviceClass);
+
 
 HRESULT CBluetoothDeviceList::OnInitCtrl()
 {
@@ -92,6 +96,13 @@ HRESULT CBluetoothDeviceList::Update(const BLUETOOTH_DEVICE_INFO& info, UpdateMa
         CString deviceName(info.szName);
         SetItemText(nItem, int(Column::Name), deviceName);
     }
+	if(mask & UpdateMask::ClassofDevice) {
+		CString majorDeviceClass, minorDeviceClass;
+		ClassOfDeviceToString(info.ulClassofDevice, nullptr, &majorDeviceClass, &minorDeviceClass);
+		CString text;
+		text.Format(_T("%s:%s"), majorDeviceClass.GetString(), minorDeviceClass.GetString());
+		SetItemText(nItem, int(Column::ClassOfDevice), text);
+	}
     if(mask & UpdateMask::ConnectIcon) {
         setItemImage(nItem, getDeviceImageId(info.ulClassofDevice), info.fConnected ? 1 : 0);
     }
@@ -142,4 +153,146 @@ CString addressToString(const BLUETOOTH_ADDRESS& address)
 UINT CBluetoothDeviceList::getContextMenuId() const
 {
     return IDR_MENU_DEVICE_LIST;
+}
+
+
+// TODO: Implement showing Minor Device Class.
+//       Currently implemented for Computer, Phone(not tested) and Audio/Video device.
+
+// Struct defines Major and Minor Device Class.
+struct MajorMinorDeviceClass {
+	LPCTSTR major;			// Major Device Class.
+	size_t minorSize;		// Array size of Minor Device Classes.
+	const LPCTSTR* pMinor;	// Minor Device Classes array.
+
+	// Function that returns Minor Device Class corresponding to ULONGLONG value.
+	using MinorDeviceClassFunc = CString(*)(const MajorMinorDeviceClass&, ULONGLONG);
+	MinorDeviceClassFunc minorDeviceClassFunc;
+};
+
+static CString DefaultMinorDeviceCalssFunc(const MajorMinorDeviceClass&, ULONGLONG);
+
+static const LPCTSTR MajorServiceClasses[] = {
+	/*Bit*/
+	/* 13*/ _T("Limited Discoverable Mode"),
+	/* 14*/ _T("LE audio"),
+	/* 15*/ _T("Reserved for future use"),
+	/* 16*/ _T("Positioning(Location identification)"),
+	/* 17*/ _T("Networking"),
+	/* 18*/ _T("Rendering"),
+	/* 19*/ _T("Capturing"),
+	/* 20*/ _T("Object Transfer"),
+	/* 21*/ _T("Audio"),
+	/* 22*/ _T("Telephony"),
+	/* 23*/ _T("Information")
+};
+
+static const LPCTSTR ComputerMinorDeviceClasses[] = {
+	_T("Uncategorized, code for devie not assigned"),
+	_T("Desktop workstation"),
+	_T("Server-class computer"),
+	_T("Laptop"),
+	_T("Handheld PC/PDA(clamshell)"),
+	_T("Palm-size PC/PDA"),
+	_T("Wearable computer(watch size)"),
+	_T("Tablet"),
+};
+
+static const LPCTSTR PhoneMinorDeviceClasses[] = {
+	_T("Uncategorized, code for device not assigned"),
+	_T("Cellular"),
+	_T("Cordless"),
+	_T("Smartphone"),
+	_T("Wired modem or void gateway"),
+	_T("Common ISDN access"),
+};
+
+static const LPCTSTR AudioVideoMinorDeviceClasses[] = {
+	_T("Uncategorized, code not assigned"),
+	_T("Wearable Headset Device"),
+	_T("Hands-free Device"),
+	_T("(Reserved)"),
+	_T("Microphone"),
+	_T("Loudspeaker"),
+	_T("Headphones"),
+	_T("Portable Audio"),
+	_T("Car Audio"),
+	_T("Set-top box"),
+	_T("HiFi Audio Device"),
+	_T("VCR"),
+	_T("Video Camera"),
+	_T("Camcorder"),
+	_T("Video Monitor"),
+	_T("Video Display and Loudspeaker"),
+	_T("Video Conferencing"),
+	_T("(Reserved)"),
+	_T("Gaming/Toy"),
+};
+
+static const MajorMinorDeviceClass MajorDeviceClasses[] = {
+	{_T("Miscellaneous")},
+	{_T("Computer"), ARRAYSIZE(ComputerMinorDeviceClasses), ComputerMinorDeviceClasses},
+	{_T("Phone"), ARRAYSIZE(PhoneMinorDeviceClasses), PhoneMinorDeviceClasses},
+	{_T("LAN/Network Access point")},
+	{_T("Audio/Video"), ARRAYSIZE(AudioVideoMinorDeviceClasses), AudioVideoMinorDeviceClasses},
+	{_T("Peripheral")},
+	{_T("Imaging")},
+	{_T("Wearable")},
+	{_T("Toy")},
+	{_T("Health")},
+	{_T("Uncategorized: device code not specified")},
+};
+
+// Returns string representing MajorServiceClass, MajorDeviceClass and MinorDeviceClass for Class of Device value.
+// See https://btprodspecificationrefs.blob.core.windows.net/assigned-numbers/Assigned%20Number%20Types/Assigned%20Numbers.pdf
+void ClassOfDeviceToString(ULONG value, CString* pServiceClasses, CString* pMajorDeviceClass, CString* pMinorDeviceClass)
+{
+	auto majorServiceClass = GET_COD_SERVICE(value);
+	auto majorDeviceClass = GET_COD_MAJOR(value);
+	auto minorDeviceClass = GET_COD_MINOR(value);
+
+	if(pServiceClasses) {
+		CStringArray serviceClasses;
+		auto var = majorServiceClass;
+		for(auto str : MajorServiceClasses) {
+			if(var & 1) {
+				serviceClasses.Add(str);
+			}
+			var >>= 1;
+			if(var == 0) { break; /* No more bit is set.*/ }
+		}
+		*pServiceClasses = join(serviceClasses, _T("|"));
+	}
+
+	auto index = (majorDeviceClass < ARRAYSIZE(MajorDeviceClasses)) ? majorDeviceClass : (ARRAYSIZE(MajorDeviceClasses) - 1);
+	auto& deviceClass = MajorDeviceClasses[index];
+
+	if(pMajorDeviceClass) {
+		*pMajorDeviceClass = deviceClass.major;
+	}
+
+	if(pMinorDeviceClass) {
+		auto func = deviceClass.minorDeviceClassFunc;
+		if(!func) { func = DefaultMinorDeviceCalssFunc; }
+		*pMinorDeviceClass = func(deviceClass, minorDeviceClass);
+	}
+}
+
+// Returns Minor Device Class corresponding to the value.
+// The value is used as index of array that consits of Minor Devie Class strings.
+CString DefaultMinorDeviceCalssFunc(const MajorMinorDeviceClass& classes, ULONGLONG value)
+{
+	LPCTSTR minor = _T("Unknown");
+	if(classes.minorSize && classes.pMinor) {
+		if(value < classes.minorSize) {
+			minor = classes.pMinor[value];
+		} else {
+			LOG4CXX_WARN(logger, _T(__FUNCTION__ "(") << classes.major << _T(", ") << value << _T("): Out of range"));
+			minor = _T("Out of range");
+		}
+	} else {
+		LOG4CXX_WARN(logger, _T(__FUNCTION__ "(") << classes.major << _T(", ") << value << _T("): Unknown"));
+	}
+
+	return minor;
 }

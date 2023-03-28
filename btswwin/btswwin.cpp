@@ -40,7 +40,7 @@ static auto logger(log4cxx::Logger::getLogger(_T("btswwin")));
 
 BOOL CbtswwinApp::InitInstance()
 {
-	// Configure log4cxx using log4cxx.properties file in the folder of exe file.
+	// Configure log4cxx using XML file in the folder of exe file.
 	WCHAR path[MAX_PATH];
 	static const auto pathLength = ARRAYSIZE(path);
 	GetModuleFileName(NULL, path, pathLength);

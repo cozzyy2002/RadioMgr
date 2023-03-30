@@ -7,12 +7,33 @@
 #include "RadioNotifyListener.h"
 #include "RadioInstanceList.h"
 #include "BluetoothDeviceList.h"
+#include "Settings.h"
 #include "../Common/SafeHandle.h"
+#include "../Common/Assert.h"
 
 #include <RadioMgr.h>
 #include <atlbase.h>
 #include <memory>
 #include <thread>
+
+struct CMySettings
+{
+	CMySettings()
+		: settings(_T("btswwin"))
+		, switchByLcdState(_T("SwitchByLcdState"), true)
+		, restoreRadioState(_T("RestoreRadioState"), true)
+	{}
+
+	using BoolValue = CSettings::Value<BOOL>;
+	BoolValue switchByLcdState;
+	BoolValue restoreRadioState;
+
+	void load();
+	void save();
+
+protected:
+	CSettings settings;
+};
 
 enum {
 	WM_USER_PRINT = WM_USER + 1,	// Sent by CbtswwinDlg::printV() method.
@@ -32,6 +53,7 @@ public:
 	void print(LPCTSTR, ...);
 
 protected:
+	CMySettings m_settings;
 	CComPtr<IMediaRadioManager> m_radioManager;
 
 	static void unregisterPowerNotify(HPOWERNOTIFY);
@@ -83,15 +105,17 @@ protected:
 	afx_msg LRESULT OnUserPrint(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserRadioManagerNotify(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam);
-	virtual void PostNcDestroy();
+	//virtual void PostNcDestroy();
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnSwitchRadioUpdateCommandUI(CCmdUI*);
 	afx_msg BOOL OnSwitchRadioCommand(UINT);
 	void OnConnectDeviceUpdateCommandUI(CCmdUI*);
 	void OnConnectDeviceCommand();
-	void OnCopyDeviceList() { m_bluetoothDevices.Copy(); }
-	void OnCopyRadioList() { m_radioInstances.Copy(); }
+	void OnCopyDeviceList() { HR_EXPECT_OK(m_bluetoothDevices.Copy()); }
+	void OnCopyRadioList() { HR_EXPECT_OK(m_radioInstances.Copy()); }
 	void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	//virtual BOOL DestroyWindow();
+	afx_msg void OnDestroy();
 };

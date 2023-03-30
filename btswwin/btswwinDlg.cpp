@@ -7,7 +7,6 @@
 #include "btswwin.h"
 #include "btswwinDlg.h"
 #include "ValueName.h"
-#include "../Common/Assert.h"
 #include "afxdialogex.h"
 
 #ifdef _DEBUG
@@ -139,8 +138,22 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_COMMAND(ID_EDIT_COPYRADIOLIST, &CbtswwinDlg::OnCopyRadioList)
 	ON_COMMAND(ID_EDIT_COPYDEVICELIST, &CbtswwinDlg::OnCopyDeviceList)
 	ON_WM_INITMENUPOPUP()
+	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
+
+// CMySettings members
+
+void CMySettings::load()
+{
+	CSettings::IValue* valueList[] = {&switchByLcdState, &restoreRadioState};
+	HR_EXPECT_OK(settings.load(valueList));
+}
+
+void CMySettings::save()
+{
+	HR_EXPECT_OK(settings.save());
+}
 
 // CbtswwinDlg message handlers
 
@@ -179,6 +192,11 @@ BOOL CbtswwinDlg::OnInitDialog()
 	// Prepare for AssertFailedProc() static function.
 	tsm::Assert::onAssertFailedProc = ::AssertFailedProc;
 
+	m_settings.load();
+	m_switchByLcdState = m_settings.switchByLcdState.get();
+	m_restoreRadioState = m_settings.restoreRadioState.get();
+	UpdateData(FALSE);
+
 	m_radioInstances.OnInitCtrl();
 
 	auto hr = createRadioManager();
@@ -212,14 +230,20 @@ HRESULT CbtswwinDlg::createRadioManager()
 	return S_OK;
 }
 
-void CbtswwinDlg::PostNcDestroy()
+
+void CbtswwinDlg::OnDestroy()
 {
+	CDialogEx::OnDestroy();
+
 	// Disconnect RadioNotifyListener from IConnectionPoint.
 	if(m_radioNotifyListener) {
 		HR_EXPECT_OK(m_radioNotifyListener->unadvise());
 	}
 
-	CDialogEx::PostNcDestroy();
+	UpdateData();
+	m_settings.switchByLcdState.set(m_switchByLcdState);
+	m_settings.restoreRadioState.set(m_restoreRadioState);
+	m_settings.save();
 }
 
 void CbtswwinDlg::OnSysCommand(UINT nID, LPARAM lParam)

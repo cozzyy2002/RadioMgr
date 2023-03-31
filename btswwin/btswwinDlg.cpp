@@ -146,13 +146,32 @@ END_MESSAGE_MAP()
 
 void CMySettings::load()
 {
-	CSettings::IValue* valueList[] = {&switchByLcdState, &restoreRadioState};
+	CSettings::IValue* valueList[] = {
+		&switchByLcdState,
+		&restoreRadioState,
+		&saveWindowPlacement,
+		&windowPlacement,
+	};
 	HR_EXPECT_OK(settings.load(valueList));
 }
 
 void CMySettings::save()
 {
 	HR_EXPECT_OK(settings.save());
+}
+
+bool CMySettings::isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b)
+{
+	// If saving window position is not necessary, return as unchnged.
+	if(!saveWindowPlacement.get()) { return false; }
+
+	return
+		(a.showCmd != b.showCmd)
+		|| (a.rcNormalPosition.left != b.rcNormalPosition.left)
+		|| (a.rcNormalPosition.top != b.rcNormalPosition.top)
+		|| (a.rcNormalPosition.right != b.rcNormalPosition.right)
+		|| (a.rcNormalPosition.bottom != b.rcNormalPosition.bottom)
+	;
 }
 
 // CbtswwinDlg message handlers
@@ -192,9 +211,18 @@ BOOL CbtswwinDlg::OnInitDialog()
 	// Prepare for AssertFailedProc() static function.
 	tsm::Assert::onAssertFailedProc = ::AssertFailedProc;
 
+	auto& wp = m_settings.windowPlacement;
+	wp->length = 0;
 	m_settings.load();
 	m_switchByLcdState = m_settings.switchByLcdState.get();
 	m_restoreRadioState = m_settings.restoreRadioState.get();
+
+	// Restore Window placement, if reading value is succeeded.
+	if(wp->length == sizeof(WINDOWPLACEMENT)) {
+		const auto& rc = wp->rcNormalPosition;
+		WIN32_EXPECT(SetWindowPos(NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER));
+		ShowWindow(wp->showCmd);
+	}
 	UpdateData(FALSE);
 
 	m_radioInstances.OnInitCtrl();
@@ -243,6 +271,7 @@ void CbtswwinDlg::OnDestroy()
 	UpdateData();
 	m_settings.switchByLcdState.set(m_switchByLcdState);
 	m_settings.restoreRadioState.set(m_restoreRadioState);
+	WIN32_EXPECT(GetWindowPlacement(&m_settings.windowPlacement.get()));
 	m_settings.save();
 }
 
@@ -392,10 +421,10 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 							}
 						);
 					}
-					setRadioState(DRS_SW_RADIO_OFF);
+					HR_EXPECT_OK(setRadioState(DRS_SW_RADIO_OFF));
 					break;;
 				case 1:		// The lid is opened.
-					setRadioState(DRS_RADIO_ON, m_restoreRadioState);
+					HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_restoreRadioState));
 					break;
 				}
 			}

@@ -16,20 +16,30 @@
 #include <memory>
 #include <thread>
 
-struct CMySettings
+struct CMySettings : public CSettings::BinaryValue<WINDOWPLACEMENT>::DefaultValueHandler
 {
 	CMySettings()
 		: settings(_T("btswwin"))
-		, switchByLcdState(_T("SwitchByLcdState"), true)
-		, restoreRadioState(_T("RestoreRadioState"), true)
-	{}
+		, switchByLcdState(_T("SwitchByLcdState"), TRUE)
+		, restoreRadioState(_T("RestoreRadioState"), TRUE)
+		, saveWindowPlacement(_T("SaveWindowPlacement"))
+		, windowPlacement(_T("WindowPlacement"), this)
+	{
+		windowPlacement->length = sizeof(WINDOWPLACEMENT);
+	}
 
 	using BoolValue = CSettings::Value<BOOL>;
 	BoolValue switchByLcdState;
 	BoolValue restoreRadioState;
+	BoolValue saveWindowPlacement;
+	CSettings::BinaryValue<WINDOWPLACEMENT> windowPlacement;
 
 	void load();
 	void save();
+
+#pragma region implementation of CSettings::BinaryValue<WINDOWPLACEMENT>::IValueHandler
+	virtual bool isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b);
+#pragma endregion
 
 protected:
 	CSettings settings;

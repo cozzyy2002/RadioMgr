@@ -163,7 +163,7 @@ void CMySettings::save()
 bool CMySettings::isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b)
 {
 	// If saving window position is not necessary, return as unchnged.
-	if(!saveWindowPlacement.get()) { return false; }
+	if(!saveWindowPlacement) { return false; }
 
 	return
 		(a.showCmd != b.showCmd)
@@ -211,17 +211,17 @@ BOOL CbtswwinDlg::OnInitDialog()
 	// Prepare for AssertFailedProc() static function.
 	tsm::Assert::onAssertFailedProc = ::AssertFailedProc;
 
-	auto& wp = m_settings.windowPlacement;
-	wp->length = 0;
+	auto& wp = *m_settings.windowPlacement;
+	wp.length = 0;
 	m_settings.load();
-	m_switchByLcdState = m_settings.switchByLcdState.get();
-	m_restoreRadioState = m_settings.restoreRadioState.get();
+	m_switchByLcdState = m_settings.switchByLcdState;
+	m_restoreRadioState = m_settings.restoreRadioState;
 
 	// Restore Window placement, if reading value is succeeded.
-	if(wp->length == sizeof(WINDOWPLACEMENT)) {
-		const auto& rc = wp->rcNormalPosition;
+	if(wp.length == sizeof(WINDOWPLACEMENT)) {
+		const auto& rc = wp.rcNormalPosition;
 		WIN32_EXPECT(SetWindowPos(NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER));
-		ShowWindow(wp->showCmd);
+		ShowWindow(wp.showCmd);
 	}
 	UpdateData(FALSE);
 
@@ -269,9 +269,9 @@ void CbtswwinDlg::OnDestroy()
 	}
 
 	UpdateData();
-	m_settings.switchByLcdState.set(m_switchByLcdState);
-	m_settings.restoreRadioState.set(m_restoreRadioState);
-	WIN32_EXPECT(GetWindowPlacement(&m_settings.windowPlacement.get()));
+	m_settings.switchByLcdState = m_switchByLcdState;
+	m_settings.restoreRadioState = m_restoreRadioState;
+	WIN32_EXPECT(GetWindowPlacement(m_settings.windowPlacement.getPtr()));
 	m_settings.save();
 }
 

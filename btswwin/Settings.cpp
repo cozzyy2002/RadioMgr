@@ -43,7 +43,7 @@ bool CSettings::read(Value<bool>* value)
 template<>
 void CSettings::write(Value<bool>* value)
 {
-	AfxGetApp()->WriteProfileInt(m_sectionName.GetString(), value->getName(), value->get() ? TRUE : FALSE);
+	AfxGetApp()->WriteProfileInt(m_sectionName.GetString(), value->getName(), *value ? TRUE : FALSE);
 }
 
 template<>
@@ -55,7 +55,7 @@ int CSettings::read(Value<int>* value)
 template<>
 void CSettings::write(Value<int>* value)
 {
-	AfxGetApp()->WriteProfileInt(m_sectionName.GetString(), value->getName(), value->get());
+	AfxGetApp()->WriteProfileInt(m_sectionName.GetString(), value->getName(), *value);
 }
 
 template<>
@@ -67,5 +67,5 @@ CString CSettings::read(Value<CString>* value)
 template<>
 void CSettings::write(Value<CString>* value)
 {
-	AfxGetApp()->WriteProfileString(m_sectionName.GetString(), value->getName(), value->get().GetString());
+	AfxGetApp()->WriteProfileString(m_sectionName.GetString(), value->getName(), (*value)->GetString());
 }

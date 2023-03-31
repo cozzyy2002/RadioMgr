@@ -41,8 +41,11 @@ public:
 		explicit Value(LPCTSTR name, const T& defaultValue) { construct(name, defaultValue); }
 		explicit Value(LPCTSTR name) { construct(name, T()); }
 
-		const T& get() const { return m_value; }
-		void set(const T& value) { m_value = value; }
+		T& operator =(const T& newValue) { return (m_value = newValue); }
+		T& operator *() { return m_value; }
+		T* operator ->() { return &m_value; }
+		operator T() { return m_value; }
+
 		LPCTSTR getName() const { return m_name.GetString(); }
 		const T& getDefault() const { return m_defaultValue; }
 
@@ -54,7 +57,7 @@ public:
 		}
 
 		CString m_name;
-		T m_value;				// Current value. Changed by set() and Returned by get().
+		T m_value;				// Current value.
 		T m_savedValue;			// Value saved in profile storage.
 		T m_defaultValue;		// Value to be set to m_value if the name doesn't exist when read() is called.
 	};
@@ -86,13 +89,15 @@ public:
 		explicit BinaryValue(LPCTSTR name, IValueHandler* valueHandler = &m_defaultValueHandler)
 			: m_name(name), m_value(T()), m_savedValue(T()), m_valueHandler(valueHandler) {}
 
-		T& get() { return m_value; }
+		T& operator *() { return m_value; }
 		T* operator ->() { return &m_value; }
+		T* getPtr() { return &m_value; }
+
 		LPCTSTR getName() const { return m_name.GetString(); }
 
 	protected:
 		CString m_name;
-		T m_value;				// Current value. Changed by set() and Returned by get().
+		T m_value;				// Current value.
 		T m_savedValue;			// Value saved in profile storage.
 		IValueHandler* m_valueHandler;
 		DefaultValueHandler m_defaultValueHandler;
@@ -190,7 +195,7 @@ BYTE* CSettings::read(BinaryValue<T>* value)
 template<typename T>
 void CSettings::write(BinaryValue<T>* value)
 {
-	auto okWriteProfileBinary = AfxGetApp()->WriteProfileBinary(m_sectionName.GetString(), value->getName(), (BYTE*)&value->get(), sizeof(T));
+	auto okWriteProfileBinary = AfxGetApp()->WriteProfileBinary(m_sectionName.GetString(), value->getName(), (BYTE*)value->getPtr(), sizeof(T));
 	HR_EXPECT(okWriteProfileBinary, E_UNEXPECTED);
 }
 

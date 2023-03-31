@@ -2,6 +2,8 @@
 #include "Settings.h"
 #include "../Common/Assert.h"
 
+static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CSettings")));
+
 CSettings::CSettings(LPCTSTR sectionName)
 	: m_sectionName(sectionName)
 {
@@ -26,6 +28,7 @@ HRESULT CSettings::save(bool force /*= false*/)
 
 	for(auto value : m_valueList) {
 		if(force || value->isChanged()) {
+			LOG4CXX_DEBUG(logger, _T("Writing ") << value->toString().GetString());
 			value->write(this);
 		}
 	}
@@ -68,4 +71,28 @@ template<>
 void CSettings::write(Value<CString>* value)
 {
 	AfxGetApp()->WriteProfileString(m_sectionName.GetString(), value->getName(), (*value)->GetString());
+}
+
+template<>
+CString CSettings::Value<bool>::toString() const
+{
+	CString str;
+	str.Format(_T("%s: %s"), m_name.GetString(), m_value ? _T("true") : _T("false"));
+	return str;
+}
+
+template<>
+CString CSettings::Value<int>::toString() const
+{
+	CString str;
+	str.Format(_T("%s: %d"), m_name.GetString(), m_value);
+	return str;
+}
+
+template<>
+CString CSettings::Value<CString>::toString() const
+{
+	CString str;
+	str.Format(_T("%s: %s"), m_name.GetString(), m_value.GetString());
+	return str;
 }

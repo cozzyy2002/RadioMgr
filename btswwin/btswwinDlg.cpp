@@ -174,6 +174,15 @@ bool CMySettings::isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b)
 	;
 }
 
+CString CMySettings::valueToString(const CSettings::BinaryValue<WINDOWPLACEMENT>& value) const
+{
+	auto& wp = value.getConstValue();
+	auto& rc = wp.rcNormalPosition;
+	CString str;
+	str.Format(_T("Position=%d:%d, Size=%dx%d, showCmd=%d"), rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, wp.showCmd);
+	return str;
+}
+
 // CbtswwinDlg message handlers
 
 BOOL CbtswwinDlg::OnInitDialog()

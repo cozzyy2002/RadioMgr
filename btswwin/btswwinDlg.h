@@ -39,6 +39,7 @@ struct CMySettings : public CSettings::BinaryValue<WINDOWPLACEMENT>::DefaultValu
 
 #pragma region implementation of CSettings::BinaryValue<WINDOWPLACEMENT>::IValueHandler
 	virtual bool isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b);
+	virtual CString valueToString(const CSettings::BinaryValue<WINDOWPLACEMENT>& value) const override;
 #pragma endregion
 
 protected:

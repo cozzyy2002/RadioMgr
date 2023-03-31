@@ -18,6 +18,9 @@ public:
 
 		// Returns true if the value is changed and write() is not called yet.
 		virtual bool isChanged() const = 0;
+
+		// Returns string that consist of it's name and value.
+		virtual CString toString() const = 0;
 	};
 
 	template<typename T>
@@ -36,6 +39,7 @@ public:
 			m_savedValue = m_value;
 		}
 		bool isChanged() const override { return (m_value != m_savedValue); }
+		virtual CString toString() const override;	// Implemented for each type T.
 #pragma endregion
 
 		explicit Value(LPCTSTR name, const T& defaultValue) { construct(name, defaultValue); }
@@ -70,6 +74,7 @@ public:
 		void read(CSettings* settings) override;
 		void write(CSettings* settings) override;
 		bool isChanged() const override;
+		CString toString() const override;
 #pragma endregion
 
 		class IValueHandler
@@ -77,6 +82,7 @@ public:
 		public:
 			virtual void copy(T& dest, const T& source) = 0;
 			virtual bool isChanged(const T& a, const T& b) = 0;
+			virtual CString valueToString(const BinaryValue<T>& value) const = 0;
 		};
 
 		class DefaultValueHandler : public IValueHandler
@@ -84,6 +90,7 @@ public:
 		public:
 			virtual void copy(T& dest, const T& source) override;
 			virtual bool isChanged(const T& a, const T& b) override;
+			virtual CString valueToString(const BinaryValue<T>& value) const override;
 		};
 
 		explicit BinaryValue(LPCTSTR name, IValueHandler* valueHandler = &m_defaultValueHandler)
@@ -92,6 +99,7 @@ public:
 		T& operator *() { return m_value; }
 		T* operator ->() { return &m_value; }
 		T* getPtr() { return &m_value; }
+		const T& getConstValue() const { return m_value; }
 
 		LPCTSTR getName() const { return m_name.GetString(); }
 
@@ -129,6 +137,11 @@ template<> void CSettings::write(Value<int>* value);
 template<> CString CSettings::read(Value<CString>* value);
 template<> void CSettings::write(Value<CString>* value);
 
+template<> CString CSettings::Value<bool>::toString() const;
+template<> CString CSettings::Value<int>::toString() const;
+template<> CString CSettings::Value<CString>::toString() const;
+
+
 #pragma region Implementation for general type T using BinaryValue<T> class.
 
 template<typename T>
@@ -155,6 +168,14 @@ bool CSettings::BinaryValue<T>::isChanged() const
 }
 
 template<typename T>
+CString CSettings::BinaryValue<T>::toString() const
+{
+	CString str;
+	str.Format(_T("%s: %s"), m_name.GetString(), m_valueHandler->valueToString(*this).GetString());
+	return str;
+}
+
+template<typename T>
 void CSettings::BinaryValue<T>::DefaultValueHandler::copy(T& dest, const T& source)
 {
 	dest = source;
@@ -171,6 +192,14 @@ bool CSettings::BinaryValue<T>::DefaultValueHandler::isChanged(const T& a, const
 		if(*(p1++) != *(p2++)) return true;
 	}
 	return false;
+}
+
+template<typename T>
+CString CSettings::BinaryValue<T>::DefaultValueHandler::valueToString(const BinaryValue<T>& value) const
+{
+	CString str;
+	str.Format(_T("Size=%d byte"), sizeof(T));
+	return str;
 }
 
 template<typename T>

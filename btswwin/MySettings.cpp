@@ -3,6 +3,21 @@
 
 // CMySettings members
 
+static LPCTSTR SectionName = _T("btswwin")
+#ifdef _DEBUG
+	_T("_debug")
+#endif
+;
+
+CMySettings::CMySettings()
+	: settings(SectionName)
+	, switchByLcdState(_T("SwitchByLcdState"), TRUE)
+	, restoreRadioState(_T("RestoreRadioState"), TRUE)
+	, saveWindowPlacement(_T("SaveWindowPlacement"))
+	, windowPlacement(_T("WindowPlacement"), this)
+{
+}
+
 void CMySettings::load()
 {
 	CSettings::IValue* valueList[] = {

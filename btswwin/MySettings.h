@@ -4,15 +4,7 @@
 
 struct CMySettings : public CSettings::BinaryValue<WINDOWPLACEMENT>::DefaultValueHandler
 {
-	CMySettings()
-		: settings(_T("btswwin"))
-		, switchByLcdState(_T("SwitchByLcdState"), TRUE)
-		, restoreRadioState(_T("RestoreRadioState"), TRUE)
-		, saveWindowPlacement(_T("SaveWindowPlacement"))
-		, windowPlacement(_T("WindowPlacement"), this)
-	{
-		windowPlacement->length = sizeof(WINDOWPLACEMENT);
-	}
+	CMySettings();
 
 	using BoolValue = CSettings::Value<BOOL>;
 	BoolValue switchByLcdState;

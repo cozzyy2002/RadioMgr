@@ -6,6 +6,7 @@
 #include "framework.h"
 #include "btswwin.h"
 #include "btswwinDlg.h"
+#include "SettingsDlg.h"
 #include "ValueName.h"
 #include "afxdialogex.h"
 
@@ -54,8 +55,6 @@ END_MESSAGE_MAP()
 CbtswwinDlg::CbtswwinDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_BTSWWIN_DIALOG, pParent)
 	, m_radioState(DRS_RADIO_INVALID)
-	, m_switchByLcdState(TRUE)
-	, m_restoreRadioState(TRUE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -116,8 +115,6 @@ void CbtswwinDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_RADIO_INSTANCES, m_radioInstances);
 	DDX_Control(pDX, IDC_LIST_BLUETOOTH_DEVICE, m_bluetoothDevices);
 	DDX_Control(pDX, IDC_STATIC_STATUS, m_StatusText);
-	DDX_Check(pDX, IDC_CHECK_SWITCH_BY_LCD_STATE, m_switchByLcdState);
-	DDX_Check(pDX, IDC_CHECK_RESTORE_RADIO_STATE, m_restoreRadioState);
 }
 
 BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
@@ -139,49 +136,10 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_COMMAND(ID_EDIT_COPYDEVICELIST, &CbtswwinDlg::OnCopyDeviceList)
 	ON_WM_INITMENUPOPUP()
 	ON_WM_DESTROY()
+	ON_COMMAND(ID_FILE_SETTINGS, &CbtswwinDlg::OnFileSettings)
 END_MESSAGE_MAP()
 
 
-// CMySettings members
-
-void CMySettings::load()
-{
-	CSettings::IValue* valueList[] = {
-		&switchByLcdState,
-		&restoreRadioState,
-		&saveWindowPlacement,
-		&windowPlacement,
-	};
-	HR_EXPECT_OK(settings.load(valueList));
-}
-
-void CMySettings::save()
-{
-	HR_EXPECT_OK(settings.save());
-}
-
-bool CMySettings::isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b)
-{
-	// If saving window position is not necessary, return as unchnged.
-	if(!saveWindowPlacement) { return false; }
-
-	return
-		(a.showCmd != b.showCmd)
-		|| (a.rcNormalPosition.left != b.rcNormalPosition.left)
-		|| (a.rcNormalPosition.top != b.rcNormalPosition.top)
-		|| (a.rcNormalPosition.right != b.rcNormalPosition.right)
-		|| (a.rcNormalPosition.bottom != b.rcNormalPosition.bottom)
-	;
-}
-
-CString CMySettings::valueToString(const CSettings::BinaryValue<WINDOWPLACEMENT>& value) const
-{
-	auto& wp = (const WINDOWPLACEMENT&)value;
-	auto& rc = wp.rcNormalPosition;
-	CString str;
-	str.Format(_T("Position=%d:%d, Size=%dx%d, showCmd=%d"), rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, wp.showCmd);
-	return str;
-}
 
 // CbtswwinDlg message handlers
 
@@ -223,8 +181,6 @@ BOOL CbtswwinDlg::OnInitDialog()
 	auto& wp = *m_settings.windowPlacement;
 	wp.length = 0;
 	m_settings.load();
-	m_switchByLcdState = m_settings.switchByLcdState;
-	m_restoreRadioState = m_settings.restoreRadioState;
 
 	// Restore Window placement, if reading value is succeeded.
 	if(wp.length == sizeof(WINDOWPLACEMENT)) {
@@ -232,7 +188,6 @@ BOOL CbtswwinDlg::OnInitDialog()
 		WIN32_EXPECT(SetWindowPos(NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER));
 		ShowWindow(wp.showCmd);
 	}
-	UpdateData(FALSE);
 
 	m_radioInstances.OnInitCtrl();
 
@@ -277,9 +232,6 @@ void CbtswwinDlg::OnDestroy()
 		HR_EXPECT_OK(m_radioNotifyListener->unadvise());
 	}
 
-	UpdateData();
-	m_settings.switchByLcdState = m_switchByLcdState;
-	m_settings.restoreRadioState = m_restoreRadioState;
 	WIN32_EXPECT(GetWindowPlacement(m_settings.windowPlacement));
 	m_settings.save();
 }
@@ -418,10 +370,10 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 			print(_T("LIDSWITCH_STATE_CHANGE: LID is %s"), ValueToString(lidSwitchDatas, setting->Data[0]).GetString());
 
 			UpdateData();
-			if(m_switchByLcdState) {
+			if(m_settings.switchByLcdState) {
 				switch(setting->Data[0]) {
 				case 0:		// The lid is closed.
-					if(m_restoreRadioState) {
+					if(m_settings.restoreRadioState) {
 						// Save current state to restore when lid will be opened.
 						m_radioInstances.For([](RadioInstanceData& data)
 							{
@@ -433,7 +385,7 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 					HR_EXPECT_OK(setRadioState(DRS_SW_RADIO_OFF));
 					break;;
 				case 1:		// The lid is opened.
-					HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_restoreRadioState));
+					HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_settings.restoreRadioState));
 					break;
 				}
 			}
@@ -835,4 +787,11 @@ BOOL CbtswwinDlg::PreTranslateMessage(MSG* pMsg)
 	}
 
 	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+
+void CbtswwinDlg::OnFileSettings()
+{
+	CSettingsDlg dlg(m_settings, this);
+	dlg.DoModal();
 }

@@ -7,7 +7,8 @@
 #include "RadioNotifyListener.h"
 #include "RadioInstanceList.h"
 #include "BluetoothDeviceList.h"
-#include "Settings.h"
+#include "MySettings.h"
+
 #include "../Common/SafeHandle.h"
 #include "../Common/Assert.h"
 
@@ -15,36 +16,6 @@
 #include <atlbase.h>
 #include <memory>
 #include <thread>
-
-struct CMySettings : public CSettings::BinaryValue<WINDOWPLACEMENT>::DefaultValueHandler
-{
-	CMySettings()
-		: settings(_T("btswwin"))
-		, switchByLcdState(_T("SwitchByLcdState"), TRUE)
-		, restoreRadioState(_T("RestoreRadioState"), TRUE)
-		, saveWindowPlacement(_T("SaveWindowPlacement"))
-		, windowPlacement(_T("WindowPlacement"), this)
-	{
-		windowPlacement->length = sizeof(WINDOWPLACEMENT);
-	}
-
-	using BoolValue = CSettings::Value<BOOL>;
-	BoolValue switchByLcdState;
-	BoolValue restoreRadioState;
-	BoolValue saveWindowPlacement;
-	CSettings::BinaryValue<WINDOWPLACEMENT> windowPlacement;
-
-	void load();
-	void save();
-
-#pragma region implementation of CSettings::BinaryValue<WINDOWPLACEMENT>::IValueHandler
-	virtual bool isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b);
-	virtual CString valueToString(const CSettings::BinaryValue<WINDOWPLACEMENT>& value) const override;
-#pragma endregion
-
-protected:
-	CSettings settings;
-};
 
 enum {
 	WM_USER_PRINT = WM_USER + 1,	// Sent by CbtswwinDlg::printV() method.
@@ -109,8 +80,6 @@ public:
 	CStatic m_StatusText;
 	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData);
 //	afx_msg void OnDestroy();
-	BOOL m_switchByLcdState;
-	BOOL m_restoreRadioState;
 //	virtual void OnFinalRelease();
 protected:
 	afx_msg LRESULT OnUserPrint(WPARAM wParam, LPARAM lParam);
@@ -129,4 +98,5 @@ public:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	//virtual BOOL DestroyWindow();
 	afx_msg void OnDestroy();
+	afx_msg void OnFileSettings();
 };

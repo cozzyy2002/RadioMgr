@@ -192,6 +192,8 @@
     <ClInclude Include="BluetoothDeviceList.h" />
     <ClInclude Include="btswwin.h" />
     <ClInclude Include="btswwinDlg.h" />
+    <ClInclude Include="MySettings.h" />
+    <ClInclude Include="SettingsDlg.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ItemList.h" />
     <ClInclude Include="pch.h" />
@@ -212,6 +214,8 @@
     <ClCompile Include="BluetoothDeviceList.cpp" />
     <ClCompile Include="btswwin.cpp" />
     <ClCompile Include="btswwinDlg.cpp" />
+    <ClCompile Include="MySettings.cpp" />
+    <ClCompile Include="SettingsDlg.cpp" />
     <ClCompile Include="ItemList.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

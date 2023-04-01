@@ -176,7 +176,7 @@ bool CMySettings::isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b)
 
 CString CMySettings::valueToString(const CSettings::BinaryValue<WINDOWPLACEMENT>& value) const
 {
-	auto& wp = value.getConstValue();
+	auto& wp = (const WINDOWPLACEMENT&)value;
 	auto& rc = wp.rcNormalPosition;
 	CString str;
 	str.Format(_T("Position=%d:%d, Size=%dx%d, showCmd=%d"), rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, wp.showCmd);
@@ -280,7 +280,7 @@ void CbtswwinDlg::OnDestroy()
 	UpdateData();
 	m_settings.switchByLcdState = m_switchByLcdState;
 	m_settings.restoreRadioState = m_restoreRadioState;
-	WIN32_EXPECT(GetWindowPlacement(m_settings.windowPlacement.getPtr()));
+	WIN32_EXPECT(GetWindowPlacement(m_settings.windowPlacement));
 	m_settings.save();
 }
 

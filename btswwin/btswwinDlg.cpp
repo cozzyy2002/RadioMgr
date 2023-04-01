@@ -232,6 +232,7 @@ void CbtswwinDlg::OnDestroy()
 		HR_EXPECT_OK(m_radioNotifyListener->unadvise());
 	}
 
+	m_settings.windowPlacement->length = sizeof(WINDOWPLACEMENT);
 	WIN32_EXPECT(GetWindowPlacement(m_settings.windowPlacement));
 	m_settings.save();
 }

@@ -31,7 +31,31 @@ void CSettingsDlg::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CSettingsDlg, CDialogEx)
+	ON_BN_CLICKED(IDOK, &CSettingsDlg::OnBnClickedOk)
 END_MESSAGE_MAP()
 
 
 // CSettingsDlg message handlers
+
+
+BOOL CSettingsDlg::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+
+	m_switchByLcdState.SetCheck(m_settings.switchByLcdState);
+	m_restoreRadioState.SetCheck(m_settings.restoreRadioState);
+	m_saveWindowPlacement.SetCheck(m_settings.saveWindowPlacement);
+
+	return TRUE;  // return TRUE unless you set the focus to a control
+	// EXCEPTION: OCX Property Pages should return FALSE
+}
+
+
+void CSettingsDlg::OnBnClickedOk()
+{
+	m_settings.switchByLcdState = m_switchByLcdState.GetCheck();
+	m_settings.restoreRadioState = m_restoreRadioState.GetCheck();
+	m_settings.saveWindowPlacement = m_saveWindowPlacement.GetCheck();
+
+	CDialogEx::OnOK();
+}

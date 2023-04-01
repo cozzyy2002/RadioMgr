@@ -29,4 +29,6 @@ public:
 	CButton m_switchByLcdState;
 	CButton m_restoreRadioState;
 	CButton m_saveWindowPlacement;
+	virtual BOOL OnInitDialog();
+	afx_msg void OnBnClickedOk();
 };

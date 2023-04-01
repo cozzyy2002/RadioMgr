@@ -100,6 +100,8 @@ public:
 		T* operator ->() { return &m_value; }
 		operator T&() { return m_value; }
 		operator T*() { return &m_value; }
+		operator const T& () const { return m_value; }
+		operator const T* () const { return &m_value; }
 
 		LPCTSTR getName() const { return m_name.GetString(); }
 
@@ -224,7 +226,7 @@ BYTE* CSettings::read(BinaryValue<T>* value)
 template<typename T>
 void CSettings::write(BinaryValue<T>* value)
 {
-	auto okWriteProfileBinary = AfxGetApp()->WriteProfileBinary(m_sectionName.GetString(), value->getName(), (BYTE*)(T*)value, sizeof(T));
+	auto okWriteProfileBinary = AfxGetApp()->WriteProfileBinary(m_sectionName.GetString(), value->getName(), (BYTE*)(T*)*value, sizeof(T));
 	HR_EXPECT(okWriteProfileBinary, E_UNEXPECTED);
 }
 

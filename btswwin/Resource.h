@@ -3,6 +3,8 @@
 // Used by btswwin.rc
 //
 #define IDO_ON                          3
+#define IDOK2                           3
+#define ID_SAVE_SETTINGS                3
 #define IDO_ON2                         4
 #define IDO_OFF                         4
 #define IDO_CONNECT                     5

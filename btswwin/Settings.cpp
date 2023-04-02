@@ -35,6 +35,14 @@ HRESULT CSettings::save(bool force /*= false*/)
 	return S_OK;
 }
 
+bool CSettings::isChanged() const
+{
+	for(auto value : m_valueList) {
+		if(value->isChanged()) { return true; }
+	}
+	return false;
+}
+
 
 template<>
 bool CSettings::read(Value<bool>* value)

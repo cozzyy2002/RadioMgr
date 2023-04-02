@@ -48,7 +48,7 @@ public:
 		T& operator =(const T& newValue) { return (m_value = newValue); }
 		T& operator *() { return m_value; }
 		T* operator ->() { return &m_value; }
-		operator T() { return m_value; }
+		operator T() const { return m_value; }
 
 		LPCTSTR getName() const { return m_name.GetString(); }
 		const T& getDefault() const { return m_defaultValue; }
@@ -120,6 +120,8 @@ public:
 
 	HRESULT load(IValue** valueList, size_t size);
 	HRESULT save(bool force = false);
+
+	bool isChanged() const;
 
 protected:
 	template<typename T> T read(Value<T>* value);
@@ -200,7 +202,7 @@ template<typename T>
 CString CSettings::BinaryValue<T>::DefaultValueHandler::valueToString(const BinaryValue<T>& value) const
 {
 	CString str;
-	str.Format(_T("Size=%d byte"), sizeof(T));
+	str.Format(_T("Size=%d byte"), (int)sizeof(T));
 	return str;
 }
 

@@ -40,9 +40,9 @@ IMPLEMENT_DYNAMIC(CSettingsDlg, CDialogEx)
 CSettingsDlg::CSettingsDlg(CMySettings& settings, CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_SETTINGS, pParent), m_settings(settings)
 {
-	m_controllers.push_back(std::unique_ptr<IController>(new Controller<BOOL, CButton>(m_settings.switchByLcdState, m_switchByLcdState)));
-	m_controllers.push_back(std::unique_ptr<IController>(new Controller<BOOL, CButton>(m_settings.restoreRadioState, m_restoreRadioState)));
-	m_controllers.push_back(std::unique_ptr<IController>(new Controller<BOOL, CButton>(m_settings.saveWindowPlacement, m_saveWindowPlacement)));
+	addController(m_settings.switchByLcdState, m_switchByLcdState);
+	addController(m_settings.restoreRadioState, m_restoreRadioState);
+	addController(m_settings.saveWindowPlacement, m_saveWindowPlacement);
 }
 
 CSettingsDlg::~CSettingsDlg()
@@ -86,7 +86,9 @@ void CSettingsDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CSettingsDlg, CDialogEx)
 	ON_BN_CLICKED(IDOK, &CSettingsDlg::OnBnClickedOk)
-	ON_BN_CLICKED(IDC_CHECK_SWITCH_BY_LCD_STATE, &CSettingsDlg::OnClickedCheckSwitchByLcdState)
+	ON_BN_CLICKED(IDC_CHECK_SWITCH_BY_LCD_STATE, &CSettingsDlg::OnClickedCheckButton)
+	ON_BN_CLICKED(IDC_CHECK_RESTORE_RADIO_STATE, &CSettingsDlg::OnClickedCheckButton)
+	ON_BN_CLICKED(IDC_CHECK_SAVE_WINDOW_PLACEMENT, &CSettingsDlg::OnClickedCheckButton)
 	ON_BN_CLICKED(ID_SAVE_SETTINGS, &CSettingsDlg::OnClickedSaveSettings)
 END_MESSAGE_MAP()
 
@@ -118,7 +120,7 @@ void CSettingsDlg::OnBnClickedOk()
 }
 
 
-void CSettingsDlg::OnClickedCheckSwitchByLcdState()
+void CSettingsDlg::OnClickedCheckButton()
 {
 	updateUIState();
 }

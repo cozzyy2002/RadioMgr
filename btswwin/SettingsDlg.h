@@ -48,6 +48,12 @@ protected:
 	void updateUIState();
 	void applyChanges();
 
+	template<typename T, class C>
+	void addController(CSettings::Value<T>& value, C& ctrl)
+	{
+		m_controllers.push_back(std::unique_ptr<IController>(new Controller<T, C>(value, ctrl)));
+	}
+
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_SETTINGS };
@@ -63,6 +69,6 @@ public:
 	CButton m_saveWindowPlacement;
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedOk();
-	afx_msg void OnClickedCheckSwitchByLcdState();
+	afx_msg void OnClickedCheckButton();
 	afx_msg void OnClickedSaveSettings();
 };

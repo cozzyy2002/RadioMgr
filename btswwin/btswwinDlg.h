@@ -7,7 +7,10 @@
 #include "RadioNotifyListener.h"
 #include "RadioInstanceList.h"
 #include "BluetoothDeviceList.h"
+#include "MySettings.h"
+
 #include "../Common/SafeHandle.h"
+#include "../Common/Assert.h"
 
 #include <RadioMgr.h>
 #include <atlbase.h>
@@ -32,6 +35,7 @@ public:
 	void print(LPCTSTR, ...);
 
 protected:
+	CMySettings m_settings;
 	CComPtr<IMediaRadioManager> m_radioManager;
 
 	static void unregisterPowerNotify(HPOWERNOTIFY);
@@ -76,22 +80,23 @@ public:
 	CStatic m_StatusText;
 	afx_msg UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData);
 //	afx_msg void OnDestroy();
-	BOOL m_switchByLcdState;
-	BOOL m_restoreRadioState;
 //	virtual void OnFinalRelease();
 protected:
 	afx_msg LRESULT OnUserPrint(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserRadioManagerNotify(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam);
-	virtual void PostNcDestroy();
+	//virtual void PostNcDestroy();
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnSwitchRadioUpdateCommandUI(CCmdUI*);
 	afx_msg BOOL OnSwitchRadioCommand(UINT);
 	void OnConnectDeviceUpdateCommandUI(CCmdUI*);
 	void OnConnectDeviceCommand();
-	void OnCopyDeviceList() { m_bluetoothDevices.Copy(); }
-	void OnCopyRadioList() { m_radioInstances.Copy(); }
+	void OnCopyDeviceList() { HR_EXPECT_OK(m_bluetoothDevices.Copy()); }
+	void OnCopyRadioList() { HR_EXPECT_OK(m_radioInstances.Copy()); }
 	void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	//virtual BOOL DestroyWindow();
+	afx_msg void OnDestroy();
+	afx_msg void OnFileSettings();
 };

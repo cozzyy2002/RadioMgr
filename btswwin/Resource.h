@@ -3,6 +3,8 @@
 // Used by btswwin.rc
 //
 #define IDO_ON                          3
+#define IDOK2                           3
+#define ID_SAVE_SETTINGS                3
 #define IDO_ON2                         4
 #define IDO_OFF                         4
 #define IDO_CONNECT                     5
@@ -26,10 +28,12 @@
 #define IDR_MENU_DEVICE_LIST            143
 #define IDR_MENU_MAIN                   144
 #define IDR_MENU_RADIO_LIST             145
+#define IDD_SETTINGS                    146
 #define ID_LIST_LOG                     1001
 #define IDC_CHECK_SWITCH_BY_LCD_STATE   1002
 #define IDC_CHECK_RESTORE_RADIO_STATE   1003
 #define IDC_LIST_RADIO_INSTANCES        1004
+#define IDC_CHECK_SAVE_WINDOW_PLACEMENT 1004
 #define IDC_LIST_BLUETOOTH_DEVICE       1005
 #define IDC_STATIC_STATUS               1006
 #define ID_CONNECT_CONNECT              32771
@@ -54,13 +58,14 @@
 #define ID_EDIT_COPYDEVICELIST          32790
 #define ID_CONNECT_COPY                 32791
 #define ID_SWITCH_COPY                  32792
+#define ID_FILE_SETTINGS                32793
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        146
-#define _APS_NEXT_COMMAND_VALUE         32793
+#define _APS_NEXT_RESOURCE_VALUE        148
+#define _APS_NEXT_COMMAND_VALUE         32794
 #define _APS_NEXT_CONTROL_VALUE         1007
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

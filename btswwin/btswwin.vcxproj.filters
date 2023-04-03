@@ -60,6 +60,9 @@
     <ClInclude Include="MySettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ResourceReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="btswwin.cpp">
@@ -93,6 +96,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MySettings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

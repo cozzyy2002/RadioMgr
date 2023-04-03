@@ -52,8 +52,9 @@ END_MESSAGE_MAP()
 
 // CbtswwinDlg dialog
 
-CbtswwinDlg::CbtswwinDlg(CWnd* pParent /*=nullptr*/)
+CbtswwinDlg::CbtswwinDlg(CResourceReader& resourceReader, CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_BTSWWIN_DIALOG, pParent)
+	, m_resourceReader(resourceReader)
 	, m_radioState(DRS_RADIO_INVALID)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -174,6 +175,8 @@ BOOL CbtswwinDlg::OnInitDialog()
 	//  when the application's main window is not a dialog
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
+
+	SetWindowText(m_resourceReader.getProductName());
 
 	// Prepare for AssertFailedProc() static function.
 	tsm::Assert::onAssertFailedProc = ::AssertFailedProc;

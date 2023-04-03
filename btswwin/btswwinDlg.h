@@ -8,6 +8,7 @@
 #include "RadioInstanceList.h"
 #include "BluetoothDeviceList.h"
 #include "MySettings.h"
+#include "ResourceReader.h"
 
 #include "../Common/SafeHandle.h"
 #include "../Common/Assert.h"
@@ -28,7 +29,7 @@ class CbtswwinDlg : public CDialogEx
 {
 // Construction
 public:
-	CbtswwinDlg(CWnd* pParent = nullptr);	// standard constructor
+	CbtswwinDlg(CResourceReader& resourceReader, CWnd* pParent = nullptr);	// standard constructor
 	HRESULT createRadioManager();
 
 	void print(const CString&);
@@ -36,6 +37,7 @@ public:
 
 protected:
 	CMySettings m_settings;
+	CResourceReader& m_resourceReader;
 	CComPtr<IMediaRadioManager> m_radioManager;
 
 	static void unregisterPowerNotify(HPOWERNOTIFY);

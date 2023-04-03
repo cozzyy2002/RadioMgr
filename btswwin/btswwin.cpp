@@ -60,6 +60,8 @@ BOOL CbtswwinApp::InitInstance()
 	// Activate "Windows Native" visual manager for enabling themes in MFC controls
 	CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows));
 
+	CResourceReader resourceReader;
+
 	// Standard initialization
 	// If you are not using these features and wish to reduce the size
 	// of your final executable, you should remove from the following
@@ -67,7 +69,7 @@ BOOL CbtswwinApp::InitInstance()
 	// Change the registry key under which our settings are stored
 	// TODO: You should modify this string to be something appropriate
 	// such as the name of your company or organization
-	SetRegistryKey(_T("cozzyy2002"));
+	SetRegistryKey(resourceReader.getCompanyName().GetString());
 
 	// Initialize COM library and Uninitialize it when this method exits.
 	struct CoInitializeDeleter {
@@ -76,7 +78,7 @@ BOOL CbtswwinApp::InitInstance()
 	};
 	std::unique_ptr<bool, CoInitializeDeleter> coinit(SUCCEEDED(CoInitializeEx(NULL, COINIT_MULTITHREADED)));
 
-	CbtswwinDlg dlg;
+	CbtswwinDlg dlg(resourceReader);
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)

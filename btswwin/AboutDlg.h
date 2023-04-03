@@ -1,11 +1,16 @@
 #pragma once
 
+#include "ResourceReader.h"
+
 // CAboutDlg dialog used for App About
 
 class CAboutDlg : public CDialogEx
 {
 public:
-	CAboutDlg();
+	CAboutDlg(CResourceReader& resourceReader);
+
+protected:
+	CResourceReader& m_resourceReader;
 
 	// Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -18,4 +23,11 @@ protected:
 	// Implementation
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+	virtual BOOL OnInitDialog();
+	CString m_companyName;
+	CString m_copyright;
+	CString m_fileVersion;
+	CString m_gitCommit;
+	CString m_productName;
 };

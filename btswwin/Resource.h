@@ -36,6 +36,12 @@
 #define IDC_CHECK_SAVE_WINDOW_PLACEMENT 1004
 #define IDC_LIST_BLUETOOTH_DEVICE       1005
 #define IDC_STATIC_STATUS               1006
+#define IDC_STATIC_PRODUCT_NAME         1007
+#define IDC_STATIC_FILE_VERSION         1008
+#define IDC_STATIC_COMPANY_NAME         1009
+#define IDC_STATIC_COPYRIGHT            1010
+#define IDC_STATIC_FILE_VERSION4        1011
+#define IDC_STATIC_GIT_COMMIT           1011
 #define ID_CONNECT_CONNECT              32771
 #define File                            32772
 #define ID_DEVICE_CONNECT               32773
@@ -64,9 +70,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        148
+#define _APS_NEXT_RESOURCE_VALUE        149
 #define _APS_NEXT_COMMAND_VALUE         32794
-#define _APS_NEXT_CONTROL_VALUE         1007
+#define _APS_NEXT_CONTROL_VALUE         1009
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

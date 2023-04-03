@@ -224,7 +224,7 @@ void CbtswwinDlg::OnSysCommand(UINT nID, LPARAM lParam)
 		};
 		SendMessage(WM_POWERBROADCAST, PBT_POWERSETTINGCHANGE, (LPARAM)&setting);
 #else
-		CAboutDlg dlgAbout;
+		CAboutDlg dlgAbout(m_resourceReader);
 		dlgAbout.DoModal();
 #endif
 	}

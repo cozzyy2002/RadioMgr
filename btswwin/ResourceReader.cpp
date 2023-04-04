@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "ResourceReader.h"
 
-#include "../Common/Assert.h"
-
 #pragma comment(lib, "Version.lib")
 
 static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CResourceReader")));

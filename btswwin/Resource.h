@@ -29,6 +29,7 @@
 #define IDR_MENU_MAIN                   144
 #define IDR_MENU_RADIO_LIST             145
 #define IDD_SETTINGS                    146
+#define IDR_CUSTOM_STRING_GIT_COMMIT    149
 #define ID_LIST_LOG                     1001
 #define IDC_CHECK_SWITCH_BY_LCD_STATE   1002
 #define IDC_CHECK_RESTORE_RADIO_STATE   1003
@@ -42,6 +43,8 @@
 #define IDC_STATIC_COPYRIGHT            1010
 #define IDC_STATIC_FILE_VERSION4        1011
 #define IDC_STATIC_GIT_COMMIT           1011
+#define IDC_EDIT1                       1011
+#define IDC_EDIT_GIT_COMMIT             1011
 #define ID_CONNECT_CONNECT              32771
 #define File                            32772
 #define ID_DEVICE_CONNECT               32773
@@ -70,9 +73,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        149
+#define _APS_NEXT_RESOURCE_VALUE        150
 #define _APS_NEXT_COMMAND_VALUE         32794
-#define _APS_NEXT_CONTROL_VALUE         1009
-#define _APS_NEXT_SYMED_VALUE           101
+#define _APS_NEXT_CONTROL_VALUE         1012
+#define _APS_NEXT_SYMED_VALUE           102
 #endif
 #endif

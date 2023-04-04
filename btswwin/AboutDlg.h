@@ -25,9 +25,4 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	virtual BOOL OnInitDialog();
-	CString m_companyName;
-	CString m_copyright;
-	CString m_fileVersion;
-	CString m_gitCommit;
-	CString m_productName;
 };

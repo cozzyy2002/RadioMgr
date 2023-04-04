@@ -5,7 +5,7 @@
 
 #pragma comment(lib, "Version.lib")
 
-static auto logger(log4cxx::Logger::getLogger(_T("btswwin.CResourceReader")));
+static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CResourceReader")));
 
 CResourceReader::CResourceReader()
 	: m_pFileInfo(nullptr)
@@ -35,7 +35,7 @@ CResourceReader::CResourceReader()
 		return;
 	}
 	m_subBlockKey.Format(_T("\\StringFileInfo\\%04x%04x\\"), pTranslation->language, pTranslation->codePage);
-	DebugPrint(_T("Sub block key: %s"), m_subBlockKey.GetString());
+	LOG4CXX_DEBUG(logger, _T("Sub block key: ") << m_subBlockKey.GetString());
 }
 
 // Returs file version in VS_FIXEDFILEINFO as string
@@ -79,7 +79,7 @@ CString CResourceReader::queryString(LPCTSTR key) const
 		UINT len = 0;
 		auto ok = VerQueryValue(m_versionInfo.get(), keyStr.GetString(), (LPVOID*)&value, &len);
 		if(ok && value) {
-			DebugPrint(_T("Key `%s` = `%s`(%d char)"), keyStr.GetString(), value, len);
+			LOG4CXX_DEBUG(logger, _T("Key `") << keyStr.GetString() << _T("` = `") << value << _T("`(") << len << _T(" char)"));
 			return value;
 		} else {
 			LOG4CXX_ERROR(logger, _T("VerQueryValue(`") << keyStr.GetString() << _T("` failed. len = ") << len);

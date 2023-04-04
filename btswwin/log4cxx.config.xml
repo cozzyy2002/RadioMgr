@@ -6,7 +6,7 @@
     <param name="MaxFileSize" value="100KB" />
     <param name="MaxBackupIndex" value="2" />
     <layout class="org.apache.log4j.PatternLayout">
-      <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%p] %m%n" />
+      <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%p] %c - %m%n" />
     </layout>
   </appender>
  
@@ -14,5 +14,8 @@
      <priority value="info" />
      <appender-ref ref="FileAppender"/>
   </root>
+  <category name="btswwin.CSettings">
+     <priority value="debug" />
+  </category>
  
 </log4j:configuration>

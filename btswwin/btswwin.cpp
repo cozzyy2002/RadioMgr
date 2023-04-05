@@ -61,6 +61,7 @@ BOOL CbtswwinApp::InitInstance()
 	CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows));
 
 	CResourceReader resourceReader;
+	LOG4CXX_INFO(logger, resourceReader.getProductName().GetString() << _T(" V") << resourceReader.getFileVersion().GetString());
 
 	// Standard initialization
 	// If you are not using these features and wish to reduce the size

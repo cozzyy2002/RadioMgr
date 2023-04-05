@@ -16,7 +16,7 @@ CResourceReader::CResourceReader()
 	auto versionInfoSize = GetFileVersionInfoSize(fileName.GetString(), &dwHandle);
 	if(FAILED(WIN32_EXPECT(0 < versionInfoSize))) { return; }
 	m_versionInfo = std::make_unique<BYTE[]>(versionInfoSize);
-	if(FAILED(WIN32_EXPECT(GetFileVersionInfo(fileName.GetString(), dwHandle, versionInfoSize, (LPVOID)m_versionInfo.get())))) { return; }
+	if(FAILED(WIN32_EXPECT(GetFileVersionInfo(fileName.GetString(), dwHandle, versionInfoSize, m_versionInfo.get())))) { return; }
 	UINT len = 0;
 	BOOL ok;
 	ok = VerQueryValue(m_versionInfo.get(), _T("\\"), (LPVOID*)&m_pFileInfo, &len);

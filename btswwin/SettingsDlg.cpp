@@ -128,6 +128,12 @@ void CSettingsDlg::OnClickedCheckButton()
 
 void CSettingsDlg::OnClickedSaveSettings()
 {
+	if(m_saveWindowPlacement.GetCheck())
+	{
+		m_settings.windowPlacement->length = sizeof(WINDOWPLACEMENT);
+		WIN32_EXPECT(GetWindowPlacement(m_settings.windowPlacement));
+	}
+
 	applyChanges();
 	m_settings.save();
 

@@ -45,40 +45,40 @@ bool CSettings::isChanged() const
 
 
 template<>
-bool CSettings::read(Value<bool>* value)
+bool CSettings::read(Value<bool>& value)
 {
-	return AfxGetApp()->GetProfileInt(m_sectionName, value->getName(), value->getDefault()) ?
+	return AfxGetApp()->GetProfileInt(m_sectionName, value.getName(), value.getDefault()) ?
 		true : false;
 }
 
 template<>
-void CSettings::write(Value<bool>* value)
+void CSettings::write(Value<bool>& value)
 {
-	AfxGetApp()->WriteProfileInt(m_sectionName.GetString(), value->getName(), *value ? TRUE : FALSE);
+	AfxGetApp()->WriteProfileInt(m_sectionName.GetString(), value.getName(), value ? TRUE : FALSE);
 }
 
 template<>
-int CSettings::read(Value<int>* value)
+int CSettings::read(Value<int>& value)
 {
-	return AfxGetApp()->GetProfileInt(m_sectionName.GetString(), value->getName(), value->getDefault());
+	return AfxGetApp()->GetProfileInt(m_sectionName.GetString(), value.getName(), value.getDefault());
 }
 
 template<>
-void CSettings::write(Value<int>* value)
+void CSettings::write(Value<int>& value)
 {
-	AfxGetApp()->WriteProfileInt(m_sectionName.GetString(), value->getName(), *value);
+	AfxGetApp()->WriteProfileInt(m_sectionName.GetString(), value.getName(), value);
 }
 
 template<>
-CString CSettings::read(Value<CString>* value)
+CString CSettings::read(Value<CString>& value)
 {
-	return AfxGetApp()->GetProfileString(m_sectionName.GetString(), value->getName(), value->getDefault().GetString());
+	return AfxGetApp()->GetProfileString(m_sectionName.GetString(), value.getName(), value.getDefault().GetString());
 }
 
 template<>
-void CSettings::write(Value<CString>* value)
+void CSettings::write(Value<CString>& value)
 {
-	AfxGetApp()->WriteProfileString(m_sectionName.GetString(), value->getName(), (*value)->GetString());
+	AfxGetApp()->WriteProfileString(m_sectionName.GetString(), value.getName(), value->GetString());
 }
 
 template<>

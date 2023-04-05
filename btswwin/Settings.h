@@ -30,12 +30,12 @@ public:
 #pragma region Implementation of IValue interface.
 		void read(CSettings* settings) override
 		{
-			m_value = settings->read(this);
+			m_value = settings->read(*this);
 			m_savedValue = m_value;
 		}
 		void write(CSettings* settings) override
 		{
-			settings->write(this);
+			settings->write(*this);
 			m_savedValue = m_value;
 		}
 		bool isChanged() const override { return (m_value != m_savedValue); }
@@ -124,22 +124,22 @@ public:
 	bool isChanged() const;
 
 protected:
-	template<typename T> T read(Value<T>* value);
-	template<typename T> void write(Value<T>* value);
-	template<typename T> BYTE* read(BinaryValue<T>* value);
-	template<typename T> void write(BinaryValue<T>* value);
+	template<typename T> T read(Value<T>& value);
+	template<typename T> void write(Value<T>& value);
+	template<typename T> BYTE* read(BinaryValue<T>& value);
+	template<typename T> void write(BinaryValue<T>& value);
 
 protected:
 	CString m_sectionName;
 	std::vector<IValue*> m_valueList;
 };
 
-template<> bool CSettings::read(Value<bool>* value);
-template<> void CSettings::write(Value<bool>* value);
-template<> int CSettings::read(Value<int>* value);
-template<> void CSettings::write(Value<int>* value);
-template<> CString CSettings::read(Value<CString>* value);
-template<> void CSettings::write(Value<CString>* value);
+template<> bool CSettings::read(Value<bool>& value);
+template<> void CSettings::write(Value<bool>& value);
+template<> int CSettings::read(Value<int>& value);
+template<> void CSettings::write(Value<int>& value);
+template<> CString CSettings::read(Value<CString>& value);
+template<> void CSettings::write(Value<CString>& value);
 
 template<> CString CSettings::Value<bool>::toString() const;
 template<> CString CSettings::Value<int>::toString() const;
@@ -151,7 +151,7 @@ template<> CString CSettings::Value<CString>::toString() const;
 template<typename T>
 void CSettings::BinaryValue<T>::read(CSettings* settings)
 {
-	std::unique_ptr<BYTE[]> p(settings->read(this));
+	std::unique_ptr<BYTE[]> p(settings->read(*this));
 	if(p) {
 		m_valueHandler->copy(m_value, *(T*)p.get());
 		m_valueHandler->copy(m_savedValue, *(T*)p.get());
@@ -161,7 +161,7 @@ void CSettings::BinaryValue<T>::read(CSettings* settings)
 template<typename T>
 void CSettings::BinaryValue<T>::write(CSettings* settings)
 {
-	settings->write(this);
+	settings->write(*this);
 	m_valueHandler->copy(m_savedValue, m_value);
 }
 
@@ -207,11 +207,11 @@ CString CSettings::BinaryValue<T>::DefaultValueHandler::valueToString(const Bina
 }
 
 template<typename T>
-BYTE* CSettings::read(BinaryValue<T>* value)
+BYTE* CSettings::read(BinaryValue<T>& value)
 {
 	BYTE* data;
 	UINT size;
-	auto ok = AfxGetApp()->GetProfileBinary(m_sectionName.GetString(), value->getName(), &data, &size);
+	auto ok = AfxGetApp()->GetProfileBinary(m_sectionName.GetString(), value.getName(), &data, &size);
 	if(ok) {
 		if(SUCCEEDED(HR_EXPECT(size == sizeof(T), E_UNEXPECTED))) {
 			return data;
@@ -226,9 +226,9 @@ BYTE* CSettings::read(BinaryValue<T>* value)
 }
 
 template<typename T>
-void CSettings::write(BinaryValue<T>* value)
+void CSettings::write(BinaryValue<T>& value)
 {
-	auto okWriteProfileBinary = AfxGetApp()->WriteProfileBinary(m_sectionName.GetString(), value->getName(), (BYTE*)(T*)*value, sizeof(T));
+	auto okWriteProfileBinary = AfxGetApp()->WriteProfileBinary(m_sectionName.GetString(), value.getName(), (BYTE*)(T*)value, sizeof(T));
 	HR_EXPECT(okWriteProfileBinary, E_UNEXPECTED);
 }
 

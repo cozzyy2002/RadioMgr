@@ -10,6 +10,7 @@ public:
 	CString getCompanyName() const { return queryString(_T("CompanyName")); }
 	CString getFileDesctiption() const { return queryString(_T("FileDescription")); }
 	CString getProductName() const { return queryString(_T("ProductName")); }
+	CString getOriginalFileName() const { return queryString(_T("OriginalFileName")); }
 	CString getLegalCopyright() const { return queryString(_T("LegalCopyright")); }
 
 protected:

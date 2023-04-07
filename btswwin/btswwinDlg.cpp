@@ -27,6 +27,10 @@ CbtswwinDlg::CbtswwinDlg(CResourceReader& resourceReader, CWnd* pParent /*=nullp
 	, m_radioState(DRS_RADIO_INVALID)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+
+	auto companyName = resourceReader.getCompanyName();
+	auto fileName = resourceReader.getOriginalFileName();
+	m_settings = std::make_unique<CMySettings>(companyName.GetString(), fileName.GetString());
 }
 
 static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CbtswinDlg")));
@@ -150,9 +154,9 @@ BOOL CbtswwinDlg::OnInitDialog()
 	// Prepare for AssertFailedProc() static function.
 	tsm::Assert::onAssertFailedProc = ::AssertFailedProc;
 
-	auto& wp = *m_settings.windowPlacement;
+	auto& wp = *m_settings->windowPlacement;
 	wp.length = 0;
-	m_settings.load();
+	m_settings->load();
 
 	// Restore Window placement, if reading value is succeeded.
 	if(wp.length == sizeof(WINDOWPLACEMENT)) {
@@ -204,9 +208,9 @@ void CbtswwinDlg::OnDestroy()
 		HR_EXPECT_OK(m_radioNotifyListener->unadvise());
 	}
 
-	m_settings.windowPlacement->length = sizeof(WINDOWPLACEMENT);
-	WIN32_EXPECT(GetWindowPlacement(m_settings.windowPlacement));
-	m_settings.save();
+	m_settings->windowPlacement->length = sizeof(WINDOWPLACEMENT);
+	WIN32_EXPECT(GetWindowPlacement(m_settings->windowPlacement));
+	m_settings->save();
 }
 
 void CbtswwinDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -343,10 +347,10 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 			print(_T("LIDSWITCH_STATE_CHANGE: LID is %s"), ValueToString(lidSwitchDatas, setting->Data[0]).GetString());
 
 			UpdateData();
-			if(m_settings.switchByLcdState) {
+			if(m_settings->switchByLcdState) {
 				switch(setting->Data[0]) {
 				case 0:		// The lid is closed.
-					if(m_settings.restoreRadioState) {
+					if(m_settings->restoreRadioState) {
 						// Save current state to restore when lid will be opened.
 						m_radioInstances.For([](RadioInstanceData& data)
 							{
@@ -358,7 +362,7 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 					HR_EXPECT_OK(setRadioState(DRS_SW_RADIO_OFF));
 					break;;
 				case 1:		// The lid is opened.
-					HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_settings.restoreRadioState));
+					HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_settings->restoreRadioState));
 					break;
 				}
 			}
@@ -765,6 +769,6 @@ BOOL CbtswwinDlg::PreTranslateMessage(MSG* pMsg)
 
 void CbtswwinDlg::OnFileSettings()
 {
-	CSettingsDlg dlg(m_settings, this);
+	CSettingsDlg dlg(*m_settings, this);
 	dlg.DoModal();
 }

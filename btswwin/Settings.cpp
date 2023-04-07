@@ -74,7 +74,7 @@ HRESULT CSettings::read(LPCTSTR valueName, DWORD expectedType, std::unique_ptr<B
 	if(errorRegGetValue == ERROR_FILE_NOT_FOUND) { return HRESULT_FROM_WIN32(errorRegGetValue); }
 	// Check another error.
 	HR_ASSERT_OK(HRESULT_FROM_WIN32(errorRegGetValue));
-	if((type == expectedType) && (size == (expectedSize ? expectedSize : size))) {
+	if((type == expectedType) && ((expectedSize ? (expectedSize == size) : true))) {
 		return S_OK;
 	} else {
 		LOG4CXX_WARN(logger, valueName << _T(": Unexpected type ") << type << _T(" or size ") << size);

@@ -4,9 +4,17 @@
 
 static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CSettings")));
 
-CSettings::CSettings(LPCTSTR sectionName)
-	: m_sectionName(sectionName)
+CSettings::CSettings(LPCTSTR companyName, LPCTSTR applicationName)
 {
+	CString subKey;
+	subKey.Format(_T("Software\\%s\\%s"), companyName, applicationName);
+#ifdef _DEBUG
+	subKey += _T(".debug");
+#endif
+
+	HR_EXPECT_OK(HRESULT_FROM_WIN32(
+		RegCreateKeyEx(HKEY_CURRENT_USER, subKey.GetString(), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &m_hKey, NULL))
+	);
 }
 
 HRESULT CSettings::load(IValue** valueList, size_t size)
@@ -43,45 +51,107 @@ bool CSettings::isChanged() const
 	return false;
 }
 
+HRESULT CSettings::read(LPCTSTR valueName, DWORD expectedType, std::unique_ptr<BYTE[]>& data, DWORD expectedSize /*= 0*/)
+{
+	auto size = expectedSize;
+	DWORD type;
+	if(0 == expectedSize) {
+		// Retrieve size of the value in registory.
+		auto errorRegGetValue = RegGetValue(m_hKey, NULL, valueName, RRF_RT_ANY, &type, NULL, &size);
+		// If the value does not exist, return error.
+		if(errorRegGetValue == ERROR_FILE_NOT_FOUND) { return HRESULT_FROM_WIN32(errorRegGetValue); }
+		// Check error.
+		HR_ASSERT_OK(HRESULT_FROM_WIN32(errorRegGetValue));
+		if(type != expectedType) {
+			LOG4CXX_WARN(logger, valueName << _T(": Unexpected type ") << type << _T("(size = ") << size << _T(")"));
+			return E_UNEXPECTED;
+		}
+	}
+
+	data = std::make_unique<BYTE[]>(size);
+	auto errorRegGetValue = RegGetValue(m_hKey, NULL, valueName, RRF_RT_ANY, &type, data.get(), &size);
+	// If the value does not exist, return error.
+	if(errorRegGetValue == ERROR_FILE_NOT_FOUND) { return HRESULT_FROM_WIN32(errorRegGetValue); }
+	// Check another error.
+	HR_ASSERT_OK(HRESULT_FROM_WIN32(errorRegGetValue));
+	if((type == expectedType) && (size == (expectedSize ? expectedSize : size))) {
+		return S_OK;
+	} else {
+		LOG4CXX_WARN(logger, valueName << _T(": Unexpected type ") << type << _T(" or size ") << size);
+		data.reset();
+		return E_UNEXPECTED;
+	}
+}
+
+HRESULT CSettings::write(LPCTSTR valueName, DWORD type, const BYTE* data, DWORD size)
+{
+	return HR_EXPECT_OK(HRESULT_FROM_WIN32(RegSetValueEx(m_hKey, valueName, 0, type, data, size)));
+}
+
 
 template<>
 bool CSettings::read(Value<bool>& value)
 {
-	return AfxGetApp()->GetProfileInt(m_sectionName, value.getName(), value.getDefault()) ?
-		true : false;
+	std::unique_ptr<BYTE[]> data;
+	if(SUCCEEDED(read(value.getName(), value.RegType, data, sizeof(int)))) {
+		return *(int*)data.get() ? true : false;
+	} else {
+		return value.getDefault();
+	}
 }
 
 template<>
 void CSettings::write(Value<bool>& value)
 {
-	AfxGetApp()->WriteProfileInt(m_sectionName.GetString(), value.getName(), value ? TRUE : FALSE);
+	int data = (value ? TRUE : FALSE);
+	write(value.getName(), value.RegType, (const BYTE*)&data, sizeof(data));
 }
 
 template<>
 int CSettings::read(Value<int>& value)
 {
-	return AfxGetApp()->GetProfileInt(m_sectionName.GetString(), value.getName(), value.getDefault());
+	std::unique_ptr<BYTE[]> data;
+	if(SUCCEEDED(read(value.getName(), value.RegType, data, sizeof(int)))) {
+		return *(int*)data.get();
+	} else {
+		return value.getDefault();
+	}
 }
 
 template<>
 void CSettings::write(Value<int>& value)
 {
-	AfxGetApp()->WriteProfileInt(m_sectionName.GetString(), value.getName(), value);
+	int data = value;
+	write(value.getName(), value.RegType, (const BYTE*)&data, sizeof(data));
 }
 
 template<>
 CString CSettings::read(Value<CString>& value)
 {
-	return AfxGetApp()->GetProfileString(m_sectionName.GetString(), value.getName(), value.getDefault().GetString());
+	std::unique_ptr<BYTE[]> data;
+	if(SUCCEEDED(read(value.getName(), value.RegType, data))) {
+		return (LPCTSTR)data.get();
+	} else {
+		return value.getDefault();
+	}
 }
 
 template<>
 void CSettings::write(Value<CString>& value)
 {
-	AfxGetApp()->WriteProfileString(m_sectionName.GetString(), value.getName(), value->GetString());
+	write(value.getName(), value.RegType, (const BYTE*)value->GetString(), (value->GetLength() + 1) * sizeof(TCHAR));
 }
 
+
 template<>
+const DWORD CSettings::Value<bool>::RegType = REG_DWORD;
+template<>
+const DWORD CSettings::Value<int>::RegType = REG_DWORD;
+template<>
+const DWORD CSettings::Value<CString>::RegType = REG_SZ;
+template<>
+const DWORD CSettings::BinaryValue<WINDOWPLACEMENT>::RegType = REG_BINARY;
+
 CString CSettings::Value<bool>::toString() const
 {
 	CString str;

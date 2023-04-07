@@ -36,7 +36,7 @@ public:
 	void print(LPCTSTR, ...);
 
 protected:
-	CMySettings m_settings;
+	std::unique_ptr<CMySettings> m_settings;
 	CResourceReader& m_resourceReader;
 	CComPtr<IMediaRadioManager> m_radioManager;
 

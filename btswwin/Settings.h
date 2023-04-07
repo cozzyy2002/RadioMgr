@@ -53,6 +53,8 @@ public:
 		LPCTSTR getName() const { return m_name.GetString(); }
 		const T& getDefault() const { return m_defaultValue; }
 
+		static const DWORD RegType;
+
 	protected:
 		void construct(LPCTSTR name, const T& defaultValue)
 		{
@@ -105,6 +107,8 @@ public:
 
 		LPCTSTR getName() const { return m_name.GetString(); }
 
+		static const DWORD RegType;
+
 	protected:
 		CString m_name;
 		T m_value;				// Current value.
@@ -113,7 +117,7 @@ public:
 		DefaultValueHandler m_defaultValueHandler;
 	};
 
-	explicit CSettings(LPCTSTR sectionName);
+	explicit CSettings(LPCTSTR companyName, LPCTSTR applicationName);
 
 	template<size_t size>
 	HRESULT load(IValue* (&valueList)[size]) { return load(valueList, size); }
@@ -128,9 +132,11 @@ protected:
 	template<typename T> void write(Value<T>& value);
 	template<typename T> BYTE* read(BinaryValue<T>& value);
 	template<typename T> void write(BinaryValue<T>& value);
+	HRESULT read(LPCTSTR valueName, DWORD expectedType, std::unique_ptr<BYTE[]>& data, DWORD expectedSize = 0);
+	HRESULT write(LPCTSTR valueName, DWORD type, const BYTE* data, DWORD size);
 
 protected:
-	CString m_sectionName;
+	HKEY m_hKey;
 	std::vector<IValue*> m_valueList;
 };
 
@@ -209,27 +215,18 @@ CString CSettings::BinaryValue<T>::DefaultValueHandler::valueToString(const Bina
 template<typename T>
 BYTE* CSettings::read(BinaryValue<T>& value)
 {
-	BYTE* data;
-	UINT size;
-	auto ok = AfxGetApp()->GetProfileBinary(m_sectionName.GetString(), value.getName(), &data, &size);
-	if(ok) {
-		if(SUCCEEDED(HR_EXPECT(size == sizeof(T), E_UNEXPECTED))) {
-			return data;
-		} else {
-			// Size of data is not expected.
-			delete[] data;
-		}
+	std::unique_ptr<BYTE[]> data;
+	if(SUCCEEDED(read(value.getName(), value.RegType, data, sizeof(T)))) {
+		return data.release();
+	} else {
+		return nullptr;
 	}
-
-	// Failed to read or data size is not qual to size of T.
-	return nullptr;
 }
 
 template<typename T>
 void CSettings::write(BinaryValue<T>& value)
 {
-	auto okWriteProfileBinary = AfxGetApp()->WriteProfileBinary(m_sectionName.GetString(), value.getName(), (BYTE*)(T*)value, sizeof(T));
-	HR_EXPECT(okWriteProfileBinary, E_UNEXPECTED);
+	write(value.getName(), value.RegType, (BYTE*)(T*)value, sizeof(T));
 }
 
 #pragma endregion

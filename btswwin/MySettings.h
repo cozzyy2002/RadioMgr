@@ -4,7 +4,7 @@
 
 struct CMySettings : public CSettings::BinaryValue<WINDOWPLACEMENT>::DefaultValueHandler
 {
-	CMySettings();
+	CMySettings(LPCTSTR companyName, LPCTSTR applicationName);
 
 	using BoolValue = CSettings::Value<BOOL>;
 	BoolValue switchByLcdState;

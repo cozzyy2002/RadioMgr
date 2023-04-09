@@ -53,7 +53,7 @@ public:
 		LPCTSTR getName() const { return m_name.GetString(); }
 		const T& getDefault() const { return m_defaultValue; }
 
-		static const DWORD RegType;
+		DWORD getRegistryType() const;
 
 	protected:
 		void construct(LPCTSTR name, const T& defaultValue)
@@ -82,6 +82,7 @@ public:
 		class IValueHandler
 		{
 		public:
+			virtual void initialize(T& data) = 0;
 			virtual void copy(T& dest, const T& source) = 0;
 			virtual bool isChanged(const T& a, const T& b) = 0;
 			virtual CString valueToString(const BinaryValue<T>& value) const = 0;
@@ -90,13 +91,18 @@ public:
 		class DefaultValueHandler : public IValueHandler
 		{
 		public:
+			virtual void initialize(T& data) override;
 			virtual void copy(T& dest, const T& source) override;
 			virtual bool isChanged(const T& a, const T& b) override;
 			virtual CString valueToString(const BinaryValue<T>& value) const override;
 		};
 
 		explicit BinaryValue(LPCTSTR name, IValueHandler* valueHandler = &m_defaultValueHandler)
-			: m_name(name), m_value(T()), m_savedValue(T()), m_valueHandler(valueHandler) {}
+			: m_name(name), m_valueHandler(valueHandler)
+		{
+			m_valueHandler->initialize(m_value);
+			m_valueHandler->initialize(m_savedValue);
+		}
 
 		T& operator *() { return m_value; }
 		T* operator ->() { return &m_value; }
@@ -107,7 +113,7 @@ public:
 
 		LPCTSTR getName() const { return m_name.GetString(); }
 
-		static const DWORD RegType;
+		DWORD getRegistryType() const;
 
 	protected:
 		CString m_name;
@@ -115,6 +121,32 @@ public:
 		T m_savedValue;			// Value saved in profile storage.
 		IValueHandler* m_valueHandler;
 		DefaultValueHandler m_defaultValueHandler;
+	};
+
+	class CStringArrayValue : public BinaryValue<CStringArray>
+	{
+	public:
+#pragma region Implementation of IValue interface.
+		void read(CSettings* settings) override;
+		void write(CSettings* settings) override;
+#pragma endregion
+
+		explicit CStringArrayValue(LPCTSTR name) : BinaryValue(name, new ValueHandler())
+		{
+			m_valueHandlerPtr.reset(m_valueHandler);
+		}
+
+	protected:
+		class ValueHandler : public IValueHandler
+		{
+		public:
+			virtual void initialize(CStringArray& data) override { /* Nothing to do. */ }
+			virtual void copy(CStringArray& dest, const CStringArray& source) override;
+			virtual bool isChanged(const CStringArray& a, const CStringArray& b) override;
+			virtual CString valueToString(const BinaryValue< CStringArray>& value) const override;
+		};
+
+		std::unique_ptr<IValueHandler> m_valueHandlerPtr;
 	};
 
 	explicit CSettings(LPCTSTR companyName, LPCTSTR applicationName);
@@ -186,9 +218,15 @@ CString CSettings::BinaryValue<T>::toString() const
 }
 
 template<typename T>
+void CSettings::BinaryValue<T>::DefaultValueHandler::initialize(T& data)
+{
+	ZeroMemory(&data, sizeof(data));
+}
+
+template<typename T>
 void CSettings::BinaryValue<T>::DefaultValueHandler::copy(T& dest, const T& source)
 {
-	dest = source;
+	CopyMemory(&dest, &source, sizeof(dest));
 }
 
 template<typename T>
@@ -216,7 +254,7 @@ template<typename T>
 BYTE* CSettings::read(BinaryValue<T>& value)
 {
 	std::unique_ptr<BYTE[]> data;
-	if(SUCCEEDED(read(value.getName(), value.RegType, data, sizeof(T)))) {
+	if(SUCCEEDED(read(value.getName(), value.getRegistryType(), data, sizeof(T)))) {
 		return data.release();
 	} else {
 		return nullptr;
@@ -226,7 +264,7 @@ BYTE* CSettings::read(BinaryValue<T>& value)
 template<typename T>
 void CSettings::write(BinaryValue<T>& value)
 {
-	write(value.getName(), value.RegType, (BYTE*)(T*)value, sizeof(T));
+	write(value.getName(), value.getRegistryType(), (BYTE*)(T*)value, sizeof(T));
 }
 
 #pragma endregion

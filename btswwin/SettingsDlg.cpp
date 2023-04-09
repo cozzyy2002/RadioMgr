@@ -10,6 +10,7 @@
 static void setButtonCheck(CButton& button, const CMySettings::BoolValue& value) { button.SetCheck(value ? BST_CHECKED : BST_UNCHECKED); }
 static BOOL isButtonChecked(const CButton& button) { return (button.GetCheck() == BST_CHECKED) ? TRUE : FALSE; }
 
+#pragma region Controller<BOOL, CButton>
 template<>
 void Controller<BOOL, CButton>::setValue()
 {
@@ -32,6 +33,37 @@ bool Controller<BOOL, CButton>::isChanged() const
 	auto bValue = (value ? TRUE : FALSE);
 	return (buttonChecked != bValue) || value.isChanged();
 }
+#pragma endregion
+
+#pragma region Controller<int, CEdit>
+template<>
+void Controller<int, CEdit>::setValue()
+{
+	CString text;
+	text.Format(_T("%d"), (int)value);
+	ctrl.SetWindowText(text);
+}
+
+template<>
+void Controller<int, CEdit>::getValue()
+{
+	CString text;
+	ctrl.GetWindowText(text);
+	value = _tstoi(text.GetString());
+}
+
+// Returns true if one of following conditions is satisfied.
+//   State of the control is not set to the value yet.
+//   The value is changed but not saved to setting storage yet.
+template<>
+bool Controller<int, CEdit>::isChanged() const
+{
+	CString text;
+	ctrl.GetWindowText(text);
+	auto iValue = _tstoi(text.GetString());
+	return (value != iValue) || value.isChanged();
+}
+#pragma endregion
 
 // CSettingsDlg dialog
 
@@ -42,6 +74,7 @@ CSettingsDlg::CSettingsDlg(CMySettings& settings, CWnd* pParent /*=nullptr*/)
 {
 	addController(m_settings.switchByLcdState, m_switchByLcdState);
 	addController(m_settings.restoreRadioState, m_restoreRadioState);
+	addController(m_settings.setRadioStateTimeout, m_setRadioStateTimeout);
 	addController(m_settings.saveWindowPlacement, m_saveWindowPlacement);
 }
 
@@ -81,6 +114,7 @@ void CSettingsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK_SWITCH_BY_LCD_STATE, m_switchByLcdState);
 	DDX_Control(pDX, IDC_CHECK_RESTORE_RADIO_STATE, m_restoreRadioState);
 	DDX_Control(pDX, IDC_CHECK_SAVE_WINDOW_PLACEMENT, m_saveWindowPlacement);
+	DDX_Control(pDX, IDC_EDIT_SET_RADIO_STATE_TIMEOUT, m_setRadioStateTimeout);
 }
 
 

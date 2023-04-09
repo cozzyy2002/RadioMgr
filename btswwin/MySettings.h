@@ -10,6 +10,7 @@ struct CMySettings : public CSettings::BinaryValue<WINDOWPLACEMENT>::DefaultValu
 	BoolValue switchByLcdState;
 	BoolValue restoreRadioState;
 	BoolValue saveWindowPlacement;
+	CSettings::Value<int> setRadioStateTimeout;
 	CSettings::BinaryValue<WINDOWPLACEMENT> windowPlacement;
 
 	void load();

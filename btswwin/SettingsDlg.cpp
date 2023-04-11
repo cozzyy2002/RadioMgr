@@ -115,6 +115,7 @@ void CSettingsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK_RESTORE_RADIO_STATE, m_restoreRadioState);
 	DDX_Control(pDX, IDC_CHECK_SAVE_WINDOW_PLACEMENT, m_saveWindowPlacement);
 	DDX_Control(pDX, IDC_EDIT_SET_RADIO_STATE_TIMEOUT, m_setRadioStateTimeout);
+	DDX_Control(pDX, IDC_SPIN_SET_RADIO_STATE_TIMEOUT, m_setRadioStateTimeoutSpin);
 }
 
 
@@ -124,6 +125,7 @@ BEGIN_MESSAGE_MAP(CSettingsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_RESTORE_RADIO_STATE, &CSettingsDlg::OnClickedCheckButton)
 	ON_BN_CLICKED(IDC_CHECK_SAVE_WINDOW_PLACEMENT, &CSettingsDlg::OnClickedCheckButton)
 	ON_BN_CLICKED(ID_SAVE_SETTINGS, &CSettingsDlg::OnClickedSaveSettings)
+	ON_EN_CHANGE(IDC_EDIT_SET_RADIO_STATE_TIMEOUT, &CSettingsDlg::OnEnChangeEditSetRadioStateTimeout)
 END_MESSAGE_MAP()
 
 
@@ -133,6 +135,10 @@ END_MESSAGE_MAP()
 BOOL CSettingsDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+
+	// Set timeout range of IRadioInstance::SetRadioState() method.
+	// See "https://learn.microsoft.com/en-us/previous-versions/windows/hardware/radio/hh406610(v=vs.85)"
+	m_setRadioStateTimeoutSpin.SetRange(1, 5);
 
 	// Set all setting values to corresponding control.
 	for(auto& c : m_controllers) {
@@ -157,6 +163,16 @@ void CSettingsDlg::OnBnClickedOk()
 void CSettingsDlg::OnClickedCheckButton()
 {
 	updateUIState();
+}
+
+
+void CSettingsDlg::OnEnChangeEditSetRadioStateTimeout()
+{
+	// Note: Confirm that window handle is available
+	//       to not call updateUIState() method inside constructor.
+	if(m_setRadioStateTimeout.m_hWnd) {
+		updateUIState();
+	}
 }
 
 

@@ -111,6 +111,8 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_WM_INITMENUPOPUP()
 	ON_WM_DESTROY()
 	ON_COMMAND(ID_FILE_SETTINGS, &CbtswwinDlg::OnFileSettings)
+	ON_UPDATE_COMMAND_UI(ID_FILE_OPENLOG, &CbtswwinDlg::OnFileOpenLogCommandUI)
+	ON_COMMAND(ID_FILE_OPENLOG, &CbtswwinDlg::OnFileOpenLog)
 END_MESSAGE_MAP()
 
 
@@ -148,6 +150,19 @@ BOOL CbtswwinDlg::OnInitDialog()
 	//  when the application's main window is not a dialog
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
+
+	// Setup log file list.
+	for(auto& appender : log4cxx::Logger::getRootLogger()->getAllAppenders()) {
+		auto& clazz = log4cxx::helpers::Class::forName(_T("FileAppender"));
+		if(appender->instanceof(clazz)) {
+			// Add file name of FileAppender to the file list.
+			auto fileAppender = (log4cxx::FileAppender*)appender->cast(clazz);
+			auto _fileName = fileAppender->getFile();
+			auto fileName = std::make_unique<TCHAR[]>(_fileName.size() + 1);
+			_tcscpy_s(fileName.get(), _fileName.size() + 1, _fileName.c_str());
+			m_logFileList.push_back(std::move(fileName));
+		}
+	}
 
 	SetWindowText(m_resourceReader.getProductName());
 
@@ -771,4 +786,18 @@ void CbtswwinDlg::OnFileSettings()
 {
 	CSettingsDlg dlg(*m_settings, this);
 	dlg.DoModal();
+}
+
+void CbtswwinDlg::OnFileOpenLogCommandUI(CCmdUI* pCmdUI)
+{
+	pCmdUI->Enable(!m_logFileList.empty());
+}
+
+// Open all log file(s) in the log file list.
+void CbtswwinDlg::OnFileOpenLog()
+{
+	for(auto& fileName : m_logFileList) {
+		ShellExecute(m_hWnd, _T("open"), fileName.get(), NULL, NULL, SW_SHOWDEFAULT);
+	}
+
 }

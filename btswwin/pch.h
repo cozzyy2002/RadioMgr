@@ -16,5 +16,6 @@
 #include <log4cxx/logger.h>
 #include <log4cxx/file.h>
 #include <log4cxx/xml/domconfigurator.h>
+#include "log4cxx/fileappender.h"
 
 void DebugPrint(LPCTSTR fmt, ...);

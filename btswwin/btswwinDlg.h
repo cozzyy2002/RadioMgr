@@ -47,6 +47,8 @@ protected:
 
 	CComPtr<RadioNotifyListener> m_radioNotifyListener;
 
+	std::vector<std::unique_ptr<TCHAR[]>> m_logFileList;
+
 	HRESULT setRadioState(DEVICE_RADIO_STATE, bool restore = false);
 	HRESULT setRadioState(RadioInstanceData& data, DEVICE_RADIO_STATE, bool restore = false);
 
@@ -101,4 +103,6 @@ public:
 	//virtual BOOL DestroyWindow();
 	afx_msg void OnDestroy();
 	afx_msg void OnFileSettings();
+	afx_msg void OnFileOpenLogCommandUI(CCmdUI*);
+	afx_msg void OnFileOpenLog();
 };

@@ -18,6 +18,12 @@
 #endif
 
 
+// IDs to show log file.
+// 5 symbols are defined as sequential number. 
+#define ID_OPEN_LOGFILE_MIN ID_OPEN_LOGFILE_FILE1
+#define ID_OPEN_LOGFILE_MAX ID_OPEN_LOGFILE_FILE5
+static const int LogFileMaxCount = ID_OPEN_LOGFILE_MAX - ID_OPEN_LOGFILE_MIN + 1;
+
 
 // CbtswwinDlg dialog
 
@@ -111,8 +117,8 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_WM_INITMENUPOPUP()
 	ON_WM_DESTROY()
 	ON_COMMAND(ID_FILE_SETTINGS, &CbtswwinDlg::OnFileSettings)
-	ON_UPDATE_COMMAND_UI(ID_FILE_OPENLOG, &CbtswwinDlg::OnFileOpenLogCommandUI)
-	ON_COMMAND(ID_FILE_OPENLOG, &CbtswwinDlg::OnFileOpenLog)
+	ON_UPDATE_COMMAND_UI(ID_OPEN_LOGFILE_MIN, &CbtswwinDlg::OnFileOpenLogCommandUI)
+	ON_COMMAND_RANGE(ID_OPEN_LOGFILE_MIN, ID_OPEN_LOGFILE_MAX, &CbtswwinDlg::OnFileOpenLog)
 END_MESSAGE_MAP()
 
 
@@ -157,11 +163,18 @@ BOOL CbtswwinDlg::OnInitDialog()
 		if(appender->instanceof(clazz)) {
 			// Add file name of FileAppender to the file list.
 			auto fileAppender = (log4cxx::FileAppender*)appender->cast(clazz);
-			auto _fileName = fileAppender->getFile();
-			auto fileName = std::make_unique<TCHAR[]>(_fileName.size() + 1);
-			_tcscpy_s(fileName.get(), _fileName.size() + 1, _fileName.c_str());
+			MAllocPtr fileName(_tcsdup(fileAppender->getFile().c_str()));
 			m_logFileList.push_back(std::move(fileName));
 		}
+	}
+#if 0
+	// Show config file name in [Open log file] menu as log file
+	MAllocPtr config(_tcsdup(_T("log4cxx.config.xml")));
+	m_logFileList.push_back(std::move(config));
+#endif
+
+	if(LogFileMaxCount < m_logFileList.size()) {
+		LOG4CXX_WARN(logger, _T("Too many log files: ") << m_logFileList.size());
 	}
 
 	SetWindowText(m_resourceReader.getProductName());
@@ -788,16 +801,61 @@ void CbtswwinDlg::OnFileSettings()
 	dlg.DoModal();
 }
 
-void CbtswwinDlg::OnFileOpenLogCommandUI(CCmdUI* pCmdUI)
-{
-	pCmdUI->Enable(!m_logFileList.empty());
-}
 
-// Open all log file(s) in the log file list.
-void CbtswwinDlg::OnFileOpenLog()
+void CbtswwinDlg::OnFileOpenLogCommandUI(CCmdUI*)
 {
-	for(auto& fileName : m_logFileList) {
-		ShellExecute(m_hWnd, _T("open"), fileName.get(), NULL, NULL, SW_SHOWDEFAULT);
+	if(m_logFileList.empty()) {
+		GetMenu()->EnableMenuItem(ID_FILE_OPENLOG, MF_DISABLED);
+		return;
 	}
 
+	// Retrieve popup menu [File] -> [Open log file]
+	MENUITEMINFO info{sizeof(info)};
+	info.fMask = MIIM_TYPE | MIIM_ID | MIIM_SUBMENU;
+	GetMenu()->GetMenuItemInfo(ID_FILE_OPENLOG, &info, FALSE);
+	auto pMenu = CMenu::FromHandle(info.hSubMenu);
+
+	// Width of menu is 80% of window width.
+	RECT rect{0};
+	GetWindowRect(&rect);
+	auto menuWidth = (rect.right - rect.left) * 80 / 100;
+	if(pMenu) {
+		// Add log file name as submenu of the popup menu.
+		for(int pos = 0; pos < m_logFileList.size(); pos++) {
+			if(LogFileMaxCount <= pos) { break; }
+			auto newID = ID_OPEN_LOGFILE_MIN + pos;
+			CString _menuText;
+			_menuText.Format(_T("&%d %s"), pos + 1, m_logFileList[pos].get());
+			MAllocPtr menuText(_tcsdup(_menuText.GetString()));
+			PathCompactPath(NULL, menuText.get(), menuWidth);
+			auto id = (int)pMenu->GetMenuItemID(pos);
+			switch(id) {
+			default:
+				// Set existing menu item.
+				info.fMask = MIIM_STRING;
+				info.dwTypeData = menuText.get();
+				pMenu->SetMenuItemInfo(pos, &info, TRUE);
+				break;
+			case -1:
+				// Add new menu item.
+				pMenu->AppendMenu(MF_STRING, newID, menuText.get());
+				break;
+			case 0:
+				LOG4CXX_ERROR(logger, _T("Unexpected menu ID: ") << id << _T(", pos = ") << pos);
+				break;
+			}
+		}
+	}
+
+}
+
+// Open log file specified by menu ID.
+void CbtswwinDlg::OnFileOpenLog(UINT nId)
+{
+	auto pos = nId - ID_OPEN_LOGFILE_MIN;
+	if(pos < m_logFileList.size()) {
+		ShellExecute(m_hWnd, _T("open"), m_logFileList[pos].get(), NULL, NULL, SW_SHOWDEFAULT);
+	} else {
+		LOG4CXX_ERROR(logger, _T("Menu item position is out of range: ") << pos);
+	}
 }

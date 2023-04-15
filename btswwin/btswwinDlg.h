@@ -24,6 +24,17 @@ enum {
 	WM_USER_CONNECT_DEVICE_RESULT,	// Sent after connecting device.
 };
 
+// Deletre for MAllocPtr.
+struct MAllocDeleter
+{
+	void operator ()(LPTSTR p) { free(p); }
+};
+
+// unique_ptr<> for string allocated by malloc() function,
+// such as string returned by _tcsdup() function.
+//   MAllocPtr str(_tcsdup(_T("String ...")));
+using MAllocPtr = std::unique_ptr<TCHAR, MAllocDeleter>;
+
 // CbtswwinDlg dialog
 class CbtswwinDlg : public CDialogEx
 {
@@ -47,7 +58,7 @@ protected:
 
 	CComPtr<RadioNotifyListener> m_radioNotifyListener;
 
-	std::vector<std::unique_ptr<TCHAR[]>> m_logFileList;
+	std::vector<MAllocPtr> m_logFileList;
 
 	HRESULT setRadioState(DEVICE_RADIO_STATE, bool restore = false);
 	HRESULT setRadioState(RadioInstanceData& data, DEVICE_RADIO_STATE, bool restore = false);
@@ -104,5 +115,5 @@ public:
 	afx_msg void OnDestroy();
 	afx_msg void OnFileSettings();
 	afx_msg void OnFileOpenLogCommandUI(CCmdUI*);
-	afx_msg void OnFileOpenLog();
+	afx_msg void OnFileOpenLog(UINT);
 };

@@ -71,13 +71,20 @@
 #define ID_FILE_OPENLOG                 32794
 #define ID_OPENLOG_L                    32795
 #define ID_OPENLOG_FILE_1               32796
+#define ID_OPENLOGFILE_FILE1            32797
+#define ID_OPENL_OGFILE_FILE1           32798
+#define ID_OPEN_LOGFILE_FILE1           32799
+#define ID_OPEN_LOGFILE_FILE2           32800
+#define ID_OPEN_LOGFILE_FILE3           32801
+#define ID_OPEN_LOGFILE_FILE4           32802
+#define ID_OPEN_LOGFILE_FILE5           32803
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        149
-#define _APS_NEXT_COMMAND_VALUE         32797
+#define _APS_NEXT_COMMAND_VALUE         32804
 #define _APS_NEXT_CONTROL_VALUE         1011
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

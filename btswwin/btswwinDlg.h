@@ -24,7 +24,7 @@ enum {
 	WM_USER_CONNECT_DEVICE_RESULT,	// Sent after connecting device.
 };
 
-// Deletre for MAllocPtr.
+// Deleter for MAllocPtr.
 struct MAllocDeleter
 {
 	void operator ()(LPTSTR p) { free(p); }

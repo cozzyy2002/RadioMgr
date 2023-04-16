@@ -815,11 +815,12 @@ void CbtswwinDlg::OnFileOpenLogCommandUI(CCmdUI*)
 	GetMenu()->GetMenuItemInfo(ID_FILE_OPENLOG, &info, FALSE);
 	auto pMenu = CMenu::FromHandle(info.hSubMenu);
 
-	// Width of menu is 80% of window width.
-	RECT rect{0};
-	GetWindowRect(&rect);
-	auto menuWidth = (rect.right - rect.left) * 80 / 100;
 	if(pMenu) {
+		// Width of menu is 80% of window width.
+		RECT rect{0};
+		GetWindowRect(&rect);
+		auto menuWidth = (rect.right - rect.left) * 80 / 100;
+
 		// Add log file name as submenu of the popup menu.
 		for(int pos = 0; pos < m_logFileList.size(); pos++) {
 			if(LogFileMaxCount <= pos) { break; }

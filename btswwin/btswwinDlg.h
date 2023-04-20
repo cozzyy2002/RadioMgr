@@ -107,6 +107,8 @@ public:
 	afx_msg BOOL OnSwitchRadioCommand(UINT);
 	void OnConnectDeviceUpdateCommandUI(CCmdUI*);
 	void OnConnectDeviceCommand();
+	// Called when system menu is about to open.
+	void OnExitUpdateCommandUI(CCmdUI*);
 	void OnCopyDeviceList() { HR_EXPECT_OK(m_bluetoothDevices.Copy()); }
 	void OnCopyRadioList() { HR_EXPECT_OK(m_radioInstances.Copy()); }
 	void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);

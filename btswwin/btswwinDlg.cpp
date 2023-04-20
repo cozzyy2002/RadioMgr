@@ -13,8 +13,6 @@
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
-
-//#define DEBUG_LIDSWITCH
 #endif
 
 
@@ -97,6 +95,8 @@ void CbtswwinDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STATIC_STATUS, m_StatusText);
 }
 
+#define ID_DEBUG_LID_SWITCH (IDM_ABOUTBOX + 0x10)
+
 BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
@@ -119,6 +119,7 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_COMMAND(ID_FILE_SETTINGS, &CbtswwinDlg::OnFileSettings)
 	ON_UPDATE_COMMAND_UI(ID_OPEN_LOGFILE_MIN, &CbtswwinDlg::OnFileOpenLogCommandUI)
 	ON_COMMAND_RANGE(ID_OPEN_LOGFILE_MIN, ID_OPEN_LOGFILE_MAX, &CbtswwinDlg::OnFileOpenLog)
+	ON_UPDATE_COMMAND_UI(IDM_ABOUTBOX, &CbtswwinDlg::OnExitUpdateCommandUI)
 END_MESSAGE_MAP()
 
 
@@ -142,9 +143,6 @@ BOOL CbtswwinDlg::OnInitDialog()
 		CString strAboutMenu;
 		bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
 		ASSERT(bNameValid);
-#ifdef DEBUG_LIDSWITCH
-		strAboutMenu = _T("LCD open/close");
-#endif
 		if (!strAboutMenu.IsEmpty())
 		{
 			pSysMenu->AppendMenu(MF_SEPARATOR);
@@ -241,28 +239,52 @@ void CbtswwinDlg::OnDestroy()
 	m_settings->save();
 }
 
+// Setup system menu item.
+void CbtswwinDlg::OnExitUpdateCommandUI(CCmdUI*)
+{
+	auto pSysMenu(GetSystemMenu(FALSE));
+	if(!pSysMenu) { return; }
+
+	// Append Debug LID open/close command if CMySettings::LIDSwitch is set.
+	MENUITEMINFO info{sizeof(info)};
+	info.wID = MIIM_ID;
+	auto isMenuExist = pSysMenu->GetMenuItemInfo(ID_DEBUG_LID_SWITCH, &info);
+	if(m_settings->isEnabled(CMySettings::LIDSwitch)) {
+		if(!isMenuExist) {
+			pSysMenu->AppendMenu(MF_STRING, ID_DEBUG_LID_SWITCH, _T("Debug LCD open/close"));
+		}
+	} else {
+		if(isMenuExist) {
+			pSysMenu->RemoveMenu(ID_DEBUG_LID_SWITCH, MF_BYCOMMAND);
+		}
+	}
+}
+
 void CbtswwinDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
-	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
-	{
-#ifdef DEBUG_LIDSWITCH
-		// Send debug message for LCD open/close.
-		static BYTE data = 0;
-		data = (data == 0) ? 1 : 0;
-		POWERBROADCAST_SETTING setting = {
-			GUID_LIDSWITCH_STATE_CHANGE,
-			sizeof(BYTE),
-			data
-		};
-		SendMessage(WM_POWERBROADCAST, PBT_POWERSETTINGCHANGE, (LPARAM)&setting);
-#else
-		CAboutDlg dlgAbout(m_resourceReader);
-		dlgAbout.DoModal();
-#endif
-	}
-	else
-	{
+	switch(nID & 0xFFF0) {
+	case IDM_ABOUTBOX:
+		{
+			CAboutDlg dlgAbout(m_resourceReader);
+			dlgAbout.DoModal();
+		}
+		break;
+	case ID_DEBUG_LID_SWITCH:
+		{
+			// Send debug message for LCD open/close.
+			static BYTE data = 0;
+			data = (data == 0) ? 1 : 0;
+			POWERBROADCAST_SETTING setting = {
+				GUID_LIDSWITCH_STATE_CHANGE,
+				sizeof(BYTE),
+				data
+			};
+			SendMessage(WM_POWERBROADCAST, PBT_POWERSETTINGCHANGE, (LPARAM)&setting);
+		}
+		break;
+	default:
 		CDialogEx::OnSysCommand(nID, lParam);
+		break;
 	}
 }
 
@@ -634,9 +656,11 @@ void CbtswwinDlg::OnConnectDeviceCommand()
 				HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothEnumerateInstalledServices(hRadio, deviceInfo, &serviceCount, serviceGuids.get())));
 				for(DWORD i = 0; i < serviceCount; i++) {
 					const auto& guid = serviceGuids.get()[i];
-					//WCHAR strGuid[40];
-					//HR_EXPECT(0 < StringFromGUID2(guid, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
-					//print(_T("Setting service state of %s"), strGuid);
+					if(m_settings->isEnabled(CMySettings::ShowServiceStateGUID)) {
+						WCHAR strGuid[40];
+						HR_EXPECT(0 < StringFromGUID2(guid, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
+						LOG4CXX_INFO(logger, _T("Setting service state of ") << strGuid);
+					}
 					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, deviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE)));
 					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, deviceInfo, &guid, BLUETOOTH_SERVICE_ENABLE)));
 				}

@@ -10,6 +10,7 @@ CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
 	, setRadioStateTimeout(_T("SetRadioStateTimeout"), 1)
 	, saveWindowPlacement(_T("SaveWindowPlacement"))
 	, windowPlacement(_T("WindowPlacement"), this)
+	, debugSwitches(_T("DebugSwitches"))
 {
 }
 
@@ -51,4 +52,11 @@ CString CMySettings::valueToString(const CSettings::BinaryValue<WINDOWPLACEMENT>
 	CString str;
 	str.Format(_T("Position=%d:%d, Size=%dx%d, showCmd=%d"), rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, wp.showCmd);
 	return str;
+}
+
+
+bool CMySettings::isEnabled(int flag)
+{
+	debugSwitches.read(&settings);
+	return (flag & (int)debugSwitches);
 }

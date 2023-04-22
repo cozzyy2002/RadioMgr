@@ -8,6 +8,7 @@ CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
 	, switchByLcdState(_T("SwitchByLcdState"), TRUE)
 	, restoreRadioState(_T("RestoreRadioState"), TRUE)
 	, setRadioStateTimeout(_T("SetRadioStateTimeout"), 1)
+	, autoSelectDevice(_T("AudoSelectDevice"), TRUE)
 	, saveWindowPlacement(_T("SaveWindowPlacement"))
 	, windowPlacement(_T("WindowPlacement"), this)
 	, debugSwitches(_T("DebugSwitches"))
@@ -20,6 +21,7 @@ void CMySettings::load()
 		&switchByLcdState,
 		&restoreRadioState,
 		&setRadioStateTimeout,
+		&autoSelectDevice,
 		&saveWindowPlacement,
 		&windowPlacement,
 	};

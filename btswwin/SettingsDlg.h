@@ -77,4 +77,5 @@ public:
 	CEdit m_setRadioStateTimeout;
 	CSpinButtonCtrl m_setRadioStateTimeoutSpin;
 	afx_msg void OnEnChangeEditSetRadioStateTimeout();
+	CButton m_autoSelectDevice;
 };

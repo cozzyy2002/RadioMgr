@@ -592,7 +592,7 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 				m_bluetoothDevices.StateChange(x.second);
 			}
 		}
-		if(0 <= nChangedItem) {
+		if(m_settings->autoSelectDevice && (0 <= nChangedItem)) {
 			if(x.second.fConnected) {
 				if(!m_bluetoothDevices.GetFirstSelectedItemPosition()) {
 					// If no item is selected and the device is newly connected, select it.

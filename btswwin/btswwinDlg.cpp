@@ -564,17 +564,20 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 
 	// Check if any device is added or changed.
 	for(auto& x : newList) {
+		int nChangedItem = -1;		// Index of add/changed item.
 		const auto it = currentList.find(x.first);
 		if(it == currentList.end()) {
 			// The device is added.
 			CString deviceName(x.second.szName);
 			print(_T("DeviceAdd %s"), deviceName.GetString());
 			m_bluetoothDevices.Add(x.second);
+			nChangedItem = m_bluetoothDevices.findItem(x.second);
 		} else {
 			// The device already exists.
 			CStringArray changes;
 			if(x.second.fConnected != it->second.fConnected) {
 				changes.Add(x.second.fConnected ? _T("Connected") : _T("Disconnected"));
+				nChangedItem = m_bluetoothDevices.findItem(x.second);
 			}
 			if(x.second.fAuthenticated != it->second.fAuthenticated) {
 				changes.Add(x.second.fAuthenticated ? _T("Authenticated") : _T("Unauthenticated"));
@@ -587,6 +590,17 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 				CString deviceName(x.second.szName);
 				print(_T("DeviceStateChange %s: %s"), deviceName.GetString(), join(changes).GetString());
 				m_bluetoothDevices.StateChange(x.second);
+			}
+		}
+		if(0 <= nChangedItem) {
+			if(x.second.fConnected) {
+				if(!m_bluetoothDevices.GetFirstSelectedItemPosition()) {
+					// If no item is selected and the device is newly connected, select it.
+					m_bluetoothDevices.selectItem(nChangedItem, TRUE);
+				}
+			} else {
+				// If the device is newly disconnected, unselect it.
+				m_bluetoothDevices.selectItem(nChangedItem, FALSE);
 			}
 		}
 	}

@@ -45,6 +45,7 @@ public:
 	// Key is BLUETOOTH_ADDRESS_STRUCT::ullLong contained in BLUETOOTH_DEVICE_INFO.
 	using ListData = std::map<ULONGLONG, BLUETOOTH_DEVICE_INFO>;
 
+	int findItem(const BLUETOOTH_DEVICE_INFO&);
 	const auto& getDeviceInfoList() { return m_infos; }
 	static auto getListKey(const BLUETOOTH_DEVICE_INFO& info) { return info.Address.ullLong; }
 

@@ -88,8 +88,7 @@ HRESULT CBluetoothDeviceList::StateChange(const BLUETOOTH_DEVICE_INFO& info)
 
 HRESULT CBluetoothDeviceList::Update(const BLUETOOTH_DEVICE_INFO& info, UpdateMask mask)
 {
-    auto address = addressToString(info.Address);
-    auto nItem = findItem(address);
+    auto nItem = findItem(info);
     HR_ASSERT(-1 < nItem, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
 
     if(mask & UpdateMask::Name) {
@@ -123,6 +122,12 @@ const BLUETOOTH_DEVICE_INFO* CBluetoothDeviceList::GetSelectedDevice()
         ret = (BLUETOOTH_DEVICE_INFO*)GetItemData(i);
     }
     return ret;
+}
+
+int CBluetoothDeviceList::findItem(const BLUETOOTH_DEVICE_INFO& info)
+{
+	auto address = addressToString(info.Address);
+	return CItemList::findItem(address);
 }
 
 // Returns image ID suitable for ClassofDevice value.

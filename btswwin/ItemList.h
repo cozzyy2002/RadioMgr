@@ -18,6 +18,9 @@ public:
     template<size_t size>
     HRESULT setupImageList(const UINT (&bitmaps)[size]);
 
+    void selectItem(int, BOOL select = TRUE);
+    int findItem(LPCTSTR);
+
 protected:
     CItemList() : m_columnCount(0), m_bitmaps(nullptr), m_bitmapCount(0) {}
 
@@ -28,7 +31,6 @@ protected:
 
     int addItem(LPCTSTR);
     void removeItem(LPCTSTR);
-    int findItem(LPCTSTR);
 
     void setItemImage(int nItem, UINT imageId, int nOverlay = 0);
     void setOverlayImage(UINT imageId, int nOverlay);

@@ -23,6 +23,11 @@ void CItemList::removeItem(LPCTSTR key)
     }
 }
 
+void CItemList::selectItem(int nItem, BOOL select /*= TRUE*/)
+{
+    SetItemState(nItem, select ? LVIS_SELECTED : 0, LVIS_SELECTED);
+}
+
 int CItemList::findItem(LPCTSTR key)
 {
     LVFINDINFO fi = {LVFI_STRING, key};

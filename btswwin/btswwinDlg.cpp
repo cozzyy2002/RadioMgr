@@ -109,9 +109,11 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
 	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
 	ON_UPDATE_COMMAND_UI(ID_REMOTE_DEVICE_CONNECT, &CbtswwinDlg::OnConnectDeviceUpdateCommandUI)
+	ON_UPDATE_COMMAND_UI(ID_REMOTE_DEVICE_PROPERTIES, &CbtswwinDlg::OnDevicePropertiesUpdateCommandUI)
 	ON_COMMAND_EX(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnSwitchRadioCommand)
 	ON_COMMAND_EX(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnSwitchRadioCommand)
 	ON_COMMAND(ID_REMOTE_DEVICE_CONNECT, &CbtswwinDlg::OnConnectDeviceCommand)
+	ON_COMMAND(ID_REMOTE_DEVICE_PROPERTIES, &CbtswwinDlg::OnDevicePropertiesCommand)
 	ON_COMMAND(ID_EDIT_COPYRADIOLIST, &CbtswwinDlg::OnCopyRadioList)
 	ON_COMMAND(ID_EDIT_COPYDEVICELIST, &CbtswwinDlg::OnCopyDeviceList)
 	ON_WM_INITMENUPOPUP()
@@ -670,6 +672,26 @@ void CbtswwinDlg::OnConnectDeviceCommand()
 
 			PostMessage(WM_USER_CONNECT_DEVICE_RESULT, serviceCount, (LPARAM)deviceInfo);
 		});
+}
+
+void CbtswwinDlg::OnDevicePropertiesUpdateCommandUI(CCmdUI* pCmdUI)
+{
+	BOOL enable = TRUE;
+
+	// Check if the device is selected.
+	auto deviceInfo = m_bluetoothDevices.GetSelectedDevice();
+	if(!deviceInfo) { enable = FALSE; }
+
+	pCmdUI->Enable(enable);
+}
+
+void CbtswwinDlg::OnDevicePropertiesCommand()
+{
+	auto deviceInfo = m_bluetoothDevices.GetSelectedDevice();
+	if(deviceInfo) {
+		auto _deviceInfo(*deviceInfo);
+		WIN32_EXPECT(BluetoothDisplayDeviceProperties(m_hWnd, &_deviceInfo));
+	}
 }
 
 // Handles WM_USER_CONNECT_DEVICE_RESULT message.

@@ -78,13 +78,17 @@
 #define ID_OPEN_LOGFILE_FILE3           32801
 #define ID_OPEN_LOGFILE_FILE4           32802
 #define ID_OPEN_LOGFILE_FILE5           32803
+#define ID_REMOTEDEVICE_PROPERTY        32804
+#define ID_REMOTE_DEVICE_PROPERTY       32805
+#define ID_REMOTE_DEVICE_PROPERTIES     32806
+#define ID_CONNECT_PROPERTIES           32807
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        149
-#define _APS_NEXT_COMMAND_VALUE         32804
+#define _APS_NEXT_COMMAND_VALUE         32808
 #define _APS_NEXT_CONTROL_VALUE         1011
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

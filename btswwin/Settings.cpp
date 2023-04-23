@@ -6,11 +6,14 @@ static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CSettings")));
 
 CSettings::CSettings(LPCTSTR companyName, LPCTSTR applicationName)
 {
-	CString subKey;
-	subKey.Format(_T("Software\\%s\\%s"), companyName, applicationName);
+	static const auto subKeyFormat = _T("Software\\%s\\%s")
 #ifdef _DEBUG
-	subKey += _T(".debug");
+		_T(".debug");
 #endif
+	;
+
+	CString subKey;
+	subKey.Format(subKeyFormat, companyName, applicationName);
 
 	HR_EXPECT_OK(HRESULT_FROM_WIN32(
 		RegCreateKeyEx(HKEY_CURRENT_USER, subKey.GetString(), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &m_hKey, NULL))

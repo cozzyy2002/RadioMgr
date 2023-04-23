@@ -636,10 +636,10 @@ void CbtswwinDlg::OnConnectDeviceUpdateCommandUI(CCmdUI* pCmdUI)
 {
 	BOOL enable = TRUE;
 
-	// While connecting thread is running, new connection can be started.
+	// While connecting thread is running, new connection can not be started.
 	if(m_connectDeviceThread) { enable = FALSE; }
 
-	// Check if the device is not connected yet.
+	// Check if selected device is not connected yet.
 	auto deviceInfo = m_bluetoothDevices.GetSelectedDevice();
 	if(!deviceInfo || (deviceInfo->fConnected)) { enable = FALSE; }
 
@@ -671,15 +671,21 @@ void CbtswwinDlg::OnConnectDeviceCommand()
 				print(_T("Connecting to %s(%d services) ..."), deviceName.GetString(), serviceCount);
 				auto serviceGuids = std::make_unique<GUID[]>(serviceCount);
 				HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothEnumerateInstalledServices(hRadio, deviceInfo, &serviceCount, serviceGuids.get())));
+				std::vector<std::unique_ptr<std::thread>> threads(serviceCount);
 				for(DWORD i = 0; i < serviceCount; i++) {
-					const auto& guid = serviceGuids.get()[i];
-					if(m_settings->isEnabled(CMySettings::ShowServiceStateGUID)) {
-						WCHAR strGuid[40];
-						HR_EXPECT(0 < StringFromGUID2(guid, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
-						LOG4CXX_INFO(logger, _T("Setting service state of ") << strGuid);
-					}
-					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, deviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE)));
-					HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, deviceInfo, &guid, BLUETOOTH_SERVICE_ENABLE)));
+					threads[i] = std::make_unique<std::thread>([&](int seq) {
+						const auto& guid = serviceGuids.get()[seq];
+						if(m_settings->isEnabled(CMySettings::ShowServiceStateGUID)) {
+							WCHAR strGuid[40];
+							HR_EXPECT(0 < StringFromGUID2(guid, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
+							LOG4CXX_INFO(logger, _T("Setting service state ") << seq << _T(": ") << strGuid);
+						}
+						HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, deviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE)));
+						HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, deviceInfo, &guid, BLUETOOTH_SERVICE_ENABLE)));
+					}, i);
+				}
+				for(auto& t : threads) {
+					t->join();
 				}
 			} else {
 				print(_T("No installed service to connect for %s"), deviceName.GetString());

@@ -134,6 +134,7 @@
     <ClCompile Include="..\Common\Assert.cpp" />
     <ClCompile Include="BluetoothCommon.cpp" />
     <ClCompile Include="BluetoothDevice.cpp" />
+    <ClCompile Include="BluetoothGATT.cpp" />
     <ClCompile Include="BluetoothRadio.cpp" />
     <ClCompile Include="RadioMgrConsole.cpp" />
   </ItemGroup>

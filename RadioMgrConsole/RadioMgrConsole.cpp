@@ -6,13 +6,14 @@
 
 #include "../Common/Assert.h"
 
-#define USE_RADIO_MANAGER
+//#define USE_RADIO_MANAGER
 
 using namespace ATL;
 
 extern HRESULT EnumBluetoothRadios();
 extern HRESULT EnumBluetoothDevices();
 extern HRESULT SelectBluetoothDevice();
+extern HRESULT BluetoothGATT(int argc, wchar_t** argv);
 
 static const wchar_t* knownClsIDs[] = {
     // CLSID of IMediaRadioManager               Count Name
@@ -25,6 +26,8 @@ static const wchar_t* knownClsIDs[] = {
 int wmain(int argc, wchar_t** argv)
 {
     tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { _putts(msg); };
+
+    return BluetoothGATT(argc, argv);
 
 #ifdef USE_RADIO_MANAGER
     if(argc < 2) {
@@ -91,7 +94,7 @@ int wmain(int argc, wchar_t** argv)
     HR_ASSERT_OK(EnumBluetoothRadios());
     _putws(L"\n---- Enumerating Bluetooth Devices ----");
     HR_ASSERT_OK(EnumBluetoothDevices());
-    HR_ASSERT_OK(SelectBluetoothDevice());
+    //HR_ASSERT_OK(SelectBluetoothDevice());
 
     return S_OK;
 }

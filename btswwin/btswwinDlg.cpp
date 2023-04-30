@@ -659,11 +659,11 @@ void CbtswwinDlg::OnConnectDeviceUpdateCommandUI(CCmdUI* pCmdUI)
 void CbtswwinDlg::OnConnectDeviceCommand()
 {
 	BeginWaitCursor();
-	m_connectDeviceThread = std::make_unique<std::thread>([this]
+	auto deviceInfo = m_bluetoothDevices.GetSelectedDevice();
+	m_connectDeviceThread = std::make_unique<std::thread>([this, deviceInfo]
 		{
 			HANDLE hRadio = NULL;		// Search for all local radios.
 			DWORD serviceCount = 0;
-			auto deviceInfo = m_bluetoothDevices.GetSelectedDevice();
 			auto enumError = BluetoothEnumerateInstalledServices(hRadio, deviceInfo, &serviceCount, NULL);
 			HR_EXPECT(enumError == ERROR_MORE_DATA, HRESULT_FROM_WIN32(enumError));
 			CString deviceName(deviceInfo->szName);

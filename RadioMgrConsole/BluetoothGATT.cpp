@@ -44,7 +44,7 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 		WIN32_ASSERT(SetupDiGetDeviceInterfaceDetail(hDevInfo, &interfaceData, pDetail, detailSize, NULL, &infoData));
 		wprintf_s(L"  %d %d byte: `%s`\n", index, detailSize, pDetail->DevicePath);
 
-		HANDLE hFile = CreateFile(pDetail->DevicePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+		HFile hFile = CreateFile(pDetail->DevicePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 		WIN32_EXPECT(hFile != INVALID_HANDLE_VALUE);
 		wprintf_s(L"    Opened 0x%p\n", (HANDLE)hFile);
 	}

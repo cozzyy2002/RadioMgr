@@ -21,3 +21,4 @@ extern std::wstring ClassOfDevice(ULONG value);
 
 extern void HandleDeleteFunc(HANDLE h);
 using HRadio = SafeHandle<HANDLE, HandleDeleteFunc>;
+using HFile = SafeHandle<HANDLE, HandleDeleteFunc>;

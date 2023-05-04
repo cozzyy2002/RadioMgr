@@ -1,12 +1,16 @@
 #include <Windows.h>
 #include <SetupAPI.h>
 #include <initguid.h>
+#include <bluetoothleapis.h>
 
 #include "BluetoothCommon.h"
 #include "../Common/SafeHandle.h"
 #include "../Common/Assert.h"
 
 #pragma comment(lib, "SetupApi.lib")
+#pragma comment(lib, "BluetoothAPIs.lib")
+
+static HRESULT ShowGATT(HANDLE hDevice);
 
 DEFINE_GUID(BluetoothDeviceInterfaceClassGUID, 0x00f40965, 0xe89d, 0x4487, 0x98, 0x90, 0x87, 0xc3, 0xab, 0xb2, 0x11, 0xf4);
 
@@ -44,9 +48,9 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 		WIN32_ASSERT(SetupDiGetDeviceInterfaceDetail(hDevInfo, &interfaceData, pDetail, detailSize, NULL, &infoData));
 		wprintf_s(L"  %d %d byte: `%s`\n", index, detailSize, pDetail->DevicePath);
 
-		HFile hFile = CreateFile(pDetail->DevicePath, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
-		WIN32_EXPECT(hFile != INVALID_HANDLE_VALUE);
-		wprintf_s(L"    Opened 0x%p\n", (HANDLE)hFile);
+		HFile hFile = CreateFile(pDetail->DevicePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+		WIN32_ASSERT(hFile != INVALID_HANDLE_VALUE);
+		HR_EXPECT_OK(ShowGATT(hFile));
 	}
 
 #if 0
@@ -78,5 +82,20 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 	}
 #endif
 
+	return S_OK;
+}
+
+HRESULT ShowGATT(HANDLE hDevice)
+{
+	USHORT serviceCount = 0;
+	auto error = BluetoothGATTGetServices(hDevice, 0, NULL, &serviceCount, BLUETOOTH_GATT_FLAG_NONE);
+	HR_ASSERT(error == ERROR_MORE_DATA, HRESULT_FROM_WIN32(error));
+	wprintf_s(L"    %d Services\n", serviceCount);
+	auto services = std::make_unique<BTH_LE_GATT_SERVICE[]>(serviceCount);
+	HR_ASSERT_OK(HRESULT_FROM_WIN32(BluetoothGATTGetServices(hDevice, serviceCount, services.get(), NULL, BLUETOOTH_GATT_FLAG_NONE)));
+
+	for(USHORT iService = 0; iService < serviceCount; iService++) {
+
+	}
 	return S_OK;
 }

@@ -28,13 +28,13 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 	HDevInfo hDevInfo = SetupDiGetClassDevs(&BluetoothDeviceInterfaceClassGUID, NULL, NULL, flag);
 	WIN32_ASSERT(hDevInfo != INVALID_HANDLE_VALUE);
 
-#if 0
+#if 1
 	SP_DEVINFO_LIST_DETAIL_DATA detail{sizeof(detail)};
 	WIN32_ASSERT(SetupDiGetDeviceInfoListDetail(hDevInfo, &detail));
-	wprintf_s(L"%s\n", detail.RemoteMachineName);
-	return S_OK;
+	wprintf_s(L"RemoteMachineName: `%s`\n", detail.RemoteMachineName);
 #endif
 
+#if 0
 	SP_DEVICE_INTERFACE_DATA interfaceData{sizeof(interfaceData)};
 	for(DWORD index = 0; SetupDiEnumDeviceInterfaces(hDevInfo, NULL, &BluetoothDeviceInterfaceClassGUID, index, &interfaceData); index++) {
 		DWORD detailSize = 0;
@@ -52,18 +52,17 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 		WIN32_ASSERT(hFile != INVALID_HANDLE_VALUE);
 		HR_EXPECT_OK(ShowGATT(hFile));
 	}
+#endif
 
-#if 0
+#if 1
 	SP_DEVINFO_DATA data{sizeof(data)};
 	for(DWORD index = 0; SetupDiEnumDeviceInfo(hDevInfo, index, &data); index++) {
-		OLECHAR strGuid[40];
-		HR_ASSERT(0 < StringFromGUID2(data.ClassGuid, strGuid, ARRAYSIZE(strGuid)), E_UNEXPECTED);
 		DWORD keyCount;
 		WIN32_ASSERT(
 			SetupDiGetDevicePropertyKeys(hDevInfo, &data, NULL, 0, &keyCount, 0)
 			!= ERROR_INSUFFICIENT_BUFFER
 		);
-		wprintf(L"%d %s: %d keys\n", index, strGuid, keyCount);
+		wprintf(L"%d %s: %d keys\n", index, GuidToString(data.ClassGuid).c_str(), keyCount);
 		auto keys = std::make_unique<DEVPROPKEY[]>(keyCount);
 		WIN32_ASSERT(SetupDiGetDevicePropertyKeys(hDevInfo, &data, keys.get(), keyCount, NULL, 0));
 		for(DWORD i = 0; i < keyCount; i++) {
@@ -76,8 +75,7 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 			);
 			auto prop = std::make_unique<BYTE[]>(propSize);
 			WIN32_ASSERT(SetupDiGetDeviceProperty(hDevInfo, &data, &key, &propType, prop.get(), propSize, NULL, 0));
-			HR_ASSERT(0 < StringFromGUID2(key.fmtid, strGuid, ARRAYSIZE(strGuid)), E_UNEXPECTED);
-			wprintf(L"  % 3d %s Type=0x%08x, Size=%d\n", i, strGuid, propType, propSize);
+			wprintf(L"  % 3d %s Type=0x%08x, Size=%d\n", i, GuidToString(key.fmtid).c_str(), propType, propSize);
 		}
 	}
 #endif

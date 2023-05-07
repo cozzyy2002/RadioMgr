@@ -137,3 +137,11 @@ std::wstring DefaultMinorDeviceCalssFunc(const MajorMinorDeviceClass& classes, U
 	stream << L"(0x" << std::hex << value << L")";
 	return stream.str();
 }
+
+
+std::wstring GuidToString(REFGUID guid)
+{
+	OLECHAR str[40];
+	StringFromGUID2(guid, str, ARRAYSIZE(str));
+	return str;
+}

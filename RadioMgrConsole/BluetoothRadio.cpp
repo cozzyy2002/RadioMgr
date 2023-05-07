@@ -28,7 +28,7 @@ HRESULT EnumBluetoothRadios()
 	return hr;
 }
 
-static std::wstring GuidToString(REFGUID guid);
+static std::wstring GuidToName(REFGUID guid);
 
 static BOOL WINAPI FilterDevice(LPVOID param, const BLUETOOTH_DEVICE_INFO* info)
 {
@@ -74,7 +74,7 @@ HRESULT SelectBluetoothDevice()
 		wprintf_s(L"Device %s has %d Services. Connecting...\n", deviceInfo.szName, serviceCount);
 		for(DWORD i = 0; i < serviceCount; i++) {
 			auto& guid(serviceGuids[i]);
-			wprintf_s(L"  %d %s\n", i, GuidToString(guid).c_str());
+			wprintf_s(L"  %d %s\n", i, GuidToName(guid).c_str());
 			HR_ASSERT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE)));
 			HR_ASSERT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, &deviceInfo, &guid, BLUETOOTH_SERVICE_ENABLE)));
 		}
@@ -169,7 +169,7 @@ static const GuidValueName GUIDs[] = {
 	GUID_ITEM(HealthDeviceProfileSinkServiceClass_UUID),
 };
 
-std::wstring GuidToString(REFGUID guid)
+std::wstring GuidToName(REFGUID guid)
 {
 	LPCWSTR name = L"UNKNOWN";
 	for(auto& x : GUIDs) {
@@ -179,9 +179,7 @@ std::wstring GuidToString(REFGUID guid)
 		}
 	}
 
-	WCHAR strGuid[40];
-	StringFromGUID2(guid, strGuid, ARRAYSIZE(strGuid));
 	std::wostringstream stream;
-	stream << strGuid << L":" << name;
+	stream << GuidToString(guid) << L":" << name;
 	return stream.str();
 }

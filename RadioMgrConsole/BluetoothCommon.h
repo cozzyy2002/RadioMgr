@@ -18,6 +18,7 @@
 #define T2ARG(x) x.wYear, x.wMonth, x.wDay, x.wHour, x.wMinute, x.wSecond
 
 extern std::wstring ClassOfDevice(ULONG value);
+extern std::wstring GuidToString(REFGUID);
 
 extern void HandleDeleteFunc(HANDLE h);
 using HRadio = SafeHandle<HANDLE, HandleDeleteFunc>;

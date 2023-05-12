@@ -9,6 +9,7 @@
 
 static void setButtonCheck(CButton& button, const CMySettings::BoolValue& value) { button.SetCheck(value ? BST_CHECKED : BST_UNCHECKED); }
 static BOOL isButtonChecked(const CButton& button) { return (button.GetCheck() == BST_CHECKED) ? TRUE : FALSE; }
+static CString getComboBoxText(const CComboBox& combo);
 
 #pragma region Controller<BOOL, CButton>
 template<>
@@ -23,9 +24,6 @@ void Controller<BOOL, CButton>::getValue()
 	value = isButtonChecked(ctrl);
 }
 
-// Returns true if one of following conditions is satisfied.
-//   State of the control is not set to the value yet.
-//   The value is changed but not saved to setting storage yet.
 template<>
 bool Controller<BOOL, CButton>::isChanged() const
 {
@@ -65,17 +63,75 @@ bool Controller<int, CEdit>::isChanged() const
 }
 #pragma endregion
 
+#pragma region Controller<CString, CComboBox>
+template<>
+void Controller<CString, CComboBox>::setValue()
+{
+	// Select ComboBox item whose string is equal to the value.
+	auto& strValue(*value);
+	for(int i = 0; i < ctrl.GetCount(); i++) {
+		CString text;
+		ctrl.GetLBText(i, text);
+		if(text == strValue) {
+			ctrl.SetCurSel(i);
+			return;
+		}
+	}
+	// If ComboBox does not have an item whose string is equal to the value.
+	// Insert the value as the top item.
+	ctrl.InsertString(0, strValue);
+	ctrl.SetCurSel(0);
+}
+
+template<>
+void Controller<CString, CComboBox>::getValue()
+{
+	value = getComboBoxText(ctrl);
+}
+
+template<>
+bool Controller<CString, CComboBox>::isChanged() const
+{
+	return (value != getComboBoxText(ctrl)) || value.isChanged();
+}
+#pragma endregion
+
+// Returns String of selected item of the ComboBox.
+// If no item is selected, returns string in the edit box.
+CString getComboBoxText(const CComboBox& combo)
+{
+	auto nSelected = combo.GetCurSel();
+	CString text;
+	if(0 <= nSelected) {
+		combo.GetLBText(nSelected, text);
+	} else {
+		COMBOBOXINFO info{sizeof(info)};
+		combo.GetComboBoxInfo(&info);
+		auto hwnd = info.hwndItem;
+		if(hwnd) {
+			auto len = GetWindowTextLength(hwnd);
+			if(len++) {
+				auto str = std::make_unique<TCHAR[]>(len);
+				GetWindowText(hwnd, str.get(), len);
+				text = str.get();
+			}
+		}
+	}
+	//DebugPrint(_T(__FUNCTION__ ": `%s`, nSelected=%d"), text.GetString(), nSelected);
+	return text;
+}
+
 // CSettingsDlg dialog
 
 IMPLEMENT_DYNAMIC(CSettingsDlg, CDialogEx)
 
-CSettingsDlg::CSettingsDlg(CMySettings& settings, CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_SETTINGS, pParent), m_settings(settings)
+CSettingsDlg::CSettingsDlg(CMySettings& settings, const CStringArray& deviceSelectNameArray, CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_SETTINGS, pParent), m_settings(settings), m_deviceSelectNameArray(deviceSelectNameArray)
 {
 	addController(m_settings.switchByLcdState, m_switchByLcdState);
 	addController(m_settings.restoreRadioState, m_restoreRadioState);
 	addController(m_settings.setRadioStateTimeout, m_setRadioStateTimeout);
-	addController(m_settings.autoSelectDevice, m_autoSelectDevice);
+	addController(m_settings.deviceSelectName, m_deviceSelectNameList);
 	addController(m_settings.saveWindowPlacement, m_saveWindowPlacement);
 }
 
@@ -88,13 +144,27 @@ void CSettingsDlg::updateUIState()
 	// restoreRadioState is used only if switchByLcdState == TRUE.
 	m_restoreRadioState.EnableWindow(isButtonChecked(m_switchByLcdState));
 
+	if(m_deviceSelectNone.GetCheck()) {
+		m_settings.deviceSelect = CMySettings::DeviceSelect::None;
+	} else if(m_deviceSelectAuto.GetCheck()) {
+		m_settings.deviceSelect = CMySettings::DeviceSelect::Auto;
+	} else if(m_deviceSelectName.GetCheck()) {
+		m_settings.deviceSelect = CMySettings::DeviceSelect::Name;
+	}
+
+	m_deviceSelectNameList.EnableWindow(m_settings.deviceSelect == CMySettings::DeviceSelect::Name);
+
 	// Set enabled state of [Save] button.
 	// The button is enabled if at least one setting value is different from it's setting storage.
 	bool isChanged = false;
-	for(auto& c : m_controllers) {
-		if(c->isChanged()) {
-			isChanged = true;
-			break;
+	// Note: Controller does not support RadioButton.
+	isChanged |= m_settings.deviceSelect.isChanged();
+	if(!isChanged) {
+		for(auto& c : m_controllers) {
+			if(c->isChanged()) {
+				isChanged = true;
+				break;
+			}
 		}
 	}
 	auto button = GetDlgItem(ID_SAVE_SETTINGS);
@@ -117,7 +187,10 @@ void CSettingsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK_SAVE_WINDOW_PLACEMENT, m_saveWindowPlacement);
 	DDX_Control(pDX, IDC_EDIT_SET_RADIO_STATE_TIMEOUT, m_setRadioStateTimeout);
 	DDX_Control(pDX, IDC_SPIN_SET_RADIO_STATE_TIMEOUT, m_setRadioStateTimeoutSpin);
-	DDX_Control(pDX, IDC_CHECK_AUTO_SELECT_DEVICE, m_autoSelectDevice);
+	DDX_Control(pDX, IDC_COMBO_DEVICE_SELECT_NAME, m_deviceSelectNameList);
+	DDX_Control(pDX, IDC_RADIO_DEVICE_SELECT_NONE, m_deviceSelectNone);
+	DDX_Control(pDX, IDC_RADIO_DEVICE_SELECT_AUTO, m_deviceSelectAuto);
+	DDX_Control(pDX, IDC_RADIO_DEVICE_SELECT_NAME, m_deviceSelectName);
 }
 
 
@@ -129,6 +202,11 @@ BEGIN_MESSAGE_MAP(CSettingsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_AUTO_SELECT_DEVICE, &CSettingsDlg::OnClickedCheckButton)
 	ON_BN_CLICKED(ID_SAVE_SETTINGS, &CSettingsDlg::OnClickedSaveSettings)
 	ON_EN_CHANGE(IDC_EDIT_SET_RADIO_STATE_TIMEOUT, &CSettingsDlg::OnEnChangeEditSetRadioStateTimeout)
+	ON_BN_CLICKED(IDC_RADIO_DEVICE_SELECT_NONE, &CSettingsDlg::OnClickedCheckButton)
+	ON_BN_CLICKED(IDC_RADIO_DEVICE_SELECT_AUTO, &CSettingsDlg::OnClickedCheckButton)
+	ON_BN_CLICKED(IDC_RADIO_DEVICE_SELECT_NAME, &CSettingsDlg::OnClickedCheckButton)
+	ON_CBN_SELCHANGE(IDC_COMBO_DEVICE_SELECT_NAME, &CSettingsDlg::OnChangeComboDeviceSelectName)
+	ON_CBN_EDITCHANGE(IDC_COMBO_DEVICE_SELECT_NAME, &CSettingsDlg::OnChangeComboDeviceSelectName)
 END_MESSAGE_MAP()
 
 
@@ -142,6 +220,22 @@ BOOL CSettingsDlg::OnInitDialog()
 	// Set timeout range of IRadioInstance::SetRadioState() method.
 	// See "https://learn.microsoft.com/en-us/previous-versions/windows/hardware/radio/hh406610(v=vs.85)"
 	m_setRadioStateTimeoutSpin.SetRange(1, 5);
+
+	switch((CMySettings::DeviceSelect)m_settings.deviceSelect) {
+	case CMySettings::DeviceSelect::None:
+		m_deviceSelectNone.SetCheck(TRUE);
+		break;
+	case CMySettings::DeviceSelect::Auto:
+		m_deviceSelectAuto.SetCheck(TRUE);
+		break;
+	case CMySettings::DeviceSelect::Name:
+		m_deviceSelectName.SetCheck(TRUE);
+		break;
+	}
+
+	for(int i = 0; i < m_deviceSelectNameArray.GetCount(); i++) {
+		m_deviceSelectNameList.AddString(m_deviceSelectNameArray[i]);
+	}
 
 	// Set all setting values to corresponding control.
 	for(auto& c : m_controllers) {
@@ -190,5 +284,11 @@ void CSettingsDlg::OnClickedSaveSettings()
 	applyChanges();
 	m_settings.save();
 
+	updateUIState();
+}
+
+
+void CSettingsDlg::OnChangeComboDeviceSelectName()
+{
 	updateUIState();
 }

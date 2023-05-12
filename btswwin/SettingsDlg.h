@@ -7,8 +7,15 @@
 class IController
 {
 public:
+	// Set setting value to the control.
 	virtual void setValue() = 0;
+
+	// Get setting value from the control.
 	virtual void getValue() = 0;
+
+	// Returns true if one of following conditions is satisfied.
+	//   State of the control is not set to the value yet.
+	//   The value is changed but not saved to setting storage yet.
 	virtual bool isChanged() const = 0;
 };
 
@@ -27,13 +34,6 @@ protected:
 	C& ctrl;
 };
 
-template<> void Controller<BOOL, CButton>::setValue();
-template<> void Controller<BOOL, CButton>::getValue();
-template<> bool Controller<BOOL, CButton>::isChanged() const;
-template<> void Controller<int, CEdit>::setValue();
-template<> void Controller<int, CEdit>::getValue();
-template<> bool Controller<int, CEdit>::isChanged() const;
-
 // CSettingsDlg dialog
 
 class CSettingsDlg : public CDialogEx
@@ -41,11 +41,12 @@ class CSettingsDlg : public CDialogEx
 	DECLARE_DYNAMIC(CSettingsDlg)
 
 public:
-	CSettingsDlg(CMySettings& settings, CWnd* pParent = nullptr);   // standard constructor
+	CSettingsDlg(CMySettings& settings, const CStringArray& deviceSelectNameArray, CWnd* pParent = nullptr);   // standard constructor
 	virtual ~CSettingsDlg();
 
 protected:
 	CMySettings& m_settings;
+	const CStringArray& m_deviceSelectNameArray;
 	std::vector<std::unique_ptr<IController>> m_controllers;
 
 	void updateUIState();
@@ -77,5 +78,9 @@ public:
 	CEdit m_setRadioStateTimeout;
 	CSpinButtonCtrl m_setRadioStateTimeoutSpin;
 	afx_msg void OnEnChangeEditSetRadioStateTimeout();
-	CButton m_autoSelectDevice;
+	CButton m_deviceSelectNone;
+	CButton m_deviceSelectAuto;
+	CButton m_deviceSelectName;
+	CComboBox m_deviceSelectNameList;
+	afx_msg void OnChangeComboDeviceSelectName();
 };

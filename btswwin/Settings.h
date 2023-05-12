@@ -69,6 +69,17 @@ public:
 	};
 
 	template<typename T>
+	class EnumValue : public Value<int>
+	{
+	public:
+		explicit EnumValue(LPCTSTR name, const T& defaultValue) : Value<int>(name, (int)defaultValue) {}
+		explicit EnumValue(LPCTSTR name) : Value<int>(name, (int)T()) {}
+
+		T& operator =(const T& newValue) { return (T&)(m_value = (int)newValue); }
+		operator T() const { return (T)m_value; }
+	};
+
+	template<typename T>
 	class BinaryValue : public IValue
 	{
 	public:

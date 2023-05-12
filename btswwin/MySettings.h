@@ -10,7 +10,15 @@ struct CMySettings : public CSettings::BinaryValue<WINDOWPLACEMENT>::DefaultValu
 	BoolValue switchByLcdState;
 	BoolValue restoreRadioState;
 	CSettings::Value<int> setRadioStateTimeout;
-	BoolValue autoSelectDevice;
+
+	enum class DeviceSelect {
+		None = 0,
+		Auto,
+		Name,
+	};
+	CSettings::EnumValue<DeviceSelect> deviceSelect;
+	CSettings::Value<CString> deviceSelectName;
+
 	BoolValue saveWindowPlacement;
 	CSettings::BinaryValue<WINDOWPLACEMENT> windowPlacement;
 

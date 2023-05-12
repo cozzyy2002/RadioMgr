@@ -57,11 +57,12 @@ HRESULT CBluetoothDeviceList::OnInitCtrl()
     return S_OK;
 }
 
-HRESULT CBluetoothDeviceList::Add(const BLUETOOTH_DEVICE_INFO& info)
+HRESULT CBluetoothDeviceList::Add(const BLUETOOTH_DEVICE_INFO& info, BOOL select)
 {
     auto& pair = m_infos.insert({getListKey(info), info});
 
     auto nItem = addItem(addressToString(info.Address));
+	selectItem(nItem, select);
     SetItemData(nItem, (DWORD_PTR)&pair.first->second);
     return Update(info, UpdateMask::All);
 }

@@ -570,7 +570,10 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 			// The device is added.
 			CString deviceName(x.second.szName);
 			print(_T("DeviceAdd %s"), deviceName.GetString());
-			m_bluetoothDevices.Add(x.second);
+			BOOL select =
+				(m_settings->deviceSelect == CMySettings::DeviceSelect::Name) &&
+				(*m_settings->deviceSelectName == x.second.szName);
+			m_bluetoothDevices.Add(x.second, select);
 			pChangedInfo = &x.second;
 		} else {
 			// The device already exists.
@@ -592,7 +595,7 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 				m_bluetoothDevices.StateChange(x.second);
 			}
 		}
-		if(pChangedInfo && m_settings->autoSelectDevice) {
+		if(pChangedInfo && (m_settings->deviceSelect == CMySettings::DeviceSelect::Auto)) {
 			auto nItem = m_bluetoothDevices.findItem(*pChangedInfo);
 			if(x.second.fConnected) {
 				if(!m_bluetoothDevices.GetFirstSelectedItemPosition()) {
@@ -864,7 +867,12 @@ BOOL CbtswwinDlg::PreTranslateMessage(MSG* pMsg)
 
 void CbtswwinDlg::OnFileSettings()
 {
-	CSettingsDlg dlg(*m_settings, this);
+	CStringArray deviceNameArray;
+	for(auto& x : m_bluetoothDevices.getDeviceInfoList()) {
+		deviceNameArray.Add(x.second.szName);
+	}
+
+	CSettingsDlg dlg(*m_settings, deviceNameArray, this);
 	dlg.DoModal();
 }
 

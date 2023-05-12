@@ -19,7 +19,7 @@ public:
 	};
 
 	HRESULT OnInitCtrl();
-	HRESULT Add(const BLUETOOTH_DEVICE_INFO&);
+	HRESULT Add(const BLUETOOTH_DEVICE_INFO&, BOOL select);
 	HRESULT Remove(const BLUETOOTH_DEVICE_INFO&);
 	HRESULT StateChange(const BLUETOOTH_DEVICE_INFO&);
 	const BLUETOOTH_DEVICE_INFO* GetSelectedDevice();

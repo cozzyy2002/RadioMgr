@@ -140,17 +140,6 @@ protected:
 	std::vector<IValue*> m_valueList;
 };
 
-template<> bool CSettings::read(Value<bool>& value);
-template<> void CSettings::write(Value<bool>& value);
-template<> int CSettings::read(Value<int>& value);
-template<> void CSettings::write(Value<int>& value);
-template<> CString CSettings::read(Value<CString>& value);
-template<> void CSettings::write(Value<CString>& value);
-
-template<> CString CSettings::Value<bool>::toString() const;
-template<> CString CSettings::Value<int>::toString() const;
-template<> CString CSettings::Value<CString>::toString() const;
-
 
 #pragma region Implementation for general type T using BinaryValue<T> class.
 

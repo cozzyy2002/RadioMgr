@@ -102,8 +102,10 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 				break;
 			case DEVPROP_TYPE_FILETIME:
 				{
+					FILETIME ft;
+					FileTimeToLocalFileTime((FILETIME*)prop.get(), &ft);
 					SYSTEMTIME t;
-					FileTimeToSystemTime((FILETIME*)prop.get(), &t);
+					FileTimeToSystemTime(&ft, &t);
 					wprintf(L"%04d/%02d/%02d %02d:%02d:%02d.%03d", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond, t.wMilliseconds);
 				}
 				break;

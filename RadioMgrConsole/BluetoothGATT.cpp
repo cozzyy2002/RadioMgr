@@ -121,6 +121,13 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 					wprintf(L"\n        `%s`", p);
 				}
 				break;
+			case DEVPROP_TYPE_BINARY:
+				wprintf(L"BINARY Size=%d", propSize);
+				for(DWORD i = 0; i < propSize; i++) {
+					if((i % 16) == 0) { wprintf(L"\n       "); }
+					wprintf(L" %02x", ((BYTE*)prop.get())[i]);
+				}
+				break;
 			default:
 				wprintf(L"Type=0x%08x, Size=%d", propType, propSize);
 				break;

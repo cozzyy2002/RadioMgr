@@ -75,7 +75,57 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 			);
 			auto prop = std::make_unique<BYTE[]>(propSize);
 			WIN32_ASSERT(SetupDiGetDeviceProperty(hDevInfo, &data, &key, &propType, prop.get(), propSize, NULL, 0));
-			wprintf(L"  % 3d %s Type=0x%08x, Size=%d\n", i, GuidToString(key.fmtid).c_str(), propType, propSize);
+			wprintf(L"  % 3d %s ", i, GuidToString(key.fmtid).c_str());
+
+			switch(propType) {
+			case DEVPROP_TYPE_BOOLEAN:
+				wprintf(L"BOOLEAN %s", *(BYTE*)prop.get() ? L"TRUE" : L"FALSE");
+				break;
+			case DEVPROP_TYPE_BYTE:
+				wprintf(L"BYTE %u", *(BYTE*)prop.get());
+				break;
+			case DEVPROP_TYPE_INT16:
+				wprintf(L"INT16 %d", *(INT16*)prop.get());
+				break;
+			case DEVPROP_TYPE_UINT16:
+				wprintf(L"UINT16 %u", *(UINT16*)prop.get());
+				break;
+			case DEVPROP_TYPE_INT32:
+				wprintf(L"UINT32 %d", *(INT32*)prop.get());
+				break;
+			case DEVPROP_TYPE_UINT32:
+				wprintf(L"UINT32 %u", *(UINT32*)prop.get());
+				break;
+			case DEVPROP_TYPE_INT64:
+				wprintf(L"UINT64 %I64d", *(INT64*)prop.get());
+				break;
+			case DEVPROP_TYPE_UINT64:
+				wprintf(L"UINT64 %I64u", *(UINT64*)prop.get());
+				break;
+			case DEVPROP_TYPE_FILETIME:
+				{
+					SYSTEMTIME t;
+					FileTimeToSystemTime((FILETIME*)prop.get(), &t);
+					wprintf(L"%04d/%02d/%02d %02d:%02d:%02d.%03d", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond, t.wMilliseconds);
+				}
+				break;
+			case DEVPROP_TYPE_GUID:
+				wprintf(L"%s", GuidToString(*(GUID*)prop.get()).c_str());
+				break;
+			case DEVPROP_TYPE_STRING:
+				wprintf(L"`%s`", (WCHAR*)prop.get());
+				break;
+			case DEVPROP_TYPE_STRING_LIST:
+				wprintf(L"STRING_LIST Size=%d", propSize);
+				for(auto p = (WCHAR*)prop.get(); *p; p += (wcslen(p) + 1)) {
+					wprintf(L"\n        `%s`", p);
+				}
+				break;
+			default:
+				wprintf(L"Type=0x%08x, Size=%d", propType, propSize);
+				break;
+			}
+			_putws(L"");
 		}
 	}
 #endif

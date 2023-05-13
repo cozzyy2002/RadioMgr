@@ -25,7 +25,7 @@ static const wchar_t* knownClsIDs[] = {
 
 int wmain(int argc, wchar_t** argv)
 {
-    tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { _putts(msg); };
+    tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { fputws(msg, stderr); };
 
     return BluetoothGATT(argc, argv);
 

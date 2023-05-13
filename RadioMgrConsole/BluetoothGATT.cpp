@@ -116,13 +116,14 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 				wprintf(L"`%s`", (WCHAR*)prop.get());
 				break;
 			case DEVPROP_TYPE_STRING_LIST:
-				wprintf(L"STRING_LIST Size=%d", propSize);
+				// Note: Number of characters includes number of NULL terminaters(end of each string and end of the list).
+				wprintf(L"STRING_LIST %d characters", (int)(propSize / sizeof(WCHAR)));
 				for(auto p = (WCHAR*)prop.get(); *p; p += (wcslen(p) + 1)) {
 					wprintf(L"\n        `%s`", p);
 				}
 				break;
 			case DEVPROP_TYPE_BINARY:
-				wprintf(L"BINARY Size=%d", propSize);
+				wprintf(L"BINARY %d bytes", propSize);
 				for(DWORD i = 0; i < propSize; i++) {
 					if((i % 16) == 0) { wprintf(L"\n       "); }
 					wprintf(L" %02x", ((BYTE*)prop.get())[i]);

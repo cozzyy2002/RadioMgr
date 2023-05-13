@@ -58,10 +58,9 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 	SP_DEVINFO_DATA data{sizeof(data)};
 	for(DWORD index = 0; SetupDiEnumDeviceInfo(hDevInfo, index, &data); index++) {
 		DWORD keyCount;
-		WIN32_ASSERT(
-			SetupDiGetDevicePropertyKeys(hDevInfo, &data, NULL, 0, &keyCount, 0)
-			!= ERROR_INSUFFICIENT_BUFFER
-		);
+		SetupDiGetDevicePropertyKeys(hDevInfo, &data, NULL, 0, &keyCount, 0);
+		auto errSetupDiGetDevicePropertyKeys = GetLastError();
+		HR_ASSERT(errSetupDiGetDevicePropertyKeys == ERROR_INSUFFICIENT_BUFFER, HRESULT_FROM_WIN32(errSetupDiGetDevicePropertyKeys));
 		wprintf(L"%d %s: %d keys\n", index, GuidToString(data.ClassGuid).c_str(), keyCount);
 		auto keys = std::make_unique<DEVPROPKEY[]>(keyCount);
 		WIN32_ASSERT(SetupDiGetDevicePropertyKeys(hDevInfo, &data, keys.get(), keyCount, NULL, 0));
@@ -69,10 +68,9 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 			auto& key = keys[i];
 			DEVPROPTYPE propType;
 			DWORD propSize;
-			WIN32_ASSERT(
-				SetupDiGetDeviceProperty(hDevInfo, &data, &key, &propType, NULL, 0, &propSize, 0)
-				!= ERROR_INSUFFICIENT_BUFFER
-			);
+			SetupDiGetDeviceProperty(hDevInfo, &data, &key, &propType, NULL, 0, &propSize, 0);
+			auto errSetupDiGetDeviceProperty = GetLastError();
+			HR_ASSERT(errSetupDiGetDeviceProperty == ERROR_INSUFFICIENT_BUFFER, HRESULT_FROM_WIN32(errSetupDiGetDeviceProperty));
 			auto prop = std::make_unique<BYTE[]>(propSize);
 			WIN32_ASSERT(SetupDiGetDeviceProperty(hDevInfo, &data, &key, &propType, prop.get(), propSize, NULL, 0));
 			wprintf(L"  % 3d %s ", i, GuidToString(key.fmtid).c_str());

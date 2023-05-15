@@ -2,6 +2,7 @@
 #include <SetupAPI.h>
 #include <initguid.h>
 #include <bluetoothleapis.h>
+#include <devpkey.h>
 
 #include "BluetoothCommon.h"
 #include "../Common/SafeHandle.h"
@@ -11,6 +12,7 @@
 #pragma comment(lib, "BluetoothAPIs.lib")
 
 static HRESULT ShowGATT(HANDLE hDevice);
+static std::wstring toString(const DEVPROPKEY& key);
 
 DEFINE_GUID(BluetoothDeviceInterfaceClassGUID, 0x00f40965, 0xe89d, 0x4487, 0x98, 0x90, 0x87, 0xc3, 0xab, 0xb2, 0x11, 0xf4);
 
@@ -73,7 +75,7 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 			HR_ASSERT(errSetupDiGetDeviceProperty == ERROR_INSUFFICIENT_BUFFER, HRESULT_FROM_WIN32(errSetupDiGetDeviceProperty));
 			auto prop = std::make_unique<BYTE[]>(propSize);
 			WIN32_ASSERT(SetupDiGetDeviceProperty(hDevInfo, &data, &key, &propType, prop.get(), propSize, NULL, 0));
-			wprintf(L"  % 3d %s ", i, GuidToString(key.fmtid).c_str());
+			wprintf(L"  % 3d %-45s ", i, toString(key).c_str());
 
 			switch(propType) {
 			case DEVPROP_TYPE_BOOLEAN:
@@ -154,4 +156,183 @@ HRESULT ShowGATT(HANDLE hDevice)
 
 	}
 	return S_OK;
+}
+
+struct DevPropKeyName {
+	const DEVPROPKEY* key;
+	LPCWSTR name;
+};
+
+static const DevPropKeyName devPropKeyNames[] = {
+#define ITEM(x) { &x, L#x }
+	ITEM(DEVPKEY_Device_DeviceDesc),
+	ITEM(DEVPKEY_Device_HardwareIds),
+	ITEM(DEVPKEY_Device_CompatibleIds),
+	ITEM(DEVPKEY_Device_Service),
+	ITEM(DEVPKEY_Device_Class),
+	ITEM(DEVPKEY_Device_ClassGuid),
+	ITEM(DEVPKEY_Device_Driver),
+	ITEM(DEVPKEY_Device_ConfigFlags),
+	ITEM(DEVPKEY_Device_Manufacturer),
+	ITEM(DEVPKEY_Device_FriendlyName),
+	ITEM(DEVPKEY_Device_LocationInfo),
+	ITEM(DEVPKEY_Device_PDOName),
+	ITEM(DEVPKEY_Device_Capabilities),
+	ITEM(DEVPKEY_Device_UINumber),
+	ITEM(DEVPKEY_Device_UpperFilters),
+	ITEM(DEVPKEY_Device_LowerFilters),
+	ITEM(DEVPKEY_Device_BusTypeGuid),
+	ITEM(DEVPKEY_Device_LegacyBusType),
+	ITEM(DEVPKEY_Device_BusNumber),
+	ITEM(DEVPKEY_Device_EnumeratorName),
+	ITEM(DEVPKEY_Device_Security),
+	ITEM(DEVPKEY_Device_SecuritySDS),
+	ITEM(DEVPKEY_Device_DevType),
+	ITEM(DEVPKEY_Device_Exclusive),
+	ITEM(DEVPKEY_Device_Characteristics),
+	ITEM(DEVPKEY_Device_Address),
+	ITEM(DEVPKEY_Device_UINumberDescFormat),
+	ITEM(DEVPKEY_Device_PowerData),
+	ITEM(DEVPKEY_Device_RemovalPolicy),
+	ITEM(DEVPKEY_Device_RemovalPolicyDefault),
+	ITEM(DEVPKEY_Device_RemovalPolicyOverride),
+	ITEM(DEVPKEY_Device_InstallState),
+	ITEM(DEVPKEY_Device_LocationPaths),
+	ITEM(DEVPKEY_Device_BaseContainerId),
+	ITEM(DEVPKEY_Device_InstanceId),
+	ITEM(DEVPKEY_Device_DevNodeStatus),
+	ITEM(DEVPKEY_Device_ProblemCode),
+	ITEM(DEVPKEY_Device_EjectionRelations),
+	ITEM(DEVPKEY_Device_RemovalRelations),
+	ITEM(DEVPKEY_Device_PowerRelations),
+	ITEM(DEVPKEY_Device_BusRelations),
+	ITEM(DEVPKEY_Device_Parent),
+	ITEM(DEVPKEY_Device_Children),
+	ITEM(DEVPKEY_Device_Siblings),
+	ITEM(DEVPKEY_Device_TransportRelations),
+	ITEM(DEVPKEY_Device_ProblemStatus),
+	ITEM(DEVPKEY_Device_Reported),
+	ITEM(DEVPKEY_Device_Legacy),
+	ITEM(DEVPKEY_Device_ContainerId),
+	ITEM(DEVPKEY_Device_InLocalMachineContainer),
+	ITEM(DEVPKEY_Device_Model),
+	ITEM(DEVPKEY_Device_ModelId),
+	ITEM(DEVPKEY_Device_FriendlyNameAttributes),
+	ITEM(DEVPKEY_Device_ManufacturerAttributes),
+	ITEM(DEVPKEY_Device_PresenceNotForDevice),
+	ITEM(DEVPKEY_Device_SignalStrength),
+	ITEM(DEVPKEY_Device_IsAssociateableByUserAction),
+	ITEM(DEVPKEY_Device_ShowInUninstallUI),
+	ITEM(DEVPKEY_Device_Numa_Proximity_Domain),
+	ITEM(DEVPKEY_Device_DHP_Rebalance_Policy),
+	ITEM(DEVPKEY_Device_Numa_Node),
+	ITEM(DEVPKEY_Device_BusReportedDeviceDesc),
+	ITEM(DEVPKEY_Device_IsPresent),
+	ITEM(DEVPKEY_Device_HasProblem),
+	ITEM(DEVPKEY_Device_ConfigurationId),
+	ITEM(DEVPKEY_Device_ReportedDeviceIdsHash),
+	ITEM(DEVPKEY_Device_PhysicalDeviceLocation),
+	ITEM(DEVPKEY_Device_BiosDeviceName),
+	ITEM(DEVPKEY_Device_DriverProblemDesc),
+	ITEM(DEVPKEY_Device_DebuggerSafe),
+	ITEM(DEVPKEY_Device_PostInstallInProgress),
+	ITEM(DEVPKEY_Device_Stack),
+	ITEM(DEVPKEY_Device_ExtendedConfigurationIds),
+	ITEM(DEVPKEY_Device_IsRebootRequired),
+	ITEM(DEVPKEY_Device_FirmwareDate),
+	ITEM(DEVPKEY_Device_FirmwareVersion),
+	ITEM(DEVPKEY_Device_FirmwareRevision),
+	ITEM(DEVPKEY_Device_DependencyProviders),
+	ITEM(DEVPKEY_Device_DependencyDependents),
+	ITEM(DEVPKEY_Device_SoftRestartSupported),
+	ITEM(DEVPKEY_Device_ExtendedAddress),
+	ITEM(DEVPKEY_Device_AssignedToGuest),
+	ITEM(DEVPKEY_Device_CreatorProcessId),
+	ITEM(DEVPKEY_Device_FirmwareVendor),
+	ITEM(DEVPKEY_Device_SessionId),
+	ITEM(DEVPKEY_Device_InstallDate),
+	ITEM(DEVPKEY_Device_FirstInstallDate),
+	ITEM(DEVPKEY_Device_LastArrivalDate),
+	ITEM(DEVPKEY_Device_LastRemovalDate),
+	ITEM(DEVPKEY_Device_DriverDate),
+	ITEM(DEVPKEY_Device_DriverVersion),
+	ITEM(DEVPKEY_Device_DriverDesc),
+	ITEM(DEVPKEY_Device_DriverInfPath),
+	ITEM(DEVPKEY_Device_DriverInfSection),
+	ITEM(DEVPKEY_Device_DriverInfSectionExt),
+	ITEM(DEVPKEY_Device_MatchingDeviceId),
+	ITEM(DEVPKEY_Device_DriverProvider),
+	ITEM(DEVPKEY_Device_DriverPropPageProvider),
+	ITEM(DEVPKEY_Device_DriverCoInstallers),
+	ITEM(DEVPKEY_Device_ResourcePickerTags),
+	ITEM(DEVPKEY_Device_ResourcePickerExceptions),
+	ITEM(DEVPKEY_Device_DriverRank),
+	ITEM(DEVPKEY_Device_DriverLogoLevel),
+	ITEM(DEVPKEY_Device_NoConnectSound),
+	ITEM(DEVPKEY_Device_GenericDriverInstalled),
+	ITEM(DEVPKEY_Device_AdditionalSoftwareRequested),
+	ITEM(DEVPKEY_Device_SafeRemovalRequired),
+	ITEM(DEVPKEY_Device_SafeRemovalRequiredOverride),
+	ITEM(DEVPKEY_DeviceContainer_Address),
+	ITEM(DEVPKEY_DeviceContainer_DiscoveryMethod),
+	ITEM(DEVPKEY_DeviceContainer_IsEncrypted),
+	ITEM(DEVPKEY_DeviceContainer_IsAuthenticated),
+	ITEM(DEVPKEY_DeviceContainer_IsConnected),
+	ITEM(DEVPKEY_DeviceContainer_IsPaired),
+	ITEM(DEVPKEY_DeviceContainer_Icon),
+	ITEM(DEVPKEY_DeviceContainer_Version),
+	ITEM(DEVPKEY_DeviceContainer_Last_Seen),
+	ITEM(DEVPKEY_DeviceContainer_Last_Connected),
+	ITEM(DEVPKEY_DeviceContainer_IsShowInDisconnectedState),
+	ITEM(DEVPKEY_DeviceContainer_IsLocalMachine),
+	ITEM(DEVPKEY_DeviceContainer_MetadataPath),
+	ITEM(DEVPKEY_DeviceContainer_IsMetadataSearchInProgress),
+	ITEM(DEVPKEY_DeviceContainer_MetadataChecksum),
+	ITEM(DEVPKEY_DeviceContainer_IsNotInterestingForDisplay),
+	ITEM(DEVPKEY_DeviceContainer_LaunchDeviceStageOnDeviceConnect),
+	ITEM(DEVPKEY_DeviceContainer_LaunchDeviceStageFromExplorer),
+	ITEM(DEVPKEY_DeviceContainer_BaselineExperienceId),
+	ITEM(DEVPKEY_DeviceContainer_IsDeviceUniquelyIdentifiable),
+	ITEM(DEVPKEY_DeviceContainer_AssociationArray),
+	ITEM(DEVPKEY_DeviceContainer_DeviceDescription1),
+	ITEM(DEVPKEY_DeviceContainer_DeviceDescription2),
+	ITEM(DEVPKEY_DeviceContainer_HasProblem),
+	ITEM(DEVPKEY_DeviceContainer_IsSharedDevice),
+	ITEM(DEVPKEY_DeviceContainer_IsNetworkDevice),
+	ITEM(DEVPKEY_DeviceContainer_IsDefaultDevice),
+	ITEM(DEVPKEY_DeviceContainer_MetadataCabinet),
+	ITEM(DEVPKEY_DeviceContainer_RequiresPairingElevation),
+	ITEM(DEVPKEY_DeviceContainer_ExperienceId),
+	ITEM(DEVPKEY_DeviceContainer_Category),
+	ITEM(DEVPKEY_DeviceContainer_Category_Desc_Singular),
+	ITEM(DEVPKEY_DeviceContainer_Category_Desc_Plural),
+	ITEM(DEVPKEY_DeviceContainer_Category_Icon),
+	ITEM(DEVPKEY_DeviceContainer_CategoryGroup_Desc),
+	ITEM(DEVPKEY_DeviceContainer_CategoryGroup_Icon),
+	ITEM(DEVPKEY_DeviceContainer_PrimaryCategory),
+	ITEM(DEVPKEY_DeviceContainer_UnpairUninstall),
+	ITEM(DEVPKEY_DeviceContainer_RequiresUninstallElevation),
+	ITEM(DEVPKEY_DeviceContainer_DeviceFunctionSubRank),
+	ITEM(DEVPKEY_DeviceContainer_AlwaysShowDeviceAsConnected),
+	ITEM(DEVPKEY_DeviceContainer_ConfigFlags),
+	ITEM(DEVPKEY_DeviceContainer_PrivilegedPackageFamilyNames),
+	ITEM(DEVPKEY_DeviceContainer_CustomPrivilegedPackageFamilyNames),
+	ITEM(DEVPKEY_DeviceContainer_IsRebootRequired),
+	ITEM(DEVPKEY_DeviceContainer_FriendlyName),
+	ITEM(DEVPKEY_DeviceContainer_Manufacturer),
+	ITEM(DEVPKEY_DeviceContainer_ModelName),
+	ITEM(DEVPKEY_DeviceContainer_ModelNumber),
+	ITEM(DEVPKEY_DeviceContainer_InstallInProgress),
+#undef ITEM
+};
+
+std::wstring toString(const DEVPROPKEY& key)
+{
+	for(auto& x : devPropKeyNames) {
+		if(*x.key == key) { return x.name; }
+	}
+
+	WCHAR name[100];
+	swprintf_s(name, L"%s,0x%04x", GuidToString(key.fmtid).c_str(), key.pid);
+	return name;
 }

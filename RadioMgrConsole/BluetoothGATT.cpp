@@ -3,6 +3,7 @@
 #include <initguid.h>
 #include <bluetoothleapis.h>
 #include <devpkey.h>
+#include <propkey.h>
 
 #include "BluetoothCommon.h"
 #include "../Common/SafeHandle.h"
@@ -159,12 +160,16 @@ HRESULT ShowGATT(HANDLE hDevice)
 }
 
 struct DevPropKeyName {
-	const DEVPROPKEY* key;
+	// One of following:
+	//   DEVPROPKEY defined in devpkey.h
+	//   PROPERTYKEY defined in propkey.h
+	const void* key;
 	LPCWSTR name;
 };
 
 static const DevPropKeyName devPropKeyNames[] = {
 #define ITEM(x) { &x, L#x }
+	// DEVPROPKEY defined in devpkey.h
 	ITEM(DEVPKEY_Device_DeviceDesc),
 	ITEM(DEVPKEY_Device_HardwareIds),
 	ITEM(DEVPKEY_Device_CompatibleIds),
@@ -323,16 +328,34 @@ static const DevPropKeyName devPropKeyNames[] = {
 	ITEM(DEVPKEY_DeviceContainer_ModelName),
 	ITEM(DEVPKEY_DeviceContainer_ModelNumber),
 	ITEM(DEVPKEY_DeviceContainer_InstallInProgress),
+
+	// PROPERTYKEY defined in propkey.h
+	ITEM(PKEY_Device_PrinterURL),
+	ITEM(PKEY_DeviceInterface_Bluetooth_DeviceAddress),
+	ITEM(PKEY_DeviceInterface_Bluetooth_Flags),
+	ITEM(PKEY_DeviceInterface_Bluetooth_LastConnectedTime),
+	ITEM(PKEY_DeviceInterface_Bluetooth_Manufacturer),
+	ITEM(PKEY_DeviceInterface_Bluetooth_ModelNumber),
+	ITEM(PKEY_DeviceInterface_Bluetooth_ProductId),
+	ITEM(PKEY_DeviceInterface_Bluetooth_ProductVersion),
+	ITEM(PKEY_DeviceInterface_Bluetooth_ServiceGuid),
+	ITEM(PKEY_DeviceInterface_Bluetooth_VendorId),
+	ITEM(PKEY_DeviceInterface_Bluetooth_VendorIdSource),
+	ITEM(PKEY_Devices_Aep_ProtocolId),
+	ITEM(PKEY_ItemNameDisplay),
+	ITEM(PKEY_Devices_Aep_DeviceAddress),
+	ITEM(PKEY_Devices_Aep_AepId),
+	ITEM(DEVPKEY_Device_Legacy),
 #undef ITEM
 };
 
 std::wstring toString(const DEVPROPKEY& key)
 {
 	for(auto& x : devPropKeyNames) {
-		if(*x.key == key) { return x.name; }
+		if(*(DEVPROPKEY*)x.key == key) { return x.name; }
 	}
 
 	WCHAR name[100];
-	swprintf_s(name, L"%s,0x%04x", GuidToString(key.fmtid).c_str(), key.pid);
+	swprintf_s(name, L"%s,%d", GuidToString(key.fmtid).c_str(), key.pid);
 	return name;
 }

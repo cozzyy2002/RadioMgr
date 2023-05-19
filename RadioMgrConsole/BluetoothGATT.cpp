@@ -167,8 +167,15 @@ struct DevPropKeyName {
 	LPCWSTR name;
 };
 
+// https://stackoverflow.com/questions/71607722/how-to-know-if-a-bluetooth-device-is-connected-or-disconnected-by-powershell
+// How to know if a bluetooth device is connected or disconnected by Powershell
+DEFINE_PROPERTYKEY(UNKNOWN_PKEY_IsDevicerConnected, 0x83DA6326, 0x97A6, 0x4088, 0x94, 0x53, 0xA1, 0x92, 0x3F, 0x57, 0x3B, 0x29, 15);
+
 static const DevPropKeyName devPropKeyNames[] = {
 #define ITEM(x) { &x, L#x }
+	// Definition is not found.
+	ITEM(UNKNOWN_PKEY_IsDevicerConnected),
+
 	// DEVPROPKEY defined in devpkey.h
 	ITEM(DEVPKEY_Device_DeviceDesc),
 	ITEM(DEVPKEY_Device_HardwareIds),

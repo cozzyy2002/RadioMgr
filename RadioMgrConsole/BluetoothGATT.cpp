@@ -326,59 +326,51 @@ void showProperty(const DEVPROPKEY& key, DEVPROPTYPE propType, DWORD propSize, L
 	showPropFunc(propType, propSize, prop);
 }
 
+// Shows property value for DEVPKEY_Device_Capabilities.
 void showDeviceCapablities(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 {
-	// Defined in wdm.h
-	typedef struct _DEVICE_CAPABILITIES {
-		USHORT             Size;
-		USHORT             Version;
-		ULONG              DeviceD1 : 1;
-		ULONG              DeviceD2 : 1;
-		ULONG              LockSupported : 1;
-		ULONG              EjectSupported : 1;
-		ULONG              Removable : 1;
-		ULONG              DockDevice : 1;
-		ULONG              UniqueID : 1;
-		ULONG              SilentInstall : 1;
-		ULONG              RawDeviceOK : 1;
-		ULONG              SurpriseRemovalOK : 1;
-		ULONG              WakeFromD0 : 1;
-		ULONG              WakeFromD1 : 1;
-		ULONG              WakeFromD2 : 1;
-		ULONG              WakeFromD3 : 1;
-		ULONG              HardwareDisabled : 1;
-		ULONG              NonDynamic : 1;
-		ULONG              WarmEjectSupported : 1;
-		ULONG              NoDisplayInUI : 1;
-		ULONG              Reserved1 : 1;
-		ULONG              WakeFromInterrupt : 1;
-		ULONG              SecureDevice : 1;
-		ULONG              ChildOfVgaEnabledBridge : 1;
-		ULONG              DecodeIoOnBoot : 1;
-		ULONG              Reserved : 9;
-		ULONG              Address;
-		ULONG              UINumber;
-		DEVICE_POWER_STATE DeviceState[POWER_SYSTEM_MAXIMUM];
-		SYSTEM_POWER_STATE SystemWake;
-		DEVICE_POWER_STATE DeviceWake;
-		ULONG              D1Latency;
-		ULONG              D2Latency;
-		ULONG              D3Latency;
-	} DEVICE_CAPABILITIES, * PDEVICE_CAPABILITIES;
+	// Names for device capabilities bit mask found in DEVICE_CAPABILITIES structure.
+	// See https://learn.microsoft.com/ja-jp/windows-hardware/drivers/ddi/wdm/ns-wdm-_device_capabilities
+	static const LPCWSTR capNames[] = {
+		// Note: Bit mask retrieved as property value seems to not include DeviceD1/2 flags though DEVICE_CAPABILITIES includes them.
+		//       Ignoring these flags makes interpreted string as same as capabilities shown by Device Manager.
+		//L"DeviceD1",
+		//L"DeviceD2",
+		L"LockSupported",
+		L"EjectSupported",
+		L"Removable",
+		L"DockDevice",
+		L"UniqueID",
+		L"SilentInstall",
+		L"RawDeviceOK",
+		L"SurpriseRemovalOK",
+		L"WakeFromD0",
+		L"WakeFromD1",
+		L"WakeFromD2",
+		L"WakeFromD3",
+		L"HardwareDisabled",
+		L"NonDynamic",
+		L"WarmEjectSupported",
+		L"NoDisplayInUI",
+		L"Reserved1",
+		L"WakeFromInterrupt",
+		L"SecureDevice",
+		L"ChildOfVgaEnabledBridge",
+		L"DecodeIoOnBoot",
+	};
 
-	typedef struct {
-		USHORT             Size;
-		USHORT             Version;
-		ULONG              caps;
-	} DEVICE_CAPABILITIES_HEADER;
-
-	typedef union {
-		DEVICE_CAPABILITIES_HEADER header;
-		DEVICE_CAPABILITIES deviceCapabilities;
-	} DEVCAPS;
-	DEVCAPS devCaps{sizeof(DEVICE_CAPABILITIES), 0, *(UINT32*)prop};
-
-	wprintf(L"0x%08x", devCaps.header.caps);
+	auto devCap = *(UINT32*)prop;
+	std::wstringstream stream;
+	auto separator = L"";
+	for(auto p : capNames) {
+		if(!devCap) { break; }
+		if(devCap & 1) {
+			stream << separator << p;
+			separator = L",";
+		}
+		devCap >>= 1;
+	}
+	wprintf(L"0x%x: %s", *(UINT32*)prop, stream.str().c_str());
 }
 
 void defaultShowPropFunc(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)

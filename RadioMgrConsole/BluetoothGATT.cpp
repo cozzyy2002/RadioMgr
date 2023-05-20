@@ -13,7 +13,7 @@
 #pragma comment(lib, "BluetoothAPIs.lib")
 
 static HRESULT ShowGATT(HANDLE hDevice);
-static std::wstring toString(const DEVPROPKEY& key);
+static void showProperty(const DEVPROPKEY& key, DEVPROPTYPE propType, DWORD propSize, LPCVOID prop);
 
 DEFINE_GUID(BluetoothDeviceInterfaceClassGUID, 0x00f40965, 0xe89d, 0x4487, 0x98, 0x90, 0x87, 0xc3, 0xab, 0xb2, 0x11, 0xf4);
 
@@ -76,66 +76,8 @@ HRESULT BluetoothGATT(int argc, wchar_t** argv)
 			HR_ASSERT(errSetupDiGetDeviceProperty == ERROR_INSUFFICIENT_BUFFER, HRESULT_FROM_WIN32(errSetupDiGetDeviceProperty));
 			auto prop = std::make_unique<BYTE[]>(propSize);
 			WIN32_ASSERT(SetupDiGetDeviceProperty(hDevInfo, &data, &key, &propType, prop.get(), propSize, NULL, 0));
-			wprintf(L"  % 3d %-45s ", i, toString(key).c_str());
-
-			switch(propType) {
-			case DEVPROP_TYPE_BOOLEAN:
-				wprintf(L"BOOLEAN %s", *(BYTE*)prop.get() ? L"TRUE" : L"FALSE");
-				break;
-			case DEVPROP_TYPE_BYTE:
-				wprintf(L"BYTE %u", *(BYTE*)prop.get());
-				break;
-			case DEVPROP_TYPE_INT16:
-				wprintf(L"INT16 %d", *(INT16*)prop.get());
-				break;
-			case DEVPROP_TYPE_UINT16:
-				wprintf(L"UINT16 %u", *(UINT16*)prop.get());
-				break;
-			case DEVPROP_TYPE_INT32:
-				wprintf(L"UINT32 %d", *(INT32*)prop.get());
-				break;
-			case DEVPROP_TYPE_UINT32:
-				wprintf(L"UINT32 %u", *(UINT32*)prop.get());
-				break;
-			case DEVPROP_TYPE_INT64:
-				wprintf(L"UINT64 %I64d", *(INT64*)prop.get());
-				break;
-			case DEVPROP_TYPE_UINT64:
-				wprintf(L"UINT64 %I64u", *(UINT64*)prop.get());
-				break;
-			case DEVPROP_TYPE_FILETIME:
-				{
-					FILETIME ft;
-					FileTimeToLocalFileTime((FILETIME*)prop.get(), &ft);
-					SYSTEMTIME t;
-					FileTimeToSystemTime(&ft, &t);
-					wprintf(L"%04d/%02d/%02d %02d:%02d:%02d.%03d", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond, t.wMilliseconds);
-				}
-				break;
-			case DEVPROP_TYPE_GUID:
-				wprintf(L"%s", GuidToString(*(GUID*)prop.get()).c_str());
-				break;
-			case DEVPROP_TYPE_STRING:
-				wprintf(L"`%s`", (WCHAR*)prop.get());
-				break;
-			case DEVPROP_TYPE_STRING_LIST:
-				// Note: Number of characters includes number of NULL terminaters(end of each string and end of the list).
-				wprintf(L"STRING_LIST %d characters", (int)(propSize / sizeof(WCHAR)));
-				for(auto p = (WCHAR*)prop.get(); *p; p += (wcslen(p) + 1)) {
-					wprintf(L"\n        `%s`", p);
-				}
-				break;
-			case DEVPROP_TYPE_BINARY:
-				wprintf(L"BINARY %d bytes", propSize);
-				for(DWORD i = 0; i < propSize; i++) {
-					if((i % 16) == 0) { wprintf(L"\n       "); }
-					wprintf(L" %02x", ((BYTE*)prop.get())[i]);
-				}
-				break;
-			default:
-				wprintf(L"Type=0x%08x, Size=%d", propType, propSize);
-				break;
-			}
+			wprintf(L"  % 3d ", i);
+			showProperty(key, propType, propSize, prop.get());
 			_putws(L"");
 		}
 	}
@@ -159,12 +101,17 @@ HRESULT ShowGATT(HANDLE hDevice)
 	return S_OK;
 }
 
+using ShowPropFunc = void (*)(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop);
+static void showDeviceCapablities(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop);
+static void defaultShowPropFunc(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop);
+
 struct DevPropKeyName {
 	// One of following:
 	//   DEVPROPKEY defined in devpkey.h
 	//   PROPERTYKEY defined in propkey.h
 	const void* key;
 	LPCWSTR name;
+	ShowPropFunc showProc;
 };
 
 // https://stackoverflow.com/questions/71607722/how-to-know-if-a-bluetooth-device-is-connected-or-disconnected-by-powershell
@@ -172,7 +119,7 @@ struct DevPropKeyName {
 DEFINE_PROPERTYKEY(UNKNOWN_PKEY_IsDevicerConnected, 0x83DA6326, 0x97A6, 0x4088, 0x94, 0x53, 0xA1, 0x92, 0x3F, 0x57, 0x3B, 0x29, 15);
 
 static const DevPropKeyName devPropKeyNames[] = {
-#define ITEM(x) { &x, L#x }
+#define ITEM(x, ...) { &x, L#x, __VA_ARGS__ }
 	// Definition is not found.
 	ITEM(UNKNOWN_PKEY_IsDevicerConnected),
 
@@ -189,7 +136,7 @@ static const DevPropKeyName devPropKeyNames[] = {
 	ITEM(DEVPKEY_Device_FriendlyName),
 	ITEM(DEVPKEY_Device_LocationInfo),
 	ITEM(DEVPKEY_Device_PDOName),
-	ITEM(DEVPKEY_Device_Capabilities),
+	ITEM(DEVPKEY_Device_Capabilities, showDeviceCapablities),
 	ITEM(DEVPKEY_Device_UINumber),
 	ITEM(DEVPKEY_Device_UpperFilters),
 	ITEM(DEVPKEY_Device_LowerFilters),
@@ -356,13 +303,142 @@ static const DevPropKeyName devPropKeyNames[] = {
 #undef ITEM
 };
 
-std::wstring toString(const DEVPROPKEY& key)
+void showProperty(const DEVPROPKEY& key, DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 {
+	LPCWSTR keyName = nullptr;
+	ShowPropFunc showPropFunc = nullptr;
 	for(auto& x : devPropKeyNames) {
-		if(*(DEVPROPKEY*)x.key == key) { return x.name; }
+		if(*(DEVPROPKEY*)x.key == key) {
+			keyName = x.name;
+			showPropFunc = x.showProc;
+			break;
+		}
 	}
 
 	WCHAR name[100];
-	swprintf_s(name, L"%s,%d", GuidToString(key.fmtid).c_str(), key.pid);
-	return name;
+	if(!keyName) {
+		swprintf_s(name, L"%s,%d", GuidToString(key.fmtid).c_str(), key.pid);
+		keyName = name;
+	}
+	wprintf(L"%-45s ", keyName);
+
+	if(!showPropFunc) { showPropFunc = defaultShowPropFunc; }
+	showPropFunc(propType, propSize, prop);
+}
+
+void showDeviceCapablities(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
+{
+	// Defined in wdm.h
+	typedef struct _DEVICE_CAPABILITIES {
+		USHORT             Size;
+		USHORT             Version;
+		ULONG              DeviceD1 : 1;
+		ULONG              DeviceD2 : 1;
+		ULONG              LockSupported : 1;
+		ULONG              EjectSupported : 1;
+		ULONG              Removable : 1;
+		ULONG              DockDevice : 1;
+		ULONG              UniqueID : 1;
+		ULONG              SilentInstall : 1;
+		ULONG              RawDeviceOK : 1;
+		ULONG              SurpriseRemovalOK : 1;
+		ULONG              WakeFromD0 : 1;
+		ULONG              WakeFromD1 : 1;
+		ULONG              WakeFromD2 : 1;
+		ULONG              WakeFromD3 : 1;
+		ULONG              HardwareDisabled : 1;
+		ULONG              NonDynamic : 1;
+		ULONG              WarmEjectSupported : 1;
+		ULONG              NoDisplayInUI : 1;
+		ULONG              Reserved1 : 1;
+		ULONG              WakeFromInterrupt : 1;
+		ULONG              SecureDevice : 1;
+		ULONG              ChildOfVgaEnabledBridge : 1;
+		ULONG              DecodeIoOnBoot : 1;
+		ULONG              Reserved : 9;
+		ULONG              Address;
+		ULONG              UINumber;
+		DEVICE_POWER_STATE DeviceState[POWER_SYSTEM_MAXIMUM];
+		SYSTEM_POWER_STATE SystemWake;
+		DEVICE_POWER_STATE DeviceWake;
+		ULONG              D1Latency;
+		ULONG              D2Latency;
+		ULONG              D3Latency;
+	} DEVICE_CAPABILITIES, * PDEVICE_CAPABILITIES;
+
+	typedef struct {
+		USHORT             Size;
+		USHORT             Version;
+		ULONG              caps;
+	} DEVICE_CAPABILITIES_HEADER;
+
+	typedef union {
+		DEVICE_CAPABILITIES_HEADER header;
+		DEVICE_CAPABILITIES deviceCapabilities;
+	} DEVCAPS;
+	DEVCAPS devCaps{sizeof(DEVICE_CAPABILITIES), 0, *(UINT32*)prop};
+
+	wprintf(L"0x%08x", devCaps.header.caps);
+}
+
+void defaultShowPropFunc(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
+{
+	switch(propType) {
+	case DEVPROP_TYPE_BOOLEAN:
+		wprintf(L"BOOLEAN %s", *(BYTE*)prop ? L"TRUE" : L"FALSE");
+		break;
+	case DEVPROP_TYPE_BYTE:
+		wprintf(L"BYTE %u", *(BYTE*)prop);
+		break;
+	case DEVPROP_TYPE_INT16:
+		wprintf(L"INT16 %d", *(INT16*)prop);
+		break;
+	case DEVPROP_TYPE_UINT16:
+		wprintf(L"UINT16 %u", *(UINT16*)prop);
+		break;
+	case DEVPROP_TYPE_INT32:
+		wprintf(L"UINT32 %d", *(INT32*)prop);
+		break;
+	case DEVPROP_TYPE_UINT32:
+		wprintf(L"UINT32 %u", *(UINT32*)prop);
+		break;
+	case DEVPROP_TYPE_INT64:
+		wprintf(L"UINT64 %I64d", *(INT64*)prop);
+		break;
+	case DEVPROP_TYPE_UINT64:
+		wprintf(L"UINT64 %I64u", *(UINT64*)prop);
+		break;
+	case DEVPROP_TYPE_FILETIME:
+	{
+		FILETIME ft;
+		FileTimeToLocalFileTime((FILETIME*)prop, &ft);
+		SYSTEMTIME t;
+		FileTimeToSystemTime(&ft, &t);
+		wprintf(L"%04d/%02d/%02d %02d:%02d:%02d.%03d", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond, t.wMilliseconds);
+	}
+	break;
+	case DEVPROP_TYPE_GUID:
+		wprintf(L"%s", GuidToString(*(GUID*)prop).c_str());
+		break;
+	case DEVPROP_TYPE_STRING:
+		wprintf(L"`%s`", (WCHAR*)prop);
+		break;
+	case DEVPROP_TYPE_STRING_LIST:
+		// Note: Number of characters includes number of NULL terminaters(end of each string and end of the list).
+		wprintf(L"STRING_LIST %d characters", (int)(propSize / sizeof(WCHAR)));
+		for(auto p = (WCHAR*)prop; *p; p += (wcslen(p) + 1)) {
+			wprintf(L"\n        `%s`", p);
+		}
+		break;
+	case DEVPROP_TYPE_BINARY:
+		wprintf(L"BINARY %d bytes", propSize);
+		for(DWORD i = 0; i < propSize; i++) {
+			if((i % 16) == 0) { wprintf(L"\n       "); }
+			wprintf(L" %02x", ((BYTE*)prop)[i]);
+		}
+		break;
+	default:
+		wprintf(L"Type=0x%08x, Size=%d", propType, propSize);
+		break;
+	}
 }

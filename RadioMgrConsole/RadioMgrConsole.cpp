@@ -3,6 +3,7 @@
 
 #include <RadioMgr.h>
 #include <atlbase.h>
+#include <locale.h>
 
 #include "../Common/Assert.h"
 
@@ -26,6 +27,7 @@ static const wchar_t* knownClsIDs[] = {
 int wmain(int argc, wchar_t** argv)
 {
     tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { fputws(msg, stderr); };
+    setlocale(LC_ALL, "ja_JP.Utf-8");
 
     return BluetoothGATT(argc, argv);
 

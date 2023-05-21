@@ -103,6 +103,7 @@ HRESULT ShowGATT(HANDLE hDevice)
 
 using ShowPropFunc = void (*)(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop);
 static void showDeviceCapablities(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop);
+static void showDevNodeStatus(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop);
 static void defaultShowPropFunc(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop);
 
 struct DevPropKeyName {
@@ -159,7 +160,7 @@ static const DevPropKeyName devPropKeyNames[] = {
 	ITEM(DEVPKEY_Device_LocationPaths),
 	ITEM(DEVPKEY_Device_BaseContainerId),
 	ITEM(DEVPKEY_Device_InstanceId),
-	ITEM(DEVPKEY_Device_DevNodeStatus),
+	ITEM(DEVPKEY_Device_DevNodeStatus, showDevNodeStatus),
 	ITEM(DEVPKEY_Device_ProblemCode),
 	ITEM(DEVPKEY_Device_EjectionRelations),
 	ITEM(DEVPKEY_Device_RemovalRelations),
@@ -329,6 +330,11 @@ void showProperty(const DEVPROPKEY& key, DEVPROPTYPE propType, DWORD propSize, L
 // Shows property value for DEVPKEY_Device_Capabilities.
 void showDeviceCapablities(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 {
+	if((propType != DEVPROP_TYPE_UINT32) || (propSize != sizeof(UINT32))) {
+		defaultShowPropFunc(propType, propSize, prop);
+		return;
+	}
+
 	// Names for device capabilities bit mask found in DEVICE_CAPABILITIES structure.
 	// See https://learn.microsoft.com/ja-jp/windows-hardware/drivers/ddi/wdm/ns-wdm-_device_capabilities
 	static const LPCWSTR capNames[] = {
@@ -360,17 +366,64 @@ void showDeviceCapablities(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 	};
 
 	auto devCap = *(UINT32*)prop;
-	std::wstringstream stream;
-	auto separator = L"";
-	for(auto p : capNames) {
-		if(!devCap) { break; }
-		if(devCap & 1) {
-			stream << separator << p;
-			separator = L",";
-		}
-		devCap >>= 1;
+	wprintf(L"0x%x: %s", devCap, BitMasktoString(devCap, capNames, ARRAYSIZE(capNames)).c_str());
+}
+
+void showDevNodeStatus(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
+{
+	if((propType != DEVPROP_TYPE_UINT32) || (propSize != sizeof(UINT32))) {
+		defaultShowPropFunc(propType, propSize, prop);
+		return;
 	}
-	wprintf(L"0x%x: %s", *(UINT32*)prop, stream.str().c_str());
+
+	// Names for DevNodeStatus bimask defined in cfg.h.
+	static const LPCWSTR statusNames[] = {
+		//
+		// Device Instance status flags, returned by call to CM_Get_DevInst_Status
+		//
+		L"DN_ROOT_ENUMERATED",	// (0x00000001) // Was enumerated by ROOT
+		L"DN_DRIVER_LOADED",	// (0x00000002) // Has Register_Device_Driver
+		L"DN_ENUM_LOADED",		// (0x00000004) // Has Register_Enumerator
+		L"DN_STARTED",			// (0x00000008) // Is currently configured
+		L"DN_MANUAL",			// (0x00000010) // Manually installed
+		L"DN_NEED_TO_ENUM",		// (0x00000020) // May need reenumeration
+		L"DN_NOT_FIRST_TIME",	// (0x00000040) // Has received a config
+		L"DN_HARDWARE_ENUM",	// (0x00000080) // Enum generates hardware ID
+		L"DN_LIAR",				// (0x00000100) // Lied about can reconfig once
+		L"DN_HAS_MARK",			// (0x00000200) // Not CM_Create_DevInst lately
+		L"DN_HAS_PROBLEM",		// (0x00000400) // Need device installer
+		L"DN_FILTERED",			// (0x00000800) // Is filtered
+		L"DN_MOVED",			// (0x00001000) // Has been moved
+		L"DN_DISABLEABLE",		// (0x00002000) // Can be disabled
+		L"DN_REMOVABLE",		// (0x00004000) // Can be removed
+		L"DN_PRIVATE_PROBLEM",	// (0x00008000) // Has a private problem
+		L"DN_MF_PARENT",		// (0x00010000) // Multi function parent
+		L"DN_MF_CHILD",			// (0x00020000) // Multi function child
+		L"DN_WILL_BE_REMOVED",	// (0x00040000) // DevInst is being removed
+		//
+		// Windows 4 OPK2 Flags
+		//
+		L"DN_NOT_FIRST_TIMEE",	// 0x00080000  // S: Has received a config enumerate
+		L"DN_STOP_FREE_RES",	// 0x00100000  // S: When child is stopped, free resources
+		L"DN_REBAL_CANDIDATE",	// 0x00200000  // S: Don't skip during rebalance
+		L"DN_BAD_PARTIAL",		// 0x00400000  // S: This devnode's log_confs do not have same resources
+		L"DN_NT_ENUMERATOR",	// 0x00800000  // S: This devnode's is an NT enumerator
+		L"DN_NT_DRIVER",		// 0x01000000  // S: This devnode's is an NT driver
+		//
+		// Windows 4.1 Flags
+		//
+		//L"DN_NEEDS_LOCKING",	// 0x02000000  // S: Devnode need lock resume processing
+		L"DN_DEVICE_DISCONNECTED",		// Device Manager shows this instead of DN_NEEDS_LOCKING.
+		L"DN_ARM_WAKEUP",		// 0x04000000  // S: Devnode can be the wakeup device
+		L"DN_APM_ENUMERATOR",	// 0x08000000  // S: APM aware enumerator
+		L"DN_APM_DRIVER",		// 0x10000000  // S: APM aware driver
+		L"DN_SILENT_INSTALL",	// 0x20000000  // S: Silent install
+		L"DN_NO_SHOW_IN_DM",	// 0x40000000  // S: No show in device manager
+		L"DN_BOOT_LOG_PROB",	// 0x80000000  // S: Had a problem during preassignment of boot log conf
+	};
+
+	auto status = *(UINT32*)prop;
+	wprintf(L"0x%x: %s", status, BitMasktoString(status, statusNames, ARRAYSIZE(statusNames)).c_str());
 }
 
 void defaultShowPropFunc(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)

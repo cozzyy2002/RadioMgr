@@ -147,7 +147,7 @@ std::wstring GuidToString(REFGUID guid)
 }
 
 // Returns string that represents bit mask.
-std::wstring BitMasktoString(UINT32 value, const LPCWSTR* strs, size_t strCount)
+std::wstring BitMaskToString(UINT32 value, const LPCWSTR* strs, size_t strCount)
 {
 	std::wstringstream stream;
 	auto separator = L"";

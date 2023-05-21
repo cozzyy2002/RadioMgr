@@ -366,7 +366,7 @@ void showDeviceCapablities(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 	};
 
 	auto devCap = *(UINT32*)prop;
-	wprintf(L"0x%x: %s", devCap, BitMasktoString(devCap, capNames, ARRAYSIZE(capNames)).c_str());
+	wprintf(L"0x%x: %s", devCap, BitMaskToString(devCap, capNames, ARRAYSIZE(capNames)).c_str());
 }
 
 void showDevNodeStatus(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
@@ -423,7 +423,7 @@ void showDevNodeStatus(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 	};
 
 	auto status = *(UINT32*)prop;
-	wprintf(L"0x%x: %s", status, BitMasktoString(status, statusNames, ARRAYSIZE(statusNames)).c_str());
+	wprintf(L"0x%x: %s", status, BitMaskToString(status, statusNames, ARRAYSIZE(statusNames)).c_str());
 }
 
 void defaultShowPropFunc(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)

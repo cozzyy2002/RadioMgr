@@ -19,7 +19,7 @@
 
 extern std::wstring ClassOfDevice(ULONG value);
 extern std::wstring GuidToString(REFGUID);
-extern std::wstring BitMasktoString(UINT32 value, const LPCWSTR* strs, size_t strCount);
+extern std::wstring BitMaskToString(UINT32 value, const LPCWSTR* strs, size_t strCount);
 
 extern void HandleDeleteFunc(HANDLE h);
 using HRadio = SafeHandle<HANDLE, HandleDeleteFunc>;

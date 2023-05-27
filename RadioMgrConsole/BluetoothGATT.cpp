@@ -103,6 +103,7 @@ HRESULT ShowGATT(HANDLE hDevice)
 
 using ShowPropFunc = void (*)(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop);
 static void showDeviceCapablities(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop);
+static void showPowerData(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop);
 static void showDevNodeStatus(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop);
 static void defaultShowPropFunc(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop);
 
@@ -137,7 +138,7 @@ static const DevPropKeyName devPropKeyNames[] = {
 	ITEM(DEVPKEY_Device_FriendlyName),
 	ITEM(DEVPKEY_Device_LocationInfo),
 	ITEM(DEVPKEY_Device_PDOName),
-	ITEM(DEVPKEY_Device_Capabilities, showDeviceCapablities),
+	ITEM(DEVPKEY_Device_Capabilities,				showDeviceCapablities),
 	ITEM(DEVPKEY_Device_UINumber),
 	ITEM(DEVPKEY_Device_UpperFilters),
 	ITEM(DEVPKEY_Device_LowerFilters),
@@ -152,7 +153,7 @@ static const DevPropKeyName devPropKeyNames[] = {
 	ITEM(DEVPKEY_Device_Characteristics),
 	ITEM(DEVPKEY_Device_Address),
 	ITEM(DEVPKEY_Device_UINumberDescFormat),
-	ITEM(DEVPKEY_Device_PowerData),
+	ITEM(DEVPKEY_Device_PowerData,					showPowerData),
 	ITEM(DEVPKEY_Device_RemovalPolicy),
 	ITEM(DEVPKEY_Device_RemovalPolicyDefault),
 	ITEM(DEVPKEY_Device_RemovalPolicyOverride),
@@ -160,7 +161,7 @@ static const DevPropKeyName devPropKeyNames[] = {
 	ITEM(DEVPKEY_Device_LocationPaths),
 	ITEM(DEVPKEY_Device_BaseContainerId),
 	ITEM(DEVPKEY_Device_InstanceId),
-	ITEM(DEVPKEY_Device_DevNodeStatus, showDevNodeStatus),
+	ITEM(DEVPKEY_Device_DevNodeStatus,				showDevNodeStatus),
 	ITEM(DEVPKEY_Device_ProblemCode),
 	ITEM(DEVPKEY_Device_EjectionRelations),
 	ITEM(DEVPKEY_Device_RemovalRelations),
@@ -369,6 +370,63 @@ void showDeviceCapablities(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 	wprintf(L"0x%x: %s", devCap, BitMaskToString(devCap, capNames, ARRAYSIZE(capNames)).c_str());
 }
 
+// Shows property value in CM_POWER_DATA structure for DEVPKEY_Device_PowerData key.
+void showPowerData(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
+{
+	if((propType != DEVPROP_TYPE_BINARY) || (propSize != sizeof(CM_POWER_DATA))) {
+		defaultShowPropFunc(propType, propSize, prop);
+		return;
+	}
+
+	// Names for CM_POWER_DATA::PD_Capabilities bitmask.
+	static const LPCWSTR caps[] = {
+		L"PDCAP_D0_SUPPORTED",				// 0x00000001
+		L"PDCAP_D1_SUPPORTED",				// 0x00000002
+		L"PDCAP_D2_SUPPORTED",				// 0x00000004
+		L"PDCAP_D3_SUPPORTED",				// 0x00000008
+		L"PDCAP_WAKE_FROM_D0_SUPPORTED",	// 0x00000010
+		L"PDCAP_WAKE_FROM_D1_SUPPORTED",	// 0x00000020
+		L"PDCAP_WAKE_FROM_D2_SUPPORTED",	// 0x00000040
+		L"PDCAP_WAKE_FROM_D3_SUPPORTED",	// 0x00000080
+		L"PDCAP_WARM_EJECT_SUPPORTED",		// 0x00000100
+	};
+
+	// Names for CM_POWER_DATA::PD_MostRecentPowerState enum.
+	static const LPCWSTR states[] = {
+		L"PowerDeviceUnspecified",	// = 0,
+		L"PowerDeviceD0",
+		L"PowerDeviceD1",
+		L"PowerDeviceD2",
+		L"PowerDeviceD3",
+		L"PowerDeviceMaximum"
+	};
+
+	auto ppd = (CM_POWER_DATA*)prop;
+	wprintf(
+		L"CM_POWER_DATA"
+		L"\n        MostRecentPowerState = %s(%d)"
+		L"\n        Capabilities = 0x%x: %s"
+		L"\n        Latency: D1 = %0.1f mSec, D2 = %0.1f mSec, D3 = %0.1f mSec"
+		,
+		GetArrayItem(states, ppd->PD_MostRecentPowerState), ppd->PD_MostRecentPowerState,
+		ppd->PD_Capabilities, BitMaskToString(ppd->PD_Capabilities, caps, ARRAYSIZE(caps)).c_str(),
+		(double)ppd->PD_D1Latency / 10, (double)ppd->PD_D2Latency / 10, (double)ppd->PD_D3Latency / 10
+	);
+
+	wprintf(L"\n        PowerStateMapping");
+	// Note: Device Manager shows S0 ~ S5 of Power State Mapping
+	for(int i = 0; i <= 5; i++) {
+		auto state = ppd->PD_PowerStateMapping[i];
+		wprintf(L"\n          S%d -> %s(%d)",
+			i, GetArrayItem(states, state), state
+		);
+	}
+
+	wprintf(L"\n        DeepestSystemWake = %s(%d)",
+		GetArrayItem(states, ppd->PD_DeepestSystemWake), ppd->PD_DeepestSystemWake
+	);
+}
+
 void showDevNodeStatus(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 {
 	if((propType != DEVPROP_TYPE_UINT32) || (propSize != sizeof(UINT32))) {
@@ -376,7 +434,7 @@ void showDevNodeStatus(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 		return;
 	}
 
-	// Names for DevNodeStatus bimask defined in cfg.h.
+	// Names for DevNodeStatus bitmask defined in cfg.h.
 	static const LPCWSTR statusNames[] = {
 		//
 		// Device Instance status flags, returned by call to CM_Get_DevInst_Status
@@ -483,7 +541,7 @@ void defaultShowPropFunc(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 		}
 		break;
 	default:
-		wprintf(L"Type=0x%08x, Size=%d", propType, propSize);
+		wprintf(L"Type = 0x%08x, Size = %d", propType, propSize);
 		break;
 	}
 }

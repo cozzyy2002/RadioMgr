@@ -24,3 +24,9 @@ extern std::wstring BitMaskToString(UINT32 value, const LPCWSTR* strs, size_t st
 extern void HandleDeleteFunc(HANDLE h);
 using HRadio = SafeHandle<HANDLE, HandleDeleteFunc>;
 using HFile = SafeHandle<HANDLE, HandleDeleteFunc>;
+
+template<typename T, int size>
+T GetArrayItem(T(&items)[size], int index, int indexOnOverrun = size - 1)
+{
+	return items[(index < size) ? index : indexOnOverrun];
+}

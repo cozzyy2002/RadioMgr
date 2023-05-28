@@ -76,6 +76,8 @@ public:
 	afx_msg void OnClickedSaveSettings();
 	CEdit m_setRadioStateTimeout;
 	CSpinButtonCtrl m_setRadioStateTimeoutSpin;
-	afx_msg void OnEnChangeEditSetRadioStateTimeout();
+	afx_msg void OnEnChangeEdit();
 	CButton m_autoSelectDevice;
+	CEdit m_setRadioOnDelay;
+	CSpinButtonCtrl m_setRadioOnDelaySpin;
 };

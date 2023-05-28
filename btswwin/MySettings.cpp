@@ -7,6 +7,7 @@ CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
 	: settings(companyName, applicationName)
 	, switchByLcdState(_T("SwitchByLcdState"), TRUE)
 	, restoreRadioState(_T("RestoreRadioState"), TRUE)
+	, setRadioOnDelay(_T("SetRadioOnDelay"))
 	, setRadioStateTimeout(_T("SetRadioStateTimeout"), 1)
 	, autoSelectDevice(_T("AudoSelectDevice"), TRUE)
 	, saveWindowPlacement(_T("SaveWindowPlacement"))
@@ -20,6 +21,7 @@ void CMySettings::load()
 	CSettings::IValue* valueList[] = {
 		&switchByLcdState,
 		&restoreRadioState,
+		&setRadioOnDelay,
 		&setRadioStateTimeout,
 		&autoSelectDevice,
 		&saveWindowPlacement,

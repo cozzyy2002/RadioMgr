@@ -47,6 +47,9 @@
 #define IDC_EDIT_SET_RADIO_STATE_TIMEOUT 1010
 #define IDC_STATIC_FILE_VERSION4        1011
 #define IDC_STATIC_GIT_COMMIT           1011
+#define IDC_EDIT_SET_RADIO_ON_DELAY     1011
+#define IDC_SPIN_SET_RADIO_ON_DELAY     1012
+#define IDC_STATIC_SET_RADIO_ON_DELAY   1013
 #define ID_CONNECT_CONNECT              32771
 #define File                            32772
 #define ID_DEVICE_CONNECT               32773
@@ -91,7 +94,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        149
 #define _APS_NEXT_COMMAND_VALUE         32808
-#define _APS_NEXT_CONTROL_VALUE         1011
+#define _APS_NEXT_CONTROL_VALUE         1014
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -75,6 +75,7 @@ CSettingsDlg::CSettingsDlg(CMySettings& settings, CWnd* pParent /*=nullptr*/)
 	addController(m_settings.switchByLcdState, m_switchByLcdState);
 	addController(m_settings.restoreRadioState, m_restoreRadioState);
 	addController(m_settings.setRadioStateTimeout, m_setRadioStateTimeout);
+	addController(m_settings.setRadioOnDelay, m_setRadioOnDelay);
 	addController(m_settings.autoSelectDevice, m_autoSelectDevice);
 	addController(m_settings.saveWindowPlacement, m_saveWindowPlacement);
 }
@@ -85,8 +86,12 @@ CSettingsDlg::~CSettingsDlg()
 
 void CSettingsDlg::updateUIState()
 {
-	// restoreRadioState is used only if switchByLcdState == TRUE.
-	m_restoreRadioState.EnableWindow(isButtonChecked(m_switchByLcdState));
+	// restoreRadioState and setRadioOnDelay are used only if switchByLcdState is checked.
+	auto enable = isButtonChecked(m_switchByLcdState);
+	m_restoreRadioState.EnableWindow(enable);
+	GetDlgItem(IDC_STATIC_SET_RADIO_ON_DELAY)->EnableWindow(enable);
+	m_setRadioOnDelay.EnableWindow(enable);
+	m_setRadioOnDelaySpin.EnableWindow(enable);
 
 	// Set enabled state of [Save] button.
 	// The button is enabled if at least one setting value is different from it's setting storage.
@@ -118,6 +123,8 @@ void CSettingsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_SET_RADIO_STATE_TIMEOUT, m_setRadioStateTimeout);
 	DDX_Control(pDX, IDC_SPIN_SET_RADIO_STATE_TIMEOUT, m_setRadioStateTimeoutSpin);
 	DDX_Control(pDX, IDC_CHECK_AUTO_SELECT_DEVICE, m_autoSelectDevice);
+	DDX_Control(pDX, IDC_EDIT_SET_RADIO_ON_DELAY, m_setRadioOnDelay);
+	DDX_Control(pDX, IDC_SPIN_SET_RADIO_ON_DELAY, m_setRadioOnDelaySpin);
 }
 
 
@@ -128,7 +135,8 @@ BEGIN_MESSAGE_MAP(CSettingsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_SAVE_WINDOW_PLACEMENT, &CSettingsDlg::OnClickedCheckButton)
 	ON_BN_CLICKED(IDC_CHECK_AUTO_SELECT_DEVICE, &CSettingsDlg::OnClickedCheckButton)
 	ON_BN_CLICKED(ID_SAVE_SETTINGS, &CSettingsDlg::OnClickedSaveSettings)
-	ON_EN_CHANGE(IDC_EDIT_SET_RADIO_STATE_TIMEOUT, &CSettingsDlg::OnEnChangeEditSetRadioStateTimeout)
+	ON_EN_CHANGE(IDC_EDIT_SET_RADIO_STATE_TIMEOUT, &CSettingsDlg::OnEnChangeEdit)
+	ON_EN_CHANGE(IDC_EDIT_SET_RADIO_ON_DELAY, &CSettingsDlg::OnEnChangeEdit)
 END_MESSAGE_MAP()
 
 
@@ -138,6 +146,8 @@ END_MESSAGE_MAP()
 BOOL CSettingsDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+
+	m_setRadioOnDelaySpin.SetRange(0, 60);
 
 	// Set timeout range of IRadioInstance::SetRadioState() method.
 	// See "https://learn.microsoft.com/en-us/previous-versions/windows/hardware/radio/hh406610(v=vs.85)"
@@ -169,11 +179,11 @@ void CSettingsDlg::OnClickedCheckButton()
 }
 
 
-void CSettingsDlg::OnEnChangeEditSetRadioStateTimeout()
+void CSettingsDlg::OnEnChangeEdit()
 {
 	// Note: Confirm that window handle is available
 	//       to not call updateUIState() method inside constructor.
-	if(m_setRadioStateTimeout.m_hWnd) {
+	if(m_setRadioStateTimeout.m_hWnd && m_setRadioOnDelay.m_hWnd) {
 		updateUIState();
 	}
 }

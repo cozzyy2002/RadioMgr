@@ -70,6 +70,9 @@ protected:
 	// Worker thread to connect to the device.
 	std::unique_ptr<std::thread> m_connectDeviceThread;
 
+	// Worker thread to execute setRadioState after delay.
+	std::unique_ptr<std::thread> m_setRadOnThread;
+
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_BTSWWIN_DIALOG };

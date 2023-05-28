@@ -491,25 +491,25 @@ void defaultShowPropFunc(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 		wprintf(L"BOOLEAN %s", *(BYTE*)prop ? L"TRUE" : L"FALSE");
 		break;
 	case DEVPROP_TYPE_BYTE:
-		wprintf(L"BYTE %u", *(BYTE*)prop);
+		wprintf(L"BYTE %u(0x%x)", *(BYTE*)prop, *(BYTE*)prop);
 		break;
 	case DEVPROP_TYPE_INT16:
-		wprintf(L"INT16 %d", *(INT16*)prop);
+		wprintf(L"INT16 %d(0x%x)", *(INT16*)prop, *(INT16*)prop);
 		break;
 	case DEVPROP_TYPE_UINT16:
-		wprintf(L"UINT16 %u", *(UINT16*)prop);
+		wprintf(L"UINT16 %u(0x%x)", *(UINT16*)prop, *(UINT16*)prop);
 		break;
 	case DEVPROP_TYPE_INT32:
-		wprintf(L"UINT32 %d", *(INT32*)prop);
+		wprintf(L"INT32 %d(0x%x)", *(INT32*)prop, *(INT32*)prop);
 		break;
 	case DEVPROP_TYPE_UINT32:
-		wprintf(L"UINT32 %u", *(UINT32*)prop);
+		wprintf(L"UINT32 %u(0x%x)", *(UINT32*)prop, *(UINT32*)prop);
 		break;
 	case DEVPROP_TYPE_INT64:
-		wprintf(L"UINT64 %I64d", *(INT64*)prop);
+		wprintf(L"INT64 %I64d(0x%I64x)", *(INT64*)prop, *(INT64*)prop);
 		break;
 	case DEVPROP_TYPE_UINT64:
-		wprintf(L"UINT64 %I64u", *(UINT64*)prop);
+		wprintf(L"UINT64 %I64u(0x%I64x)", *(UINT64*)prop, *(UINT64*)prop);
 		break;
 	case DEVPROP_TYPE_FILETIME:
 	{

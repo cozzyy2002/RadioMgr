@@ -87,11 +87,14 @@ CSettingsDlg::~CSettingsDlg()
 void CSettingsDlg::updateUIState()
 {
 	// restoreRadioState and setRadioOnDelay are used only if switchByLcdState is checked.
+	static const int ids[] = {
+		IDC_CHECK_RESTORE_RADIO_STATE,
+		IDC_STATIC_SET_RADIO_ON_DELAY, IDC_EDIT_SET_RADIO_ON_DELAY, IDC_SPIN_SET_RADIO_ON_DELAY
+	};
 	auto enable = isButtonChecked(m_switchByLcdState);
-	m_restoreRadioState.EnableWindow(enable);
-	GetDlgItem(IDC_STATIC_SET_RADIO_ON_DELAY)->EnableWindow(enable);
-	m_setRadioOnDelay.EnableWindow(enable);
-	m_setRadioOnDelaySpin.EnableWindow(enable);
+	for(auto id : ids) {
+		GetDlgItem(id)->EnableWindow(enable);
+	}
 
 	// Set enabled state of [Save] button.
 	// The button is enabled if at least one setting value is different from it's setting storage.

@@ -412,9 +412,9 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 						);
 					}
 					HR_EXPECT_OK(setRadioState(DRS_SW_RADIO_OFF));
-					break;;
+					break;
 				case 1:		// The lid is opened.
-					m_setRadOnThread = std::make_unique<std::thread>([this]
+					m_setRadioOnThread = std::make_unique<std::thread>([this]
 						{
 							Sleep(m_settings->setRadioOnDelay * 1000);
 							HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_settings->restoreRadioState));

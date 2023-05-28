@@ -71,7 +71,7 @@ protected:
 	std::unique_ptr<std::thread> m_connectDeviceThread;
 
 	// Worker thread to execute setRadioState after delay.
-	std::unique_ptr<std::thread> m_setRadOnThread;
+	std::unique_ptr<std::thread> m_setRadioOnThread;
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME

@@ -27,13 +27,6 @@ protected:
 	C& ctrl;
 };
 
-template<> void Controller<BOOL, CButton>::setValue();
-template<> void Controller<BOOL, CButton>::getValue();
-template<> bool Controller<BOOL, CButton>::isChanged() const;
-template<> void Controller<int, CEdit>::setValue();
-template<> void Controller<int, CEdit>::getValue();
-template<> bool Controller<int, CEdit>::isChanged() const;
-
 // CSettingsDlg dialog
 
 class CSettingsDlg : public CDialogEx

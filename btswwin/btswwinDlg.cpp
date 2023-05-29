@@ -236,9 +236,19 @@ void CbtswwinDlg::OnDestroy()
 		HR_EXPECT_OK(m_radioNotifyListener->unadvise());
 	}
 
+	resetThread(m_setRadioOnThread);
+
 	m_settings->windowPlacement->length = sizeof(WINDOWPLACEMENT);
 	WIN32_EXPECT(GetWindowPlacement(m_settings->windowPlacement));
 	m_settings->save();
+}
+
+void CbtswwinDlg::resetThread(std::unique_ptr<std::thread>& thread)
+{
+	if(thread) {
+		thread->join();
+		thread.reset();
+	}
 }
 
 // Setup system menu item.
@@ -414,8 +424,10 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 					HR_EXPECT_OK(setRadioState(DRS_SW_RADIO_OFF));
 					break;
 				case 1:		// The lid is opened.
+					resetThread(m_setRadioOnThread);
 					m_setRadioOnThread = std::make_unique<std::thread>([this]
 						{
+							// Workaround for failure of IRadioInstance::SetRadioState(DRS_RADIO_ON).
 							Sleep(m_settings->setRadioOnDelay * 1000);
 							HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_settings->restoreRadioState));
 						});
@@ -730,8 +742,7 @@ LRESULT CbtswwinDlg::OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam)
 		print(_T("%s to connect"), pDeviceInfo->fConnected ? _T("Succeeded") : _T("Failed"));
 	}
 
-	m_connectDeviceThread->join();
-	m_connectDeviceThread.reset();
+	resetThread(m_connectDeviceThread);
 	EndWaitCursor();
 	return LRESULT(0);
 }

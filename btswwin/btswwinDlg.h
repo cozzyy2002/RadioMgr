@@ -66,6 +66,7 @@ protected:
 	static const UINT_PTR PollingTimerId = 1;
 	HRESULT checkRadioState();
 	HRESULT checkBluetoothDevice();
+	void resetThread(std::unique_ptr<std::thread>&);
 
 	// Worker thread to connect to the device.
 	std::unique_ptr<std::thread> m_connectDeviceThread;

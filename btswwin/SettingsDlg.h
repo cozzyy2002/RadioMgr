@@ -3,12 +3,19 @@
 
 #include "MySettings.h"
 
-
+// Interface used to exchange setting value and state of control.
 class IController
 {
 public:
+	// Sets setting value to state of the control.
 	virtual void setValue() = 0;
+
+	// Gets setting value from state of the control.
 	virtual void getValue() = 0;
+
+	// Returns true if one of following conditions is satisfied.
+	//   State of the control is not set to the value yet.
+	//   The value is changed but not saved to setting storage yet.
 	virtual bool isChanged() const = 0;
 };
 

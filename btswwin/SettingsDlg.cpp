@@ -6,8 +6,10 @@
 #include "afxdialogex.h"
 #include "SettingsDlg.h"
 
-
+// Sets check state of the button.
 static void setButtonCheck(CButton& button, const CMySettings::BoolValue& value) { button.SetCheck(value ? BST_CHECKED : BST_UNCHECKED); }
+
+// Returns TRUE if the button is checked, otherwise FALSE.
 static BOOL isButtonChecked(const CButton& button) { return (button.GetCheck() == BST_CHECKED) ? TRUE : FALSE; }
 
 #pragma region Controller<BOOL, CButton>
@@ -23,9 +25,6 @@ void Controller<BOOL, CButton>::getValue()
 	value = isButtonChecked(ctrl);
 }
 
-// Returns true if one of following conditions is satisfied.
-//   State of the control is not set to the value yet.
-//   The value is changed but not saved to setting storage yet.
 template<>
 bool Controller<BOOL, CButton>::isChanged() const
 {
@@ -52,9 +51,6 @@ void Controller<int, CEdit>::getValue()
 	value = _tstoi(text.GetString());
 }
 
-// Returns true if one of following conditions is satisfied.
-//   State of the control is not set to the value yet.
-//   The value is changed but not saved to setting storage yet.
 template<>
 bool Controller<int, CEdit>::isChanged() const
 {

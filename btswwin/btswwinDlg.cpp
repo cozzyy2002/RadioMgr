@@ -456,7 +456,7 @@ HRESULT CbtswwinDlg::setRadioState(RadioInstanceData& data, DEVICE_RADIO_STATE s
 	auto newState = restore ? data.savedState : state;
 	HR_ASSERT_OK(data.radioInstance->GetRadioState(&data.state));
 	return (data.state != newState) ?
-		HR_EXPECT_OK(data.radioInstance->SetRadioState(state, m_settings->setRadioStateTimeout)) :
+		HR_EXPECT_OK(data.radioInstance->SetRadioState(newState, m_settings->setRadioStateTimeout)) :
 		S_FALSE;
 }
 

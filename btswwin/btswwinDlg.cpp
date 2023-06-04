@@ -261,7 +261,7 @@ void CbtswwinDlg::OnExitUpdateCommandUI(CCmdUI*)
 	MENUITEMINFO info{sizeof(info)};
 	info.wID = MIIM_ID;
 	auto isMenuExist = pSysMenu->GetMenuItemInfo(ID_DEBUG_LID_SWITCH, &info);
-	if(m_settings->isEnabled(CMySettings::LIDSwitch)) {
+	if(m_settings->isEnabled(CMySettings::DebugSwitch::LIDSwitch)) {
 		if(!isMenuExist) {
 			pSysMenu->AppendMenu(MF_STRING, ID_DEBUG_LID_SWITCH, _T("Debug LCD open/close"));
 		}
@@ -691,7 +691,7 @@ void CbtswwinDlg::OnConnectDeviceCommand()
 				for(DWORD i = 0; i < serviceCount; i++) {
 					threads[i] = std::make_unique<std::thread>([&](int seq) {
 						const auto& guid = serviceGuids.get()[seq];
-						if(m_settings->isEnabled(CMySettings::ShowServiceStateGUID)) {
+						if(m_settings->isEnabled(CMySettings::DebugSwitch::ShowServiceStateGUID)) {
 							WCHAR strGuid[40];
 							HR_EXPECT(0 < StringFromGUID2(guid, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
 							LOG4CXX_INFO(logger, _T("Setting service state ") << seq << _T(": ") << strGuid);

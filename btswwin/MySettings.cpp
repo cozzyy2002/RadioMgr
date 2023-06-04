@@ -59,8 +59,8 @@ CString CMySettings::valueToString(const CSettings::BinaryValue<WINDOWPLACEMENT>
 }
 
 
-bool CMySettings::isEnabled(int flag)
+bool CMySettings::isEnabled(DebugSwitch flag)
 {
 	debugSwitches.read(&settings);
-	return (flag & (int)debugSwitches);
+	return (flag & debugSwitches);
 }

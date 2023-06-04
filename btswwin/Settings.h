@@ -69,6 +69,23 @@ public:
 	};
 
 	template<typename T>
+	class EnumValue : public Value<int>
+	{
+	public:
+		explicit EnumValue(LPCTSTR name, const T& defaultValue) : Value(name, (int)defaultValue) {}
+		explicit EnumValue(LPCTSTR name) : Value(name, (int)T()) {}
+
+		EnumValue& operator =(const T& newValue)
+		{
+			m_value = (int)newValue;
+			return *this;
+		}
+		operator T() const { return (T)m_value; }
+		operator int() const { return (int)m_value; }
+		T getDefault() const { return (T)m_defaultValue; }
+	};
+
+	template<typename T>
 	class BinaryValue : public IValue
 	{
 	public:
@@ -114,7 +131,7 @@ public:
 		T m_value;				// Current value.
 		T m_savedValue;			// Value saved in profile storage.
 		IValueHandler* m_valueHandler;
-		DefaultValueHandler m_defaultValueHandler;
+		static DefaultValueHandler m_defaultValueHandler;
 	};
 
 	explicit CSettings(LPCTSTR companyName, LPCTSTR applicationName);
@@ -219,3 +236,12 @@ void CSettings::write(BinaryValue<T>& value)
 }
 
 #pragma endregion
+
+template<typename T>
+int operator &(const CSettings::EnumValue<T>& a, T b) { return (int)a & (int)b; }
+
+template<typename T>
+int operator &(T a, const CSettings::EnumValue<T>& b) { return (int)a & (int)b; }
+
+template<typename T>
+int operator &(const CSettings::EnumValue<T>& a, const CSettings::EnumValue<T>& b) { return (int)a & (int)b; }

@@ -659,14 +659,8 @@ void CbtswwinDlg::OnConnectDeviceUpdateCommandUI(CCmdUI* pCmdUI)
 	auto deviceInfo = m_bluetoothDevices.GetSelectedDevice();
 	if(!deviceInfo || (deviceInfo->fConnected)) { enable = FALSE; }
 
-	// Check if at least one radio instance is on.
-	auto onCount = 0;
-	m_radioInstances.For([this, &onCount](RadioInstanceData& data)
-		{
-			if(data.state == DRS_RADIO_ON) { onCount++; }
-			return S_OK;
-		}, false);
-	if(onCount == 0) { enable = FALSE; }
+	// Check if Bluetooth radio is connectable.
+	enable &= BluetoothIsConnectable(NULL);
 
 	pCmdUI->Enable(enable);
 }

@@ -33,12 +33,13 @@ public:
 	};
 
 	HRESULT OnInitCtrl();
-	HRESULT Add(const RadioInstanceData&);
+	HRESULT Add(const RadioInstanceData&, BOOL);
 	HRESULT Remove(const CString&);
 	HRESULT StateChange(const CString&, DEVICE_RADIO_STATE);
 
 	HRESULT For(std::function<HRESULT(RadioInstanceData&)> data, bool onlyChecked = true);
 	RadioInstanceData* GetSelectedInstance();
+	RadioInstanceData* GetInstance(const CString&);
 
 	enum class UpdateMask {
 		None = 0,

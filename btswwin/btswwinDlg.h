@@ -74,7 +74,26 @@ protected:
 	// Worker thread to execute setRadioState after delay.
 	std::unique_ptr<std::thread> m_setRadioOnThread;
 
-// Dialog Data
+	/*
+	 * Workaround that RadioInstance is removed and added when LID is opened sometimes.
+
+		2023-06-01 09:36:33.225 [INFO] LIDSWITCH_STATE_CHANGE: LID is opened(1)
+		2023-06-01 09:36:35.178 [INFO] InstanceRemove: Bluetooth_4c034fd052b8, UNKNOWN(-1)
+		2023-06-01 09:36:36.889 [INFO] InstanceAdd: Bluetooth_4c034fd052b8:Bluetooth, DRS_SW_RADIO_OFF(1)
+
+	 * RadioState is added to m_previousRadioStates when RadioInstance is removed.
+	 * And it is used to restore state when RadioInstance is added.
+	 * Then setRadioState() is called with restored state.
+	 * 
+	 * See OnUserRadioManagerNotify() method for details.
+	 */
+	struct RadioState {
+		DEVICE_RADIO_STATE sate;
+		BOOL isChecked;
+	};
+	std::map<CString, RadioState> m_previousRadioStates;
+
+	// Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_BTSWWIN_DIALOG };
 #endif

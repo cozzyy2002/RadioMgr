@@ -487,14 +487,30 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 			message->radioInstance->GetFriendlyName(1033, &friendlyName);
 			HR_ASSERT_OK(message->radioInstance->GetInstanceSignature(&id));
 			HR_ASSERT_OK(message->radioInstance->GetRadioState(&state));
+			auto savedState = state;
+			auto isChecked = TRUE;
+			auto it = m_previousRadioStates.find(id);
+			if(it != m_previousRadioStates.end()) {
+				// If RadioState is saved when the RadioInstance was removed, restore its state.
+				savedState = it->second.sate;
+				isChecked = it->second.isChecked;
+				LOG4CXX_DEBUG(logger,
+					_T("Found saved state of ") << id
+					<< _T(": state=") << ValueToString(states, savedState).GetString()
+					<< _T(", isChecked=") << isChecked);
+			}
 			RadioInstanceData data(
 				{
 					message->radioInstance, id, friendlyName,
 					message->radioInstance->IsMultiComm(),
 					message->radioInstance->IsAssociatingDevice(),
-					state, state
+					state, savedState
 				});
-			m_radioInstances.Add(data);
+			m_radioInstances.Add(data, isChecked);
+			if((it != m_previousRadioStates.end()) && isChecked) {
+				// Restore state of RadioInstance, if saved state is found.
+				setRadioState(data, savedState);
+			}
 			name.Format(_T("%s:%s"), data.id.GetString(), data.name.GetString());
 
 			// Start polling timer when first instance is added.
@@ -505,6 +521,24 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 		// RadioNotifyListener::OnInstanceRemove(BSTR bstrRadioInstanceId)
 		type = _T("InstanceRemove");
 		name = message->radioInstanceId;
+		{
+			// Save radio state of RadioInstance to be removed.
+			auto instance = m_radioInstances.GetInstance(name);
+			if(instance) {
+				// Save state of the RadioInstance to be removed.
+				// This state will be restored when the RadioInstance is added.
+				auto& previousState = m_previousRadioStates[name];
+				previousState.sate = instance->savedState;
+				auto nItem = m_radioInstances.findItem(name);
+				if(0 <= nItem) { previousState.isChecked = m_radioInstances.GetCheck(nItem); }
+				LOG4CXX_DEBUG(logger,
+					_T("Saved state of ") << name.GetString()
+					<< _T(": state=") << ValueToString(states, previousState.sate).GetString()
+					<< _T(", isChecked=") << previousState.isChecked);
+			} else {
+				LOG4CXX_WARN(logger, _T("Can't save state: ") << name.GetString());
+			}
+		}
 		m_radioInstances.Remove(name);
 
 		// Stop polling timer when last instance is removed.

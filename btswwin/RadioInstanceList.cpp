@@ -29,14 +29,14 @@ HRESULT CRadioInstanceList::OnInitCtrl()
 
 static LPCTSTR stateToString(DEVICE_RADIO_STATE state) { return ((state == DRS_RADIO_ON) ? _T("ON") : _T("OFF")); }
 
-HRESULT CRadioInstanceList::Add(const RadioInstanceData& data)
+HRESULT CRadioInstanceList::Add(const RadioInstanceData& data, BOOL isChecked)
 {
     auto& pair = m_datas.insert({data.id, data});
 
     auto nItem = addItem(data.id);
     SetItemData(nItem, (DWORD_PTR)&pair.first->second);
     Update(data, UpdateMask::All);
-    SetCheck(nItem);
+    SetCheck(nItem, isChecked);
 
     return S_OK;
 }
@@ -85,6 +85,12 @@ RadioInstanceData* CRadioInstanceList::GetSelectedInstance()
         ret = (RadioInstanceData*)GetItemData(i);
     }
     return ret;
+}
+
+RadioInstanceData* CRadioInstanceList::GetInstance(const CString& radioInstanceId)
+{
+    auto it = m_datas.find(radioInstanceId);
+    return (it != m_datas.end()) ? &(it->second) : nullptr;
 }
 
 // Updates ListCtrl item.

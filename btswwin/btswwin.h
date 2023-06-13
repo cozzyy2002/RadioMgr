@@ -20,7 +20,7 @@ class CbtswwinApp : public CWinApp
 public:
 	CbtswwinApp();
 
-// Overrides
+	// Overrides
 public:
 	virtual BOOL InitInstance();
 

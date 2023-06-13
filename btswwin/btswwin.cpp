@@ -34,7 +34,7 @@ CbtswwinApp::CbtswwinApp()
 // The one and only CbtswwinApp object
 
 CbtswwinApp theApp;
-static auto logger(log4cxx::Logger::getLogger(_T("btswwin")));
+static auto logger(log4cxx::Logger::getLogger(_T("btswwin.CbtswwinApp")));
 
 // CbtswwinApp initialization
 
@@ -44,11 +44,39 @@ BOOL CbtswwinApp::InitInstance()
 	WCHAR path[MAX_PATH];
 	static const auto pathLength = ARRAYSIZE(path);
 	GetModuleFileName(NULL, path, pathLength);
+
+	// Prevent multiple app from running.
+	// Absolute path of app is used as the mutex name in global namespace.
+	CString mutexName(_T("Global\\"));
+	{
+		CString _path(path);
+		_path.Replace(_T('\\'), _T('/'));
+		mutexName += _path;
+	}
+	CHandle appMutex(CreateMutex(NULL, TRUE, mutexName.GetString()));
+	auto err = GetLastError();
+	CString errMsg;
+	switch(err) {
+	case ERROR_SUCCESS:
+		break;
+	case ERROR_ALREADY_EXISTS:
+		errMsg.Format(_T("`%s` is already running."), path);
+		break;
+	default:
+		errMsg.Format(_T("CreateMutex failed.\nError = %d"), err);
+		break;
+	}
+	if(!errMsg.IsEmpty()) {
+		MessageBox(NULL, errMsg.GetString(), _T("Error"), MB_ICONEXCLAMATION | MB_OK);
+		return FALSE;
+	}
+
 	PathCchRemoveFileSpec(path, pathLength);
 	WCHAR configFileName[MAX_PATH];
 	PathCchCombine(configFileName, ARRAYSIZE(configFileName), path, L"log4cxx.config.xml");
 	log4cxx::xml::DOMConfigurator::configure(configFileName);
 	LOG4CXX_INFO(logger, L"Logger is configured: " << configFileName);
+	LOG4CXX_DEBUG(logger, L"Mutex is created: " << mutexName.GetString());
 
 	CWinApp::InitInstance();
 
@@ -112,4 +140,3 @@ BOOL CbtswwinApp::InitInstance()
 	//  application, rather than start the application's message pump.
 	return FALSE;
 }
-

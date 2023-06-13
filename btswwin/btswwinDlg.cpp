@@ -429,6 +429,7 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 						{
 							// Workaround for failure of IRadioInstance::SetRadioState(DRS_RADIO_ON).
 							Sleep(m_settings->setRadioOnDelay * 1000);
+							LOG4CXX_DEBUG(logger, _T("Switching Radio by LID open."));
 							HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_settings->restoreRadioState));
 						});
 					break;
@@ -509,6 +510,7 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 			m_radioInstances.Add(data, isChecked);
 			if((it != m_previousRadioStates.end()) && isChecked) {
 				// Restore state of RadioInstance, if saved state is found.
+				LOG4CXX_DEBUG(logger, _T("Switching Radio by adding Radio."));
 				setRadioState(data, savedState);
 			}
 			name.Format(_T("%s:%s"), data.id.GetString(), data.name.GetString());

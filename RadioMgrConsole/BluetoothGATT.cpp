@@ -332,8 +332,7 @@ void showProperty(const DEVPROPKEY& key, DEVPROPTYPE propType, DWORD propSize, L
 void showDeviceCapablities(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 {
 	if((propType != DEVPROP_TYPE_UINT32) || (propSize != sizeof(UINT32))) {
-		defaultShowPropFunc(propType, propSize, prop);
-		return;
+		return defaultShowPropFunc(propType, propSize, prop);
 	}
 
 	// Names for device capabilities bit mask found in DEVICE_CAPABILITIES structure.
@@ -374,8 +373,7 @@ void showDeviceCapablities(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 void showPowerData(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 {
 	if((propType != DEVPROP_TYPE_BINARY) || (propSize != sizeof(CM_POWER_DATA))) {
-		defaultShowPropFunc(propType, propSize, prop);
-		return;
+		return defaultShowPropFunc(propType, propSize, prop);
 	}
 
 	// Names for CM_POWER_DATA::PD_Capabilities bitmask.
@@ -430,8 +428,7 @@ void showPowerData(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 void showDevNodeStatus(DEVPROPTYPE propType, DWORD propSize, LPCVOID prop)
 {
 	if((propType != DEVPROP_TYPE_UINT32) || (propSize != sizeof(UINT32))) {
-		defaultShowPropFunc(propType, propSize, prop);
-		return;
+		return defaultShowPropFunc(propType, propSize, prop);
 	}
 
 	// Names for DevNodeStatus bitmask defined in cfg.h.

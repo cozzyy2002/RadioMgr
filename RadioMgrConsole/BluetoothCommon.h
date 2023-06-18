@@ -25,8 +25,8 @@ extern void HandleDeleteFunc(HANDLE h);
 using HRadio = SafeHandle<HANDLE, HandleDeleteFunc>;
 using HFile = SafeHandle<HANDLE, HandleDeleteFunc>;
 
-template<typename T, int size>
-T GetArrayItem(T(&items)[size], int index, int indexOnOverrun = size - 1)
+template<typename T, size_t size>
+T GetArrayItem(T(&items)[size], size_t index, size_t indexOnOverrun = size - 1)
 {
 	return items[(index < size) ? index : indexOnOverrun];
 }

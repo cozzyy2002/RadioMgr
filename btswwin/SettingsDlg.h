@@ -17,6 +17,9 @@ public:
 	//   State of the control is not set to the value yet.
 	//   The value is changed but not saved to setting storage yet.
 	virtual bool isChanged() const = 0;
+
+	// Returns CWnd of the control.
+	virtual CWnd* getCtrlWnd() const = 0;
 };
 
 template<typename T, class C>
@@ -28,6 +31,8 @@ public:
 	virtual void setValue() override;
 	virtual void getValue() override;
 	virtual bool isChanged() const override;
+
+	virtual CWnd* getCtrlWnd() const override { return &ctrl; }
 
 protected:
 	CSettings::Value<T>& value;

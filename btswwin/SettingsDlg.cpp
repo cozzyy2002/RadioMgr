@@ -83,12 +83,6 @@ CSettingsDlg::~CSettingsDlg()
 
 void CSettingsDlg::updateUIState()
 {
-	// Confirm that all controls are available
-	// to not perform any UI operation inside constructor.
-	for(auto& c : m_controllers) {
-		if(!c->getCtrlWnd()->GetSafeHwnd()) { return; }
-	}
-
 	// Set enabled state of the controls depending on whether switchByLcdState is checked.
 	static const int ids[] = {
 		IDC_CHECK_RESTORE_RADIO_STATE,
@@ -189,7 +183,11 @@ void CSettingsDlg::OnClickedCheckButton()
 
 void CSettingsDlg::OnEnChangeEdit()
 {
-	updateUIState();
+	// Note: Confirm that window handle is available
+	//       to not call updateUIState() method inside constructor.
+	if(m_setRadioStateTimeout.m_hWnd && m_setRadioOnDelay.m_hWnd) {
+		updateUIState();
+	}
 }
 
 

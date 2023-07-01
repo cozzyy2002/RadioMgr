@@ -183,11 +183,13 @@ void CSettingsDlg::OnClickedCheckButton()
 
 void CSettingsDlg::OnEnChangeEdit()
 {
-	// Note: Confirm that window handle is available
-	//       to not call updateUIState() method inside constructor.
-	if(m_setRadioStateTimeout.m_hWnd && m_setRadioOnDelay.m_hWnd) {
-		updateUIState();
+	// Confirm that window handle of all controls are available
+	// to not call updateUIState() method inside constructor.
+	for(auto& c : m_controllers) {
+		if(!c->getCtrlWnd()->GetSafeHwnd()) { return; }
 	}
+
+	updateUIState();
 }
 
 

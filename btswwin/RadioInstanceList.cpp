@@ -63,14 +63,25 @@ HRESULT CRadioInstanceList::StateChange(const CString& radioInstanceId, DEVICE_R
 
 HRESULT CRadioInstanceList::For(std::function<HRESULT(RadioInstanceData&)> func, bool onlyChecked /*= true*/)
 {
+    auto hr = S_FALSE;
     auto cItems = GetItemCount();
-    auto hr = ((0 < cItems) ? S_OK : S_FALSE);
     for(auto i = 0; i < cItems; i++) {
         if(!onlyChecked || GetCheck(i)) {
             auto id(GetItemText(i, 0));
             auto& data = m_datas[id];
             if(FAILED(hr = func(data))) break;
         }
+    }
+
+    return hr;
+}
+
+HRESULT CRadioInstanceList::For(std::function<HRESULT(int, BOOL)> func)
+{
+    auto hr = S_FALSE;
+    auto cItems = GetItemCount();
+    for(auto nItem = 0; nItem < cItems; nItem++) {
+        if(FAILED(hr = func(nItem, GetCheck(nItem)))) break;
     }
 
     return hr;

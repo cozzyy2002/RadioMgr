@@ -9,6 +9,7 @@ CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
 	, restoreRadioState(_T("RestoreRadioState"), TRUE)
 	, setRadioOnDelay(_T("SetRadioOnDelay"))
 	, setRadioStateTimeout(_T("SetRadioStateTimeout"), 1)
+	, autoCheckRadioInstance(_T("AutoCheckRadioInstance"))
 	, autoSelectDevice(_T("AudoSelectDevice"), TRUE)
 	, saveWindowPlacement(_T("SaveWindowPlacement"))
 	, windowPlacement(_T("WindowPlacement"), this)
@@ -23,6 +24,7 @@ void CMySettings::load()
 		&restoreRadioState,
 		&setRadioOnDelay,
 		&setRadioStateTimeout,
+		&autoCheckRadioInstance,
 		&autoSelectDevice,
 		&saveWindowPlacement,
 		&windowPlacement,

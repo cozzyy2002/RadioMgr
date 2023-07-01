@@ -38,6 +38,7 @@ public:
 	HRESULT StateChange(const CString&, DEVICE_RADIO_STATE);
 
 	HRESULT For(std::function<HRESULT(RadioInstanceData&)> data, bool onlyChecked = true);
+	HRESULT For(std::function<HRESULT(int, BOOL)> data);
 	RadioInstanceData* GetSelectedInstance();
 	RadioInstanceData* GetInstance(const CString&);
 

@@ -409,9 +409,9 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 			print(_T("LIDSWITCH_STATE_CHANGE: LID is %s"), ValueToString(lidSwitchDatas, setting->Data[0]).GetString());
 
 			UpdateData();
-			if(m_settings->switchByLcdState) {
-				switch(setting->Data[0]) {
-				case 0:		// The lid is closed.
+			switch(setting->Data[0]) {
+			case 0:		// The lid is closed.
+				if(m_settings->switchByLcdState) {
 					if(m_settings->restoreRadioState) {
 						// Save current state to restore when lid will be opened.
 						m_radioInstances.For([](RadioInstanceData& data)
@@ -422,8 +422,18 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 						);
 					}
 					HR_EXPECT_OK(setRadioState(DRS_SW_RADIO_OFF));
-					break;
-				case 1:		// The lid is opened.
+				}
+				break;
+			case 1:		// The lid is opened.
+				if(m_settings->autoCheckRadioInstance) {
+					m_radioInstances.For([this](int nItem, BOOL isChecked)
+						{
+							// Check all items of RadioInstance list.
+							if(!isChecked) { m_radioInstances.SetCheck(nItem); }
+							return S_OK;
+						});
+				}
+				if(m_settings->switchByLcdState) {
 					resetThread(m_setRadioOnThread);
 					m_setRadioOnThread = std::make_unique<std::thread>([this]
 						{
@@ -432,8 +442,8 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 							LOG4CXX_DEBUG(logger, _T("Switching Radio by LID open."));
 							HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_settings->restoreRadioState));
 						});
-					break;
 				}
+				break;
 			}
 		}
 	}

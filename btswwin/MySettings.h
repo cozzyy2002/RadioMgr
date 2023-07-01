@@ -11,6 +11,7 @@ struct CMySettings : public CSettings::BinaryValue<WINDOWPLACEMENT>::DefaultValu
 	BoolValue restoreRadioState;
 	CSettings::Value<int> setRadioOnDelay;
 	CSettings::Value<int> setRadioStateTimeout;
+	BoolValue autoCheckRadioInstance;
 	BoolValue autoSelectDevice;
 	BoolValue saveWindowPlacement;
 	CSettings::BinaryValue<WINDOWPLACEMENT> windowPlacement;

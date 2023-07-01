@@ -80,4 +80,5 @@ public:
 	CButton m_autoSelectDevice;
 	CEdit m_setRadioOnDelay;
 	CSpinButtonCtrl m_setRadioOnDelaySpin;
+	CButton m_autoCheckRadioInstance;
 };

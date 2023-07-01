@@ -72,6 +72,7 @@ CSettingsDlg::CSettingsDlg(CMySettings& settings, CWnd* pParent /*=nullptr*/)
 	addController(m_settings.restoreRadioState, m_restoreRadioState);
 	addController(m_settings.setRadioStateTimeout, m_setRadioStateTimeout);
 	addController(m_settings.setRadioOnDelay, m_setRadioOnDelay);
+	addController(m_settings.autoCheckRadioInstance, m_autoCheckRadioInstance);
 	addController(m_settings.autoSelectDevice, m_autoSelectDevice);
 	addController(m_settings.saveWindowPlacement, m_saveWindowPlacement);
 }
@@ -124,6 +125,7 @@ void CSettingsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK_AUTO_SELECT_DEVICE, m_autoSelectDevice);
 	DDX_Control(pDX, IDC_EDIT_SET_RADIO_ON_DELAY, m_setRadioOnDelay);
 	DDX_Control(pDX, IDC_SPIN_SET_RADIO_ON_DELAY, m_setRadioOnDelaySpin);
+	DDX_Control(pDX, IDC_CHECK_AUTO_CHECK_RADIO_INSTANCE, m_autoCheckRadioInstance);
 }
 
 
@@ -132,6 +134,7 @@ BEGIN_MESSAGE_MAP(CSettingsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_SWITCH_BY_LCD_STATE, &CSettingsDlg::OnClickedCheckButton)
 	ON_BN_CLICKED(IDC_CHECK_RESTORE_RADIO_STATE, &CSettingsDlg::OnClickedCheckButton)
 	ON_BN_CLICKED(IDC_CHECK_SAVE_WINDOW_PLACEMENT, &CSettingsDlg::OnClickedCheckButton)
+	ON_BN_CLICKED(IDC_CHECK_AUTO_CHECK_RADIO_INSTANCE, &CSettingsDlg::OnClickedCheckButton)
 	ON_BN_CLICKED(IDC_CHECK_AUTO_SELECT_DEVICE, &CSettingsDlg::OnClickedCheckButton)
 	ON_BN_CLICKED(ID_SAVE_SETTINGS, &CSettingsDlg::OnClickedSaveSettings)
 	ON_EN_CHANGE(IDC_EDIT_SET_RADIO_STATE_TIMEOUT, &CSettingsDlg::OnEnChangeEdit)

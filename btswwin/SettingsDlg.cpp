@@ -7,26 +7,26 @@
 #include "SettingsDlg.h"
 
 // Sets check state of the button.
-static void setButtonCheck(CButton& button, const CMySettings::BoolValue& value) { button.SetCheck(value ? BST_CHECKED : BST_UNCHECKED); }
+static void setButtonCheck(CButton& button, const CSettings::Value<bool>& value) { button.SetCheck(value ? BST_CHECKED : BST_UNCHECKED); }
 
 // Returns TRUE if the button is checked, otherwise FALSE.
 static BOOL isButtonChecked(const CButton& button) { return (button.GetCheck() == BST_CHECKED) ? TRUE : FALSE; }
 
-#pragma region Controller<BOOL, CButton>
+#pragma region Controller<bool, CButton>
 template<>
-void Controller<BOOL, CButton>::setValue()
+void Controller<bool, CButton>::setValue()
 {
 	setButtonCheck(ctrl, value);
 }
 
 template<>
-void Controller<BOOL, CButton>::getValue()
+void Controller<bool, CButton>::getValue()
 {
-	value = isButtonChecked(ctrl);
+	value = isButtonChecked(ctrl) ? true : false;
 }
 
 template<>
-bool Controller<BOOL, CButton>::isChanged() const
+bool Controller<bool, CButton>::isChanged() const
 {
 	auto buttonChecked = isButtonChecked(ctrl);
 	auto bValue = (value ? TRUE : FALSE);
@@ -83,7 +83,7 @@ CSettingsDlg::~CSettingsDlg()
 
 void CSettingsDlg::updateUIState()
 {
-	// restoreRadioState and setRadioOnDelay are used only if switchByLcdState is checked.
+	// Set enabled state of the controls depending on whether switchByLcdState is checked.
 	static const int ids[] = {
 		IDC_CHECK_RESTORE_RADIO_STATE,
 		IDC_STATIC_SET_RADIO_ON_DELAY, IDC_EDIT_SET_RADIO_ON_DELAY, IDC_SPIN_SET_RADIO_ON_DELAY

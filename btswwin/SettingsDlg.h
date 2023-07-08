@@ -8,10 +8,10 @@ class IController
 {
 public:
 	// Sets setting value to state of the control.
-	virtual void setValue() = 0;
+	virtual void setValueToCtrl() = 0;
 
 	// Gets setting value from state of the control.
-	virtual void getValue() = 0;
+	virtual void getValueFromCtrl() = 0;
 
 	// Returns true if one of following conditions is satisfied.
 	//   State of the control is not set to the value yet.
@@ -28,8 +28,8 @@ class Controller : public IController
 public:
 	Controller(CSettings::Value<T>& value, C& ctrl) : value(value), ctrl(ctrl) {}
 
-	virtual void setValue() override;
-	virtual void getValue() override;
+	virtual void setValueToCtrl() override;
+	virtual void getValueFromCtrl() override;
 	virtual bool isChanged() const override;
 	virtual CWnd* getCtrlWnd() const override { return &ctrl; }
 

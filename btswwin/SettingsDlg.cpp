@@ -14,13 +14,13 @@ static BOOL isButtonChecked(const CButton& button) { return (button.GetCheck() =
 
 #pragma region Controller<bool, CButton>
 template<>
-void Controller<bool, CButton>::setValue()
+void Controller<bool, CButton>::setValueToCtrl()
 {
 	setButtonCheck(ctrl, value);
 }
 
 template<>
-void Controller<bool, CButton>::getValue()
+void Controller<bool, CButton>::getValueFromCtrl()
 {
 	value = isButtonChecked(ctrl) ? true : false;
 }
@@ -36,7 +36,7 @@ bool Controller<bool, CButton>::isChanged() const
 
 #pragma region Controller<int, CEdit>
 template<>
-void Controller<int, CEdit>::setValue()
+void Controller<int, CEdit>::setValueToCtrl()
 {
 	CString text;
 	text.Format(_T("%d"), (int)value);
@@ -44,7 +44,7 @@ void Controller<int, CEdit>::setValue()
 }
 
 template<>
-void Controller<int, CEdit>::getValue()
+void Controller<int, CEdit>::getValueFromCtrl()
 {
 	CString text;
 	ctrl.GetWindowText(text);
@@ -95,10 +95,10 @@ void CSettingsDlg::updateUIState()
 
 	// Set enabled state of [Save] button.
 	// The button is enabled if at least one setting value is different from it's setting storage.
-	bool isChanged = false;
+	auto isChanged = FALSE;
 	for(auto& c : m_controllers) {
 		if(c->isChanged()) {
-			isChanged = true;
+			isChanged = TRUE;
 			break;
 		}
 	}
@@ -110,7 +110,7 @@ void CSettingsDlg::updateUIState()
 void CSettingsDlg::applyChanges()
 {
 	for(auto& c : m_controllers) {
-		c->getValue();
+		c->getValueFromCtrl();
 	}
 }
 
@@ -157,7 +157,7 @@ BOOL CSettingsDlg::OnInitDialog()
 
 	// Set all setting values to corresponding control.
 	for(auto& c : m_controllers) {
-		c->setValue();
+		c->setValueToCtrl();
 	}
 
 	updateUIState();

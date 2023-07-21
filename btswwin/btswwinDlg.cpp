@@ -732,9 +732,7 @@ void CbtswwinDlg::OnConnectDeviceCommand()
 					threads[i] = std::make_unique<std::thread>([&](int seq) {
 						const auto& guid = serviceGuids.get()[seq];
 						if(m_settings->isEnabled(CMySettings::DebugSwitch::ShowServiceStateGUID)) {
-							WCHAR strGuid[40];
-							HR_EXPECT(0 < StringFromGUID2(guid, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
-							LOG4CXX_INFO(logger, _T("Setting service state ") << seq << _T(": ") << strGuid);
+							LOG4CXX_INFO(logger, _T("Setting service state ") << seq << _T(": ") << guidToString(guid).GetString());
 						}
 						HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, deviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE)));
 						HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, deviceInfo, &guid, BLUETOOTH_SERVICE_ENABLE)));
@@ -981,4 +979,12 @@ void CbtswwinDlg::OnFileOpenLog(UINT nId)
 	} else {
 		LOG4CXX_ERROR(logger, _T("Menu item position is out of range: ") << pos);
 	}
+}
+
+
+CString guidToString(REFGUID guid)
+{
+	OLECHAR strGuid[50] = _T("");
+	HR_EXPECT(0 < StringFromGUID2(guid, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
+	return strGuid;
 }

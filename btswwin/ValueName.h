@@ -2,6 +2,8 @@
 
 #include "../Common/Assert.h"
 
+extern CString guidToString(REFGUID);
+
 //
 // Template class that hold a value and it's name and description(optional).
 //
@@ -67,8 +69,5 @@ CString ValueName<T>::valueToString() const
 template<>
 CString ValueName<GUID>::valueToString() const
 {
-	OLECHAR strGuid[50] = _T("");
-	HR_EXPECT(0 < StringFromGUID2(value, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
-	return strGuid;
+	return guidToString(value);
 }
-

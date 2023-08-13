@@ -39,7 +39,8 @@ CbtswwinDlg::CbtswwinDlg(CResourceReader& resourceReader, CWnd* pParent /*=nullp
 
 static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CbtswinDlg")));
 
-// Show failed message in log list control with formatted HRESULT.
+// Logs error message with formatted HRESULT.
+// This function is called from tsm::Assert when assertion fails.
 static void AssertFailedProc(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int line)
 {
 	CString _msg;
@@ -158,8 +159,8 @@ BOOL CbtswwinDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// Setup log file list.
+	auto& clazz = log4cxx::helpers::Class::forName(_T("FileAppender"));
 	for(auto& appender : log4cxx::Logger::getRootLogger()->getAllAppenders()) {
-		auto& clazz = log4cxx::helpers::Class::forName(_T("FileAppender"));
 		if(appender->instanceof(clazz)) {
 			// Add file name of FileAppender to the file list.
 			auto fileAppender = (log4cxx::FileAppender*)appender->cast(clazz);
@@ -731,7 +732,7 @@ void CbtswwinDlg::OnConnectDeviceCommand()
 				for(DWORD i = 0; i < serviceCount; i++) {
 					threads[i] = std::make_unique<std::thread>([&](int seq) {
 						const auto& guid = serviceGuids.get()[seq];
-						if(m_settings->isEnabled(CMySettings::DebugSwitch::ShowServiceStateGUID)) {
+						if(m_settings->isEnabled(CMySettings::DebugSwitch::LogServiceStateGUID)) {
 							LOG4CXX_INFO(logger, _T("Setting service state ") << seq << _T(": ") << guidToString(guid).GetString());
 						}
 						HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothSetServiceState(hRadio, deviceInfo, &guid, BLUETOOTH_SERVICE_DISABLE)));

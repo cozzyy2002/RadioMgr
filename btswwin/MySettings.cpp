@@ -60,6 +60,8 @@ CString CMySettings::valueToString(const CSettings::BinaryValue<WINDOWPLACEMENT>
 	return str;
 }
 
+template<>
+const DWORD CSettings::BinaryValue<WINDOWPLACEMENT>::RegType = REG_BINARY;
 
 bool CMySettings::isEnabled(DebugSwitch flag)
 {

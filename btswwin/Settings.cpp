@@ -152,8 +152,6 @@ template<>
 const DWORD CSettings::Value<int>::RegType = REG_DWORD;
 template<>
 const DWORD CSettings::Value<CString>::RegType = REG_SZ;
-template<>
-const DWORD CSettings::BinaryValue<WINDOWPLACEMENT>::RegType = REG_BINARY;
 
 CString CSettings::Value<bool>::toString() const
 {

@@ -23,7 +23,7 @@ struct CMySettings : public CSettings::BinaryValue<WINDOWPLACEMENT>::DefaultValu
 #pragma region DebugSwitches
 	enum class DebugSwitch{
 		// Enable log for connecting device.
-		ShowServiceStateGUID = 1,
+		LogServiceStateGUID = 1,
 		// Enable LID open/close debug command in system menu.
 		LIDSwitch = 2,
 	};

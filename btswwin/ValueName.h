@@ -64,10 +64,3 @@ CString ValueName<T>::valueToString() const
 	ret.Format(StringFormat, value);
 	return ret;
 }
-
-// Returns a string that represents the GUID value.
-template<>
-CString ValueName<GUID>::valueToString() const
-{
-	return guidToString(value);
-}

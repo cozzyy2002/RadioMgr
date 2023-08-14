@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "MySettings.h"
+#include "ValueName.h"
 
 // CMySettings members
 
@@ -53,10 +54,27 @@ bool CMySettings::isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b)
 
 CString CMySettings::valueToString(const CSettings::BinaryValue<WINDOWPLACEMENT>& value) const
 {
+	static const ValueName<UINT> ShowCmds[] = {
+		VALUE_NAME_ITEM(SW_HIDE),
+		VALUE_NAME_ITEM(SW_NORMAL),
+		VALUE_NAME_ITEM(SW_SHOWMINIMIZED),
+		VALUE_NAME_ITEM(SW_SHOWMAXIMIZED),
+		VALUE_NAME_ITEM(SW_SHOWNOACTIVATE),
+		VALUE_NAME_ITEM(SW_SHOW),
+		VALUE_NAME_ITEM(SW_MINIMIZE),
+		VALUE_NAME_ITEM(SW_SHOWMINNOACTIVE),
+		VALUE_NAME_ITEM(SW_SHOWNA),
+		VALUE_NAME_ITEM(SW_RESTORE),
+		VALUE_NAME_ITEM(SW_SHOWDEFAULT),
+		VALUE_NAME_ITEM(SW_FORCEMINIMIZE),
+	};
+
 	auto& wp = (const WINDOWPLACEMENT&)value;
 	auto& rc = wp.rcNormalPosition;
 	CString str;
-	str.Format(_T("Position=%d:%d, Size=%dx%d, showCmd=%d"), rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, wp.showCmd);
+	str.Format(_T("Position=%d:%d, Size=%dx%d, showCmd=%s"),
+		rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
+		ValueToString(ShowCmds, wp.showCmd).GetString());
 	return str;
 }
 

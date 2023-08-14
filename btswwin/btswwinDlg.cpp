@@ -981,11 +981,3 @@ void CbtswwinDlg::OnFileOpenLog(UINT nId)
 		LOG4CXX_ERROR(logger, _T("Menu item position is out of range: ") << pos);
 	}
 }
-
-
-CString guidToString(REFGUID guid)
-{
-	OLECHAR strGuid[50] = _T("");
-	HR_EXPECT(0 < StringFromGUID2(guid, strGuid, ARRAYSIZE(strGuid)), HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
-	return strGuid;
-}

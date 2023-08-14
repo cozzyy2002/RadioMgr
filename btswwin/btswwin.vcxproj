@@ -230,6 +230,7 @@
     <ClCompile Include="RadioInstanceList.cpp" />
     <ClCompile Include="RadioNotifyListener.cpp" />
     <ClCompile Include="Settings.cpp" />
+    <ClCompile Include="ValueName.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="btswwin.rc" />

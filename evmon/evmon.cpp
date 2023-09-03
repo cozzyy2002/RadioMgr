@@ -11,6 +11,7 @@
 #include "../Common/Assert.h"
 #include "ValueName.h"
 #include "NetworkEvents.h"
+#include "IpAdapterAddresses.h"
 
 enum {
 	WM_NETWORK_CONNECTIVITYCHANGED = WM_USER + 1,
@@ -187,6 +188,9 @@ int _tmain(int argc, TCHAR** argv)
 		WIN32_ASSERT(h != NULL);
 		handles.push_back(PowerNotifyHandle(h));
 	}
+
+	IpAdapterAddresses ipa;
+	ipa.update();
 
 	HR_ASSERT_OK(CoInitializeEx(NULL, COINIT_MULTITHREADED));
 	{

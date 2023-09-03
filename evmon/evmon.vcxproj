@@ -129,10 +129,12 @@
   <ItemGroup>
     <ClCompile Include="..\Common\Assert.cpp" />
     <ClCompile Include="evmon.cpp" />
+    <ClCompile Include="IpAdapterAddresses.cpp" />
     <ClCompile Include="NetworkEvents.cpp" />
     <ClCompile Include="ValueName.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="IpAdapterAddresses.h" />
     <ClInclude Include="NetworkEvents.h" />
     <ClInclude Include="ValueName.h" />
   </ItemGroup>

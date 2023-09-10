@@ -12,15 +12,17 @@
 #include "ValueName.h"
 #include "NetworkEvents.h"
 #include "IpAdapterAddresses.h"
+#include "WLan.h"
 
 enum {
 	WM_NETWORK_CONNECTIVITYCHANGED = WM_USER + 1,
 };
 
+extern void print(LPCTSTR format, ...);
+
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static void AssertFailedProc(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int line);
 static LPTSTR trim(LPTSTR str, int len);
-static void print(LPCTSTR format, ...);
 static BOOL WINAPI CtrlCHandler(DWORD ctrlType);
 
 static HWND g_hwnd(NULL);
@@ -171,6 +173,12 @@ int _tmain(int argc, TCHAR** argv)
 	tsm::Assert::onAssertFailedProc = AssertFailedProc;
 	tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { _putts(msg); };
 
+	IpAdapterAddresses ipa;
+	ipa.update();
+	WLan wlan;
+	wlan.update();
+	return 0;
+
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = WndProc;
 	wc.lpszClassName = _T("Message-Only Window");
@@ -188,9 +196,6 @@ int _tmain(int argc, TCHAR** argv)
 		WIN32_ASSERT(h != NULL);
 		handles.push_back(PowerNotifyHandle(h));
 	}
-
-	IpAdapterAddresses ipa;
-	ipa.update();
 
 	HR_ASSERT_OK(CoInitializeEx(NULL, COINIT_MULTITHREADED));
 	{
@@ -333,7 +338,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT id, WPARAM wParam, LPARAM lParam
 }
 
 // Print current date/time, thread ID and formatted text.
-static void print(LPCTSTR format, ...)
+void print(LPCTSTR format, ...)
 {
 	CString text;
 	va_list args;

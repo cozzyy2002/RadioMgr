@@ -140,3 +140,9 @@ template<typename T>
 	ret.Format(StringFormat, v);
 	return ret;
 }
+
+template<typename T>
+CString valueToString(const T& v)
+{
+	return ValueName<T>::valueToString(v);
+}

@@ -132,11 +132,13 @@
     <ClCompile Include="IpAdapterAddresses.cpp" />
     <ClCompile Include="NetworkEvents.cpp" />
     <ClCompile Include="ValueName.cpp" />
+    <ClCompile Include="WLan.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IpAdapterAddresses.h" />
     <ClInclude Include="NetworkEvents.h" />
     <ClInclude Include="ValueName.h" />
+    <ClInclude Include="WLan.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

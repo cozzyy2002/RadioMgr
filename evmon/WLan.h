@@ -18,7 +18,8 @@ struct ClientHandleDeleter {
 class WLan
 {
 public:
-	WLan() {}
+	WLan();
+	~WLan();
 
 	HRESULT update();
 

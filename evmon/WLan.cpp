@@ -15,20 +15,49 @@ template<class T>
 using WlanPtr = std::unique_ptr<T, WlanMemoryDeleter<T>>;
 
 
-HRESULT WLan::update()
+static void WlanNotificationCallback(
+    PWLAN_NOTIFICATION_DATA unnamedParam1,
+    PVOID unnamedParam2
+)
+{
+    auto pThis = (WLan*)unnamedParam2;
+}
+
+WLan::WLan()
 {
     HANDLE h;
     DWORD dwNegotiatedVersion;
-    HR_ASSERT_OK(HRESULT_FROM_WIN32(WlanOpenHandle(WLAN_API_VERSION, NULL, &dwNegotiatedVersion, &h)));
-    m_clientHandle.reset(h);
+    if(SUCCEEDED(HR_EXPECT_OK(HRESULT_FROM_WIN32(
+        WlanOpenHandle(WLAN_API_VERSION, NULL, &dwNegotiatedVersion, &h))))
+    ) {
+        print(_T("Opened WLan: Version=%d.%d"),
+            WLAN_API_VERSION_MAJOR(dwNegotiatedVersion), WLAN_API_VERSION_MINOR(dwNegotiatedVersion)
+        );
+        m_clientHandle.reset(h);
+        HR_EXPECT_OK(HRESULT_FROM_WIN32(
+            WlanRegisterNotification(h, WLAN_NOTIFICATION_SOURCE_ALL, TRUE, WlanNotificationCallback, this, NULL, NULL)
+        ));
+    }
+}
+
+WLan::~WLan()
+{
+    if(m_clientHandle) {
+        HR_EXPECT_OK(HRESULT_FROM_WIN32(
+            WlanRegisterNotification(m_clientHandle.get(), WLAN_NOTIFICATION_SOURCE_NONE, TRUE, NULL, NULL, NULL, NULL)
+        ));
+    }
+}
+
+HRESULT WLan::update()
+{
+    HR_ASSERT(m_clientHandle, E_ILLEGAL_METHOD_CALL);
 
     WLAN_INTERFACE_INFO_LIST* p;
-    HR_ASSERT_OK(HRESULT_FROM_WIN32(WlanEnumInterfaces(h, NULL, &p)));
+    HR_ASSERT_OK(HRESULT_FROM_WIN32(WlanEnumInterfaces(m_clientHandle.get(), NULL, &p)));
     WlanPtr<WLAN_INTERFACE_INFO_LIST> wlanInterfaces(p);
 
-    print(_T("Opened WLan: Version=%d.%d, %d Interfaces"),
-        WLAN_API_VERSION_MAJOR(dwNegotiatedVersion), WLAN_API_VERSION_MINOR(dwNegotiatedVersion),
-        wlanInterfaces->dwNumberOfItems
+    print(_T("Enumerating %d Interfaces"), wlanInterfaces->dwNumberOfItems
     );
 
     static const ValueName<WLAN_INTERFACE_STATE> WlanInterfaceStates[]{

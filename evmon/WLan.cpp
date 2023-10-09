@@ -28,7 +28,9 @@ static void WlanNotificationCallback(
 
 using NotificationFunc = HRESULT (*)(PWLAN_NOTIFICATION_DATA pNotificationData);
 static HRESULT SourceACM(PWLAN_NOTIFICATION_DATA pNotificationData);
-static HRESULT SourceMCM(PWLAN_NOTIFICATION_DATA pNotificationData) { return S_OK; }
+static HRESULT SourceMCM(PWLAN_NOTIFICATION_DATA pNotificationData);
+
+template<> LPCTSTR ValueName<DWORD>::StringFormat = _T("0x%02x");
 
 HRESULT WLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationData)
 {
@@ -47,8 +49,8 @@ HRESULT WLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationData
 
     for(auto& x : Sources) {
         if(x.value & pNotificationData->NotificationSource) {
-            print(_T("WLan: %s(0x%02x), Code=0x%02x, Size=%d"),
-                x.name, x.value,
+            print(_T("WLan: %s, Code=0x%02x, Size=%d"),
+                x.toString().GetString(),
                 pNotificationData->NotificationCode, pNotificationData->dwDataSize
             );
             auto func = (NotificationFunc)x.param;
@@ -58,8 +60,8 @@ HRESULT WLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationData
     return S_OK;
 }
 
-using ConnectionNotifyFunc = HRESULT (*)(DWORD, WLAN_CONNECTION_NOTIFICATION_DATA*);
-static HRESULT ConnectionNotify(DWORD size, WLAN_CONNECTION_NOTIFICATION_DATA* pdata);
+using ACMConnectionNotifyFunc = HRESULT (*)(DWORD, WLAN_CONNECTION_NOTIFICATION_DATA*);
+static HRESULT ACMConnectionNotify(DWORD size, WLAN_CONNECTION_NOTIFICATION_DATA* pdata);
 
 /*static*/ HRESULT SourceACM(PWLAN_NOTIFICATION_DATA pNotificationData)
 {
@@ -74,7 +76,7 @@ static HRESULT ConnectionNotify(DWORD size, WLAN_CONNECTION_NOTIFICATION_DATA* p
     ITEM(scan_complete),
     ITEM(scan_fail),
     ITEM(connection_start),
-    ITEM(connection_complete, ConnectionNotify),
+    ITEM(connection_complete, ACMConnectionNotify),
     ITEM(connection_attempt_fail),
     ITEM(filter_list_change),
     ITEM(interface_arrival),
@@ -85,7 +87,7 @@ static HRESULT ConnectionNotify(DWORD size, WLAN_CONNECTION_NOTIFICATION_DATA* p
     ITEM(network_not_available),
     ITEM(network_available),
     ITEM(disconnecting),
-    ITEM(disconnected, ConnectionNotify),
+    ITEM(disconnected, ACMConnectionNotify),
     ITEM(adhoc_network_state_change),
     ITEM(profile_unblocked),
     ITEM(screen_power_change),
@@ -94,16 +96,16 @@ static HRESULT ConnectionNotify(DWORD size, WLAN_CONNECTION_NOTIFICATION_DATA* p
     ITEM(operational_state_change),
 #undef ITEM
     };
-
     auto x = FindValueName(Codes, pNotificationData->NotificationCode);
-    _tprintf_s(_T("  %s"), x.name);
-    auto func = (ConnectionNotifyFunc)x.param;
+    _tprintf_s(_T("  %s"), x.toString().GetString());
+    auto func = (ACMConnectionNotifyFunc)x.param;
     if(func) { func(pNotificationData->dwDataSize, (WLAN_CONNECTION_NOTIFICATION_DATA*)pNotificationData->pData); }
     _tprintf_s(_T("\n"));
+
     return S_OK;
 }
 
-/*static*/ HRESULT ConnectionNotify(DWORD size, WLAN_CONNECTION_NOTIFICATION_DATA* pdata)
+/*static*/ HRESULT ACMConnectionNotify(DWORD size, WLAN_CONNECTION_NOTIFICATION_DATA* pdata)
 {
     std::string ssid((char*)pdata->dot11Ssid.ucSSID, pdata->dot11Ssid.uSSIDLength);
     wprintf_s(L": `%s` `%S`",
@@ -111,6 +113,50 @@ static HRESULT ConnectionNotify(DWORD size, WLAN_CONNECTION_NOTIFICATION_DATA* p
     );
     return S_OK;
 }
+
+using MSMConnectionNotifyFunc = HRESULT (*)(DWORD, WLAN_MSM_NOTIFICATION_DATA*);
+static HRESULT MSMConnectionNotify(DWORD size, WLAN_MSM_NOTIFICATION_DATA* pdata);
+
+/*static*/ HRESULT SourceMCM(PWLAN_NOTIFICATION_DATA pNotificationData)
+{
+    static const ValueName<DWORD> Codes[] = {
+#define ITEM(x, ...) {  wlan_notification_msm_##x, _T(#x), __VA_ARGS__ }
+    ITEM(associating),
+    ITEM(associated),
+    ITEM(authenticating),
+    ITEM(connected, MSMConnectionNotify),
+    ITEM(roaming_start),
+    ITEM(roaming_end),
+    ITEM(radio_state_change),
+    ITEM(signal_quality_change),
+    ITEM(disassociating),
+    ITEM(disconnected, MSMConnectionNotify),
+    ITEM(peer_join),
+    ITEM(peer_leave),
+    ITEM(adapter_removal),
+    ITEM(adapter_operation_mode_change),
+    ITEM(link_degraded),
+    ITEM(link_improved),
+#undef ITEM
+    };
+    auto x = FindValueName(Codes, pNotificationData->NotificationCode);
+    _tprintf_s(_T("  %s"), x.toString().GetString());
+    auto func = (MSMConnectionNotifyFunc)x.param;
+    if(func) { func(pNotificationData->dwDataSize, (WLAN_MSM_NOTIFICATION_DATA*)pNotificationData->pData); }
+    _tprintf_s(_T("\n"));
+
+    return S_OK;
+}
+
+static HRESULT MSMConnectionNotify(DWORD size, WLAN_MSM_NOTIFICATION_DATA* pdata)
+{
+    std::string ssid((char*)pdata->dot11Ssid.ucSSID, pdata->dot11Ssid.uSSIDLength);
+    wprintf_s(L": `%s` `%S`",
+        pdata->strProfileName, ssid.c_str()
+    );
+    return S_OK;
+}
+
 
 HRESULT WLan::start(HWND hwnd, UINT msgid)
 {

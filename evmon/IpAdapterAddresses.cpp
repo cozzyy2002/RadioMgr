@@ -37,7 +37,7 @@ HRESULT IpAdapterAddresses::update()
 
 	for(auto p = adapterAddresses; p; p = p->Next) {
 		CT2W operStatus(ValueToString(OperStatuses, p->OperStatus).GetString());
-		wprintf_s(L"%S:%s:%s\n  %s: %s\n",
+		wprintf_s(L"  %S:%s:%s\n    %s: %s\n",
 			p->AdapterName, p->DnsSuffix, (LPCWSTR)operStatus,
 			p->FriendlyName, p->Description);
 	}

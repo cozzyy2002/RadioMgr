@@ -17,12 +17,25 @@ struct ClientHandleDeleter {
 
 class WLan
 {
-public:
-	WLan();
-	~WLan();
+	friend void WlanNotificationCallback(
+		PWLAN_NOTIFICATION_DATA unnamedParam1,
+		PVOID unnamedParam2
+	);
 
+public:
+	WLan() : m_hwnd(NULL), m_msg(0) {}
+	~WLan() { stop(); }
+
+	HRESULT start(HWND, UINT);
+	HRESULT stop();
 	HRESULT update();
 
 protected:
 	std::unique_ptr<HANDLE, ClientHandleDeleter> m_clientHandle;
+
+	// Window handle and message ID to post message of notification callback.
+	HWND m_hwnd;
+	UINT m_msg;
+
+	HRESULT WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationData);
 };

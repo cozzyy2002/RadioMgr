@@ -15,7 +15,8 @@
 #include "WLan.h"
 
 enum {
-	WM_NETWORK_CONNECTIVITYCHANGED = WM_USER + 1,
+	WM_NETWORK_CONNECTIVITYCHANGED = WM_USER + 1,	// Notification of NetworkListManagerEvents
+	WM_WLAN_NOTIFY,									// Notification of Wlan
 };
 
 extern void print(LPCTSTR format, ...);
@@ -173,11 +174,9 @@ int _tmain(int argc, TCHAR** argv)
 	tsm::Assert::onAssertFailedProc = AssertFailedProc;
 	tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { _putts(msg); };
 
+	print(_T("---- IpAdapterAddresses ----"));
 	IpAdapterAddresses ipa;
 	ipa.update();
-	WLan wlan;
-	wlan.update();
-	return 0;
 
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = WndProc;
@@ -187,6 +186,11 @@ int _tmain(int argc, TCHAR** argv)
 	WIN32_ASSERT(atom != 0);
 	g_hwnd = CreateWindow((LPCTSTR)atom, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
 	WIN32_ASSERT(g_hwnd != NULL);
+
+	print(_T("---- WLan ----"));
+	WLan wlan;
+	wlan.start(g_hwnd, WM_WLAN_NOTIFY);
+	wlan.update();
 
 	// Register power setting notification.
 	using PowerNotifyHandle = std::unique_ptr<HPOWERNOTIFY, PowerNotifyHandleDeleter>;

@@ -15,7 +15,7 @@ template<class T>
 using WlanPtr = std::unique_ptr<T, WlanMemoryDeleter<T>>;
 
 
-static void WlanNotificationCallback(
+void WLan::WlanNotificationCallback(
     PWLAN_NOTIFICATION_DATA unnamedParam1,
     PVOID unnamedParam2
 )
@@ -60,8 +60,8 @@ HRESULT WLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationData
     return S_OK;
 }
 
+template<typename T> HRESULT ConnectionNotify(DWORD size, T* pdata);
 using ACMConnectionNotifyFunc = HRESULT (*)(DWORD, WLAN_CONNECTION_NOTIFICATION_DATA*);
-static HRESULT ACMConnectionNotify(DWORD size, WLAN_CONNECTION_NOTIFICATION_DATA* pdata);
 
 /*static*/ HRESULT SourceACM(PWLAN_NOTIFICATION_DATA pNotificationData)
 {
@@ -76,7 +76,7 @@ static HRESULT ACMConnectionNotify(DWORD size, WLAN_CONNECTION_NOTIFICATION_DATA
     ITEM(scan_complete),
     ITEM(scan_fail),
     ITEM(connection_start),
-    ITEM(connection_complete, ACMConnectionNotify),
+    ITEM(connection_complete, ConnectionNotify<WLAN_CONNECTION_NOTIFICATION_DATA>),
     ITEM(connection_attempt_fail),
     ITEM(filter_list_change),
     ITEM(interface_arrival),
@@ -87,7 +87,7 @@ static HRESULT ACMConnectionNotify(DWORD size, WLAN_CONNECTION_NOTIFICATION_DATA
     ITEM(network_not_available),
     ITEM(network_available),
     ITEM(disconnecting),
-    ITEM(disconnected, ACMConnectionNotify),
+    ITEM(disconnected, ConnectionNotify<WLAN_CONNECTION_NOTIFICATION_DATA>),
     ITEM(adhoc_network_state_change),
     ITEM(profile_unblocked),
     ITEM(screen_power_change),
@@ -105,17 +105,7 @@ static HRESULT ACMConnectionNotify(DWORD size, WLAN_CONNECTION_NOTIFICATION_DATA
     return S_OK;
 }
 
-/*static*/ HRESULT ACMConnectionNotify(DWORD size, WLAN_CONNECTION_NOTIFICATION_DATA* pdata)
-{
-    std::string ssid((char*)pdata->dot11Ssid.ucSSID, pdata->dot11Ssid.uSSIDLength);
-    wprintf_s(L": `%s` `%S`",
-        pdata->strProfileName, ssid.c_str()
-    );
-    return S_OK;
-}
-
 using MSMConnectionNotifyFunc = HRESULT (*)(DWORD, WLAN_MSM_NOTIFICATION_DATA*);
-static HRESULT MSMConnectionNotify(DWORD size, WLAN_MSM_NOTIFICATION_DATA* pdata);
 
 /*static*/ HRESULT SourceMCM(PWLAN_NOTIFICATION_DATA pNotificationData)
 {
@@ -124,13 +114,13 @@ static HRESULT MSMConnectionNotify(DWORD size, WLAN_MSM_NOTIFICATION_DATA* pdata
     ITEM(associating),
     ITEM(associated),
     ITEM(authenticating),
-    ITEM(connected, MSMConnectionNotify),
+    ITEM(connected, ConnectionNotify<WLAN_MSM_NOTIFICATION_DATA>),
     ITEM(roaming_start),
     ITEM(roaming_end),
     ITEM(radio_state_change),
     ITEM(signal_quality_change),
     ITEM(disassociating),
-    ITEM(disconnected, MSMConnectionNotify),
+    ITEM(disconnected, ConnectionNotify<WLAN_MSM_NOTIFICATION_DATA>),
     ITEM(peer_join),
     ITEM(peer_leave),
     ITEM(adapter_removal),
@@ -148,11 +138,12 @@ static HRESULT MSMConnectionNotify(DWORD size, WLAN_MSM_NOTIFICATION_DATA* pdata
     return S_OK;
 }
 
-static HRESULT MSMConnectionNotify(DWORD size, WLAN_MSM_NOTIFICATION_DATA* pdata)
+template<typename T>
+HRESULT ConnectionNotify(DWORD size, T* pdata)
 {
     std::string ssid((char*)pdata->dot11Ssid.ucSSID, pdata->dot11Ssid.uSSIDLength);
-    wprintf_s(L": `%s` `%S`",
-        pdata->strProfileName, ssid.c_str()
+    printf_s(": SSID=`%s`, Security Enabled=%s",
+        ssid.c_str(), pdata->bSecurityEnabled ? "true" : "false"
     );
     return S_OK;
 }
@@ -171,7 +162,7 @@ HRESULT WLan::start(HWND hwnd, UINT msgid)
     );
     m_clientHandle.reset(h);
     HR_ASSERT_OK(HRESULT_FROM_WIN32(
-        WlanRegisterNotification(h, WLAN_NOTIFICATION_SOURCE_ALL, TRUE, ::WlanNotificationCallback, this, NULL, NULL)
+        WlanRegisterNotification(h, WLAN_NOTIFICATION_SOURCE_ALL, TRUE, WlanNotificationCallback, this, NULL, NULL)
     ));
 
     return S_OK;

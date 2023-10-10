@@ -17,11 +17,6 @@ struct ClientHandleDeleter {
 
 class WLan
 {
-	friend void WlanNotificationCallback(
-		PWLAN_NOTIFICATION_DATA unnamedParam1,
-		PVOID unnamedParam2
-	);
-
 public:
 	WLan() : m_hwnd(NULL), m_msg(0) {}
 	~WLan() { stop(); }
@@ -37,5 +32,6 @@ protected:
 	HWND m_hwnd;
 	UINT m_msg;
 
+	static void WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pdata, PVOID pThis);
 	HRESULT WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationData);
 };

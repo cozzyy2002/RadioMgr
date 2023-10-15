@@ -11,6 +11,17 @@ public:
 	HRESULT start();
 	HRESULT stop();
 
+	struct ConnectedParam
+	{
+		ConnectedParam(const DOT11_SSID& dot11Ssid, bool isSecurityEnabled)
+			: ssid((char*)dot11Ssid.ucSSID, dot11Ssid.uSSIDLength)
+			, isSecurityEnabled(isSecurityEnabled)
+		{}
+
+		const CString ssid;
+		const bool isSecurityEnabled;
+	};
+
 protected:
 	struct ClientHandleDeleter {
 		using pointer = HANDLE;

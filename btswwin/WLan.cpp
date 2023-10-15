@@ -27,8 +27,14 @@ HRESULT CWLan::start()
         << WLAN_API_VERSION_MINOR(dwNegotiatedVersion)
     );
     m_clientHandle.reset(h);
+
+    // Register WLan notification
+    // NOTE:
+    //   SOURCE_ACM and SOURCE_MSM are notified.
+    //   SOURCE_MSM notifys wlan_notification_msm_connected when Wi-Fi is enabled and *disabled*.
+    //   So we register notification only SOURCE_ACM.
     HR_ASSERT_OK(HRESULT_FROM_WIN32(
-        WlanRegisterNotification(h, WLAN_NOTIFICATION_SOURCE_ALL, TRUE, WlanNotificationCallback, this, NULL, NULL)
+        WlanRegisterNotification(h, WLAN_NOTIFICATION_SOURCE_ACM, TRUE, WlanNotificationCallback, this, NULL, NULL)
     ));
 
     return S_OK;
@@ -45,20 +51,31 @@ HRESULT CWLan::stop()
     return S_OK;
 }
 
-void CWLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pdata, PVOID pThis)
+void CWLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationData, PVOID pThis)
 {
-    ((CWLan*)pThis)->WlanNotificationCallback(pdata);
+    ((CWLan*)pThis)->WlanNotificationCallback(pNotificationData);
 }
 
-using NotificationFunc = HRESULT(*)(PWLAN_NOTIFICATION_DATA pNotificationData);
+using CheckConnected = CWLan::ConnectedParam* (*)(PWLAN_NOTIFICATION_DATA pNotificationData, DWORD notificationCode);
+
+template<typename T, DWORD Connected>
+CWLan::ConnectedParam* checkConnected(PWLAN_NOTIFICATION_DATA pNotificationData, DWORD notificationCode)
+{
+    if(pNotificationData->NotificationCode == Connected) {
+        auto pdata = (T*)pNotificationData->pData;
+        return new CWLan::ConnectedParam(pdata->dot11Ssid, pdata->bSecurityEnabled);
+    } else {
+        return nullptr;
+    }
+}
 
 HRESULT CWLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationData)
 {
     static const ValueName<DWORD> Sources[] = {
 #define ITEM(x, ...) { WLAN_NOTIFICATION_##x, _T(#x), nullptr, __VA_ARGS__ }
         ITEM(SOURCE_NONE),
-        ITEM(SOURCE_ACM/*, SourceACM*/),
-        ITEM(SOURCE_MSM/*, SourceMCM*/),
+        ITEM(SOURCE_ACM, checkConnected<WLAN_CONNECTION_NOTIFICATION_DATA, wlan_notification_acm_connection_complete>),
+        ITEM(SOURCE_MSM, checkConnected<WLAN_MSM_NOTIFICATION_DATA, wlan_notification_msm_connected>),
         ITEM(SOURCE_SECURITY),
         ITEM(SOURCE_IHV),
         ITEM(SOURCE_HNWK),
@@ -74,8 +91,17 @@ HRESULT CWLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationDat
                 << _T(", Code = 0x") << pNotificationData->NotificationCode
                 << _T(", Size = ") << pNotificationData->dwDataSize
             );
-            auto func = (NotificationFunc)x.param;
-            if(func) { func(pNotificationData); }
+
+            auto func = (CheckConnected)x.param;
+            if(func) {
+                std::unique_ptr<ConnectedParam> connectedParam(func(pNotificationData, pNotificationData->NotificationCode));
+                if(connectedParam) {
+                    LOG4CXX_INFO(logger,
+                        _T("Connected SSID=") << connectedParam->ssid.GetString() 
+                        << _T(", SecurityEnabled=") << (connectedParam->isSecurityEnabled ? _T("true") : _T("false"))
+                    );
+                }
+            }
         }
     }
     return S_OK;

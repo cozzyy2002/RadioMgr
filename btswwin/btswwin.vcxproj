@@ -205,6 +205,7 @@
     <ClInclude Include="Settings.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ValueName.h" />
+    <ClInclude Include="WLan.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Assert.cpp">
@@ -231,6 +232,7 @@
     <ClCompile Include="RadioNotifyListener.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="ValueName.cpp" />
+    <ClCompile Include="WLan.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="btswwin.rc" />

@@ -12,6 +12,7 @@ struct ValueName {
 	T value;
 	LPCTSTR name;
 	LPCTSTR description;
+	LPVOID param;
 
 	static LPCTSTR StringFormat;
 

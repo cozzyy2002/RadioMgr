@@ -206,6 +206,8 @@ BOOL CbtswwinDlg::OnInitDialog()
 	m_bluetoothDevices.OnInitCtrl();
 	checkBluetoothDevice();
 
+	m_wlan.start();
+
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 

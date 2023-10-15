@@ -7,6 +7,7 @@
 #include "RadioNotifyListener.h"
 #include "RadioInstanceList.h"
 #include "BluetoothDeviceList.h"
+#include "WLan.h"
 #include "MySettings.h"
 #include "ResourceReader.h"
 
@@ -92,6 +93,8 @@ protected:
 		BOOL isChecked;
 	};
 	std::map<CString, RadioState> m_previousRadioStates;
+
+	CWLan m_wlan;
 
 	// Dialog Data
 #ifdef AFX_DESIGN_TIME

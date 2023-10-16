@@ -8,7 +8,7 @@ class CWLan
 public:
 	~CWLan();
 
-	HRESULT start();
+	HRESULT start(HWND hwnd, UINT wndMsg);
 	HRESULT stop();
 
 	struct ConnectedParam
@@ -23,6 +23,9 @@ public:
 	};
 
 protected:
+	HWND m_hWnd;
+	UINT m_wndMsg;
+
 	struct ClientHandleDeleter {
 		using pointer = HANDLE;
 		void operator() (HANDLE h);

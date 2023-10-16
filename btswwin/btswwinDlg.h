@@ -23,6 +23,7 @@ enum {
 	WM_USER_PRINT = WM_USER + 1,	// Sent by CbtswwinDlg::printV() method.
 	WM_USER_RADIO_MANAGER_NOTIFY,	// Sent by RadioNotifyListener to notify RadioManager evens.
 	WM_USER_CONNECT_DEVICE_RESULT,	// Sent after connecting device.
+	WM_USER_WLAN_CONNECTED,			// Sent by CWLan to notify Wi-Fi is connected.
 };
 
 // Deleter for MAllocPtr.
@@ -126,6 +127,7 @@ protected:
 	afx_msg LRESULT OnUserPrint(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserRadioManagerNotify(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUserWLanConnected(WPARAM wParam, LPARAM lParam);
 	//virtual void PostNcDestroy();
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);

@@ -17,8 +17,11 @@ CWLan::~CWLan()
     stop();
 }
 
-HRESULT CWLan::start()
+HRESULT CWLan::start(HWND hwnd, UINT wndMsg)
 {
+    m_hWnd = hwnd;
+    m_wndMsg = wndMsg;
+
     HANDLE h;
     DWORD dwNegotiatedVersion;
     HR_ASSERT_OK(HRESULT_FROM_WIN32(WlanOpenHandle(WLAN_API_VERSION, NULL, &dwNegotiatedVersion, &h)));
@@ -88,18 +91,24 @@ HRESULT CWLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationDat
         if(x.value & pNotificationData->NotificationSource) {
             LOG4CXX_DEBUG(logger,
                 x.toString().GetString()
-                << _T(", Code = 0x") << pNotificationData->NotificationCode
-                << _T(", Size = ") << pNotificationData->dwDataSize
+                << _T(", Code = ") << std::hex << pNotificationData->NotificationCode
+                << _T(", Size = ") << std::dec << pNotificationData->dwDataSize
             );
 
             auto func = (CheckConnected)x.param;
             if(func) {
-                std::unique_ptr<ConnectedParam> connectedParam(func(pNotificationData, pNotificationData->NotificationCode));
+                auto connectedParam(func(pNotificationData, pNotificationData->NotificationCode));
                 if(connectedParam) {
                     LOG4CXX_INFO(logger,
-                        _T("Connected SSID=") << connectedParam->ssid.GetString() 
-                        << _T(", SecurityEnabled=") << (connectedParam->isSecurityEnabled ? _T("true") : _T("false"))
+                        _T("Connected SSID = '") << connectedParam->ssid.GetString() 
+                        << _T("`, SecurityEnabled = ") << (connectedParam->isSecurityEnabled ? _T("true") : _T("false"))
                     );
+
+                    if(FAILED(WIN32_EXPECT(
+                        PostMessage(m_hWnd, m_wndMsg, 0, (LPARAM)connectedParam)
+                    ))) {
+                        delete connectedParam;
+                    }
                 }
             }
         }

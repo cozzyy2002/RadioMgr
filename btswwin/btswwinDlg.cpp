@@ -106,7 +106,7 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_MESSAGE(WM_USER_PRINT, &CbtswwinDlg::OnUserPrint)
 	ON_MESSAGE(WM_USER_RADIO_MANAGER_NOTIFY, &CbtswwinDlg::OnUserRadioManagerNotify)
 	ON_MESSAGE(WM_USER_CONNECT_DEVICE_RESULT, &CbtswwinDlg::OnUserConnectDeviceResult)
-	ON_MESSAGE(WM_USER_WLAN_CONNECTED, &CbtswwinDlg::OnUserWLanConnected)
+	ON_MESSAGE(WM_USER_WLAN_NOTIFY, &CbtswwinDlg::OnUserWLanNotify)
 	ON_WM_TIMER()
 	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
 	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
@@ -207,7 +207,7 @@ BOOL CbtswwinDlg::OnInitDialog()
 	m_bluetoothDevices.OnInitCtrl();
 	checkBluetoothDevice();
 
-	m_wlan.start(m_hWnd, WM_USER_WLAN_CONNECTED);
+	m_wlan.start(m_hWnd, WM_USER_WLAN_NOTIFY);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -789,10 +789,11 @@ LRESULT CbtswwinDlg::OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam)
 	return LRESULT(0);
 }
 
-LRESULT CbtswwinDlg::OnUserWLanConnected(WPARAM wParam, LPARAM lParam)
+LRESULT CbtswwinDlg::OnUserWLanNotify(WPARAM wParam, LPARAM lParam)
 {
-	std::unique_ptr<CWLan::ConnectedParam> param((CWLan::ConnectedParam*)lParam);
-	print(_T("OnUserWLanConnected SSID = `%s`(%s)"),
+	std::unique_ptr<CWLan::NotifyParam> param((CWLan::NotifyParam*)lParam);
+	print(_T("Wi-Fi %s: SSID = `%s`(%s)"),
+		param->isConnected? _T("Connected") : _T("Disconnect"),
 		param->ssid.GetString(),
 		param->isSecurityEnabled ? _T("Secured") : _T("Unsecured")
 	);

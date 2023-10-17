@@ -11,13 +11,15 @@ public:
 	HRESULT start(HWND hwnd, UINT wndMsg);
 	HRESULT stop();
 
-	struct ConnectedParam
+	struct NotifyParam
 	{
-		ConnectedParam(const DOT11_SSID& dot11Ssid, bool isSecurityEnabled)
-			: ssid((char*)dot11Ssid.ucSSID, dot11Ssid.uSSIDLength)
+		NotifyParam(bool isConnected, const DOT11_SSID& dot11Ssid, bool isSecurityEnabled)
+			: isConnected(isConnected)
+			, ssid((char*)dot11Ssid.ucSSID, dot11Ssid.uSSIDLength)
 			, isSecurityEnabled(isSecurityEnabled)
 		{}
 
+		const bool isConnected;
 		const CString ssid;
 		const bool isSecurityEnabled;
 	};

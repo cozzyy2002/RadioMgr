@@ -792,11 +792,6 @@ LRESULT CbtswwinDlg::OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam)
 LRESULT CbtswwinDlg::OnUserWLanNotify(WPARAM wParam, LPARAM lParam)
 {
 	std::unique_ptr<CWLan::NotifyParam> param((CWLan::NotifyParam*)lParam);
-	print(_T("Wi-Fi %s: SSID = `%s`(%s)"),
-		param->isConnected? _T("Connected") : _T("Disconnect"),
-		param->ssid.GetString(),
-		param->isSecurityEnabled ? _T("Secured") : _T("Unsecured")
-	);
 
 	return LRESULT();
 }

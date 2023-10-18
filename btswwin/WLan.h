@@ -13,13 +13,25 @@ public:
 
 	struct NotifyParam
 	{
-		NotifyParam(bool isConnected, const DOT11_SSID& dot11Ssid, bool isSecurityEnabled)
-			: isConnected(isConnected)
+		enum class Code
+		{
+			Ignore,
+			Authenticating,
+			Authenticated,
+			Connecting,
+			Connected,
+			ConnectFailed,
+			Disconnecting,
+			Disconnected,
+		};
+
+		NotifyParam(Code code, const DOT11_SSID& dot11Ssid, bool isSecurityEnabled)
+			: code(code)
 			, ssid((char*)dot11Ssid.ucSSID, dot11Ssid.uSSIDLength)
 			, isSecurityEnabled(isSecurityEnabled)
 		{}
 
-		const bool isConnected;
+		const Code code;
 		const CString ssid;
 		const bool isSecurityEnabled;
 	};

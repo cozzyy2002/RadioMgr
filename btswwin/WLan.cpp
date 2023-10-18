@@ -36,8 +36,9 @@ HRESULT CWLan::start(HWND hwnd, UINT wndMsg)
     //   SOURCE_ACM and SOURCE_MSM are notified.
     //   SOURCE_MSM notifys wlan_notification_msm_connected when Wi-Fi is enabled and *disabled*.
     //   So we register notification only SOURCE_ACM.
+    auto source = WLAN_NOTIFICATION_SOURCE_ACM /*| WLAN_NOTIFICATION_SOURCE_MSM*/;
     HR_ASSERT_OK(HRESULT_FROM_WIN32(
-        WlanRegisterNotification(h, WLAN_NOTIFICATION_SOURCE_ACM, TRUE, WlanNotificationCallback, this, NULL, NULL)
+        WlanRegisterNotification(h, source, TRUE, WlanNotificationCallback, this, NULL, NULL)
     ));
 
     return S_OK;
@@ -59,35 +60,20 @@ void CWLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationData, 
     ((CWLan*)pThis)->WlanNotificationCallback(pNotificationData);
 }
 
-using CheckNotificationCode = CWLan::NotifyParam* (*)(PWLAN_NOTIFICATION_DATA pNotificationData, DWORD notificationCode);
+using CreateNotificationParam = CWLan::NotifyParam* (*)(PWLAN_NOTIFICATION_DATA pNotificationData);
 
-template<typename T, DWORD Connected, DWORD Disconnected>
-CWLan::NotifyParam* checkNotificationCode(PWLAN_NOTIFICATION_DATA pNotificationData, DWORD notificationCode)
-{
-    bool isConnected;
-    switch(pNotificationData->NotificationCode) {
-    case Connected:
-        isConnected = true;
-        break;
-    case Disconnected:
-        isConnected = false;
-        break;
-    default:
-        return nullptr;
-    }
-    auto pdata = (T*)pNotificationData->pData;
-    return new CWLan::NotifyParam(isConnected, pdata->dot11Ssid, pdata->bSecurityEnabled);
-}
+template<typename T>
+CWLan::NotifyParam* createNotificationParam(PWLAN_NOTIFICATION_DATA pNotificationData);
+template<typename T>
+CWLan::NotifyParam::Code getCode(DWORD notificationCode);
 
 HRESULT CWLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationData)
 {
     static const ValueName<DWORD> Sources[] = {
 #define ITEM(x, ...) { WLAN_NOTIFICATION_##x, _T(#x), nullptr, __VA_ARGS__ }
         ITEM(SOURCE_NONE),
-        ITEM(SOURCE_ACM, checkNotificationCode<WLAN_CONNECTION_NOTIFICATION_DATA,
-            wlan_notification_acm_connection_complete, wlan_notification_acm_disconnected>),
-        ITEM(SOURCE_MSM, checkNotificationCode<WLAN_MSM_NOTIFICATION_DATA,
-            wlan_notification_msm_connected, wlan_notification_msm_disconnected>),
+        ITEM(SOURCE_ACM, createNotificationParam<WLAN_CONNECTION_NOTIFICATION_DATA>),
+        ITEM(SOURCE_MSM, createNotificationParam<WLAN_MSM_NOTIFICATION_DATA>),
         ITEM(SOURCE_SECURITY),
         ITEM(SOURCE_IHV),
         ITEM(SOURCE_HNWK),
@@ -96,24 +82,37 @@ HRESULT CWLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationDat
 #undef ITEM
     };
 
+    static const ValueName<CWLan::NotifyParam::Code> codes[] = {
+#define ITEM(x) { CWLan::NotifyParam::Code::x, _T(#x) }
+        ITEM(Ignore),
+        ITEM(Authenticating),
+        ITEM(Authenticated),
+        ITEM(Connecting),
+        ITEM(Connected),
+        ITEM(ConnectFailed),
+        ITEM(Disconnecting),
+        ITEM(Disconnected),
+#undef ITEM
+    };
+
     for(auto& x : Sources) {
         if(x.value & pNotificationData->NotificationSource) {
             LOG4CXX_DEBUG(logger,
-                x.toString().GetString()
-                << _T(", Code = ") << std::hex << pNotificationData->NotificationCode
-                << _T(", Size = ") << std::dec << pNotificationData->dwDataSize
+                x.name
+                << _T(", Code = ") << pNotificationData->NotificationCode
+                << _T(", Size = ") << pNotificationData->dwDataSize
             );
 
-            auto func = (CheckNotificationCode)x.param;
+            auto func = (CreateNotificationParam)x.param;
             if(func) {
-                auto notifyParam(func(pNotificationData, pNotificationData->NotificationCode));
+                auto notifyParam(func(pNotificationData));
                 if(notifyParam) {
-                    LOG4CXX_DEBUG(logger,
-                        (notifyParam->isConnected ? _T("Connected") : _T("Disconnected"))
-                        << _T(" SSID = '") << notifyParam->ssid.GetString()
-                        << _T("`, SecurityEnabled = ") << (notifyParam->isSecurityEnabled ? _T("true") : _T("false"))
+                    LOG4CXX_INFO(logger, _T("Wi-Fi ")
+                        << x.toString().GetString() << _T(" ")
+                        << ValueToString(codes, notifyParam->code).GetString()
+                        << _T(": SSID = ") << notifyParam->ssid.GetString()
+                        << _T(", ") << (notifyParam->isSecurityEnabled ? _T("Secured") : _T("Unsecured"))
                     );
-
                     if(FAILED(WIN32_EXPECT(
                         PostMessage(m_hWnd, m_wndMsg, 0, (LPARAM)notifyParam)
                     ))) {
@@ -124,4 +123,57 @@ HRESULT CWLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationDat
         }
     }
     return S_OK;
+}
+
+template<typename T>
+CWLan::NotifyParam* createNotificationParam(PWLAN_NOTIFICATION_DATA pNotificationData)
+{
+    CWLan::NotifyParam* ret = nullptr;
+    auto code = getCode<T>(pNotificationData->NotificationCode);
+    if(code != CWLan::NotifyParam::Code::Ignore) {
+        if(sizeof(T) <= pNotificationData->dwDataSize) {
+            auto pdata = (T*)pNotificationData->pData;
+            ret = new CWLan::NotifyParam(code, pdata->dot11Ssid, pdata->bSecurityEnabled);
+        } else {
+            LOG4CXX_WARN(logger, _T(__FUNCTION__)
+                _T(": Data size ") << pNotificationData->dwDataSize
+                << _T(" is less than expected structure size ") << sizeof(T)
+            );
+        }
+    }
+    return ret;
+}
+
+template<>
+CWLan::NotifyParam::Code getCode<WLAN_CONNECTION_NOTIFICATION_DATA>(DWORD notificationCode)
+{
+    switch(notificationCode) {
+    case wlan_notification_acm_connection_start:
+        return CWLan::NotifyParam::Code::Connecting;
+    case wlan_notification_acm_connection_complete:
+        return CWLan::NotifyParam::Code::Connected;
+    case wlan_notification_acm_connection_attempt_fail:
+        return CWLan::NotifyParam::Code::ConnectFailed;
+    case wlan_notification_acm_disconnecting:
+        return CWLan::NotifyParam::Code::Disconnecting;
+    case wlan_notification_acm_disconnected:
+        return CWLan::NotifyParam::Code::Disconnected;
+    default:
+        return CWLan::NotifyParam::Code::Ignore;
+    }
+}
+
+template<>
+CWLan::NotifyParam::Code getCode<WLAN_MSM_NOTIFICATION_DATA>(DWORD notificationCode)
+{
+    switch(notificationCode) {
+    case wlan_notification_msm_authenticating:
+        return CWLan::NotifyParam::Code::Authenticating;
+    case wlan_notification_msm_connected:
+        return CWLan::NotifyParam::Code::Connected;
+    case wlan_notification_msm_disconnected:
+        return CWLan::NotifyParam::Code::Disconnected;
+    default:
+        return CWLan::NotifyParam::Code::Ignore;
+    }
 }

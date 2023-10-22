@@ -17,9 +17,9 @@ struct ValueName {
 	static LPCTSTR StringFormat;
 	static LPCTSTR UnknownValueName;
 
-	CString toString() const;
-	CString valueToString() const;
-	static CString valueToString(const T& v);
+	CString toString(LPCTSTR stringFormat = nullptr) const;
+	CString valueToString(LPCTSTR stringFormat = nullptr) const;
+	static CString valueToString(const T& v, LPCTSTR stringFormat = nullptr);
 };
 
 // Macro for declaring ValueName table that passed to ValueToString() function.
@@ -52,48 +52,50 @@ CString ValueToString(const ValueName<T>(&list)[size], const T& v)
 template<typename T, size_t size>
 CString FlagValueToString(const ValueName<T>(&list)[size], const T& v)
 {
+	// Flag should be shown as hex value.
+	LPCTSTR stringFormat = _T("0x%x");
 	CString str;
 	static const CString plus = _T("+");
 	for(auto& i : list) {
 		if(i.value == v) {
-			return i.toString();
+			return i.toString(stringFormat);
 		}
 		if(i.value & v) {
 			if(0 < str.GetLength()) { str += plus; }
-			str += i.toString();
+			str += i.toString(stringFormat);
 		}
 	}
 
 	CString ret;
 	ret.Format(_T("%s=0x%s"),
 		(0 < str.GetLength()) ? str.GetString() : ValueName<T>::UnknownValueName,
-		ValueName<T>::valueToString(v).GetString());
+		ValueName<T>::valueToString(v, stringFormat).GetString());
 	return ret;
 }
 
 // Returns string `name(value):description`.
 template<typename T>
-CString ValueName<T>::toString() const
+CString ValueName<T>::toString(LPCTSTR stringFormat /*= nullptr*/) const
 {
 	CString desc;
 	if(description) { desc.Format(_T(":%s"), description); }
 	CString ret;
-	ret.Format(_T("%s(%s)%s"), (name ? name : _T("No name")), valueToString().GetString(), desc.GetString());
+	ret.Format(_T("%s(%s)%s"), (name ? name : _T("No name")), valueToString(stringFormat).GetString(), desc.GetString());
 	return ret;
 }
 
 // Returns a string that represents the value.
 // ValueName<>::StringFormat is used to format a string.
 template<typename T>
-CString ValueName<T>::valueToString() const
+CString ValueName<T>::valueToString(LPCTSTR stringFormat /*= nullptr*/) const
 {
-	return valueToString(value);
+	return valueToString(value, stringFormat);
 }
 
 template<typename T>
-CString ValueName<T>::valueToString(const T& v)
+CString ValueName<T>::valueToString(const T& v, LPCTSTR stringFormat /*= nullptr*/)
 {
 	CString ret;
-	ret.Format(StringFormat, v);
+	ret.Format(stringFormat ? stringFormat : StringFormat, v);
 	return ret;
 }

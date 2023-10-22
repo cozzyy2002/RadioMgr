@@ -51,11 +51,14 @@ static void AssertFailedProc(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int li
 	if(formatResult) {
 		CString formattedMsg(msg);
 		LocalFree(msg);
-		_msg.Format(_T("%s(0x%x)"), formattedMsg.TrimRight(_T("\r\n")).GetString(), hr);
-	} else {
-		_msg.Format(_T("0x%x"), hr);
+		_msg.Format(_T(": %s"), formattedMsg.TrimRight(_T("\r\n")).GetString());
 	}
-	LOG4CXX_ERROR(logger, _T("`") << exp << _T("` failed: ") << _msg.GetString());
+	LOG4CXX_ERROR_FMT(logger,
+		_T("`%s` failed.\n")
+		_T("  HRESULT=0x%x%s")
+		_T("\n  Source: %s(%d)"),
+		exp, hr, _msg.GetString(), sourceFile, line
+	);
 }
 
 void CbtswwinDlg::print(const CString& text)

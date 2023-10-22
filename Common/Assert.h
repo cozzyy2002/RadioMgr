@@ -34,6 +34,12 @@ public:
 
 }
 
+#define LOG4CXX_ERROR_FMT(logger, fmt, ...) do { \
+		if (logger->isErrorEnabled()) {\
+			CString message; \
+			message.Format(fmt, __VA_ARGS__); \
+			logger->forcedLog(::log4cxx::Level::getError(), message.GetString(), LOG4CXX_LOCATION); }} while (0)
+
 #define LOG4CXX_WARN_FMT(logger, fmt, ...) do { \
 		if (logger->isWarnEnabled()) {\
 			CString message; \

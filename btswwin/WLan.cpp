@@ -25,9 +25,9 @@ HRESULT CWLan::start(HWND hwnd, UINT wndMsg)
     HANDLE h;
     DWORD dwNegotiatedVersion;
     HR_ASSERT_OK(HRESULT_FROM_WIN32(WlanOpenHandle(WLAN_API_VERSION, NULL, &dwNegotiatedVersion, &h)));
-    LOG4CXX_INFO(logger, _T("Opened Version=")
-        << WLAN_API_VERSION_MAJOR(dwNegotiatedVersion) << _T(".")
-        << WLAN_API_VERSION_MINOR(dwNegotiatedVersion)
+    LOG4CXX_INFO_FMT(logger, _T("Opened Version=%d.%d"),
+            WLAN_API_VERSION_MAJOR(dwNegotiatedVersion),
+            WLAN_API_VERSION_MINOR(dwNegotiatedVersion)
     );
     m_clientHandle.reset(h);
 

@@ -33,3 +33,21 @@ public:
 };
 
 }
+
+#define LOG4CXX_WARN_FMT(logger, fmt, ...) do { \
+		if (logger->isWarnEnabled()) {\
+			CString message; \
+			message.Format(fmt, __VA_ARGS__); \
+			logger->forcedLog(::log4cxx::Level::getWarn(), message.GetString(), LOG4CXX_LOCATION); }} while (0)
+
+#define LOG4CXX_INFO_FMT(logger, fmt, ...) do { \
+		if (logger->isInfoEnabled()) {\
+			CString message; \
+			message.Format(fmt, __VA_ARGS__); \
+			logger->forcedLog(::log4cxx::Level::getInfo(), message.GetString(), LOG4CXX_LOCATION); }} while (0)
+
+#define LOG4CXX_DEBUG_FMT(logger, fmt, ...) do { \
+		if (logger->isDebugEnabled()) {\
+			CString message; \
+			message.Format(fmt, __VA_ARGS__); \
+			logger->forcedLog(::log4cxx::Level::getDebug(), message.GetString(), LOG4CXX_LOCATION); }} while (0)

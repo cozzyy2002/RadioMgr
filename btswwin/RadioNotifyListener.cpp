@@ -58,7 +58,7 @@ HRESULT __stdcall RadioNotifyListener::QueryInterface(REFIID riid, void** ppvObj
 		QITABENT(RadioNotifyListener, IMediaRadioManagerNotifySink),
 		{0}
 	};
-	return QISearch(this, qitab, riid, ppvObject);
+	return HR_EXPECT_OK(QISearch(this, qitab, riid, ppvObject));
 }
 
 ULONG __stdcall RadioNotifyListener::AddRef(void)

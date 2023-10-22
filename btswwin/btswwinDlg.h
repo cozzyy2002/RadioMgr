@@ -98,7 +98,7 @@ protected:
 	std::map<CString, RadioState> m_previousRadioStates;
 
 	CWLan m_wlan;
-	CNet m_net;
+	CComPtr<CNet> m_net;
 
 	// Dialog Data
 #ifdef AFX_DESIGN_TIME

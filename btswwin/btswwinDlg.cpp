@@ -29,6 +29,7 @@ CbtswwinDlg::CbtswwinDlg(CResourceReader& resourceReader, CWnd* pParent /*=nullp
 	: CDialogEx(IDD_BTSWWIN_DIALOG, pParent)
 	, m_resourceReader(resourceReader)
 	, m_radioState(DRS_RADIO_INVALID)
+	, m_net(new CNet())
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
@@ -209,7 +210,7 @@ BOOL CbtswwinDlg::OnInitDialog()
 	checkBluetoothDevice();
 
 	m_wlan.start(m_hWnd, WM_USER_WLAN_NOTIFY);
-	m_net.start(m_hWnd, WM_USER_NET_NOTIFY);
+	m_net->start(m_hWnd, WM_USER_NET_NOTIFY);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -245,7 +246,7 @@ void CbtswwinDlg::OnDestroy()
 	resetThread(m_setRadioOnThread);
 
 	m_wlan.stop();
-	m_net.stop();
+	m_net->stop();
 
 	m_settings->windowPlacement->length = sizeof(WINDOWPLACEMENT);
 	WIN32_EXPECT(GetWindowPlacement(m_settings->windowPlacement));

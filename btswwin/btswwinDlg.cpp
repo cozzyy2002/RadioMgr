@@ -107,6 +107,7 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_MESSAGE(WM_USER_RADIO_MANAGER_NOTIFY, &CbtswwinDlg::OnUserRadioManagerNotify)
 	ON_MESSAGE(WM_USER_CONNECT_DEVICE_RESULT, &CbtswwinDlg::OnUserConnectDeviceResult)
 	ON_MESSAGE(WM_USER_WLAN_NOTIFY, &CbtswwinDlg::OnUserWLanNotify)
+	ON_MESSAGE(WM_USER_NET_NOTIFY, &CbtswwinDlg::OnUserNetNotify)
 	ON_WM_TIMER()
 	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
 	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
@@ -208,6 +209,7 @@ BOOL CbtswwinDlg::OnInitDialog()
 	checkBluetoothDevice();
 
 	m_wlan.start(m_hWnd, WM_USER_WLAN_NOTIFY);
+	m_net.start(m_hWnd, WM_USER_NET_NOTIFY);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -241,6 +243,9 @@ void CbtswwinDlg::OnDestroy()
 	}
 
 	resetThread(m_setRadioOnThread);
+
+	m_wlan.stop();
+	m_net.stop();
 
 	m_settings->windowPlacement->length = sizeof(WINDOWPLACEMENT);
 	WIN32_EXPECT(GetWindowPlacement(m_settings->windowPlacement));
@@ -793,6 +798,11 @@ LRESULT CbtswwinDlg::OnUserWLanNotify(WPARAM wParam, LPARAM lParam)
 {
 	std::unique_ptr<CWLan::NotifyParam> param((CWLan::NotifyParam*)lParam);
 
+	return LRESULT();
+}
+
+LRESULT CbtswwinDlg::OnUserNetNotify(WPARAM wParam, LPARAM lParam)
+{
 	return LRESULT();
 }
 

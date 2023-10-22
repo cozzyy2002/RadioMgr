@@ -10,7 +10,7 @@ CString guidToString(REFGUID guid)
 
 // Returns a string that represents the GUID value.
 template<>
-CString ValueName<GUID>::valueToString() const
+CString ValueName<GUID>::valueToString(const GUID& v)
 {
-	return guidToString(value);
+	return guidToString(v);
 }

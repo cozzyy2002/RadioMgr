@@ -8,6 +8,7 @@
 #include "RadioInstanceList.h"
 #include "BluetoothDeviceList.h"
 #include "WLan.h"
+#include "Net.h"
 #include "MySettings.h"
 #include "ResourceReader.h"
 
@@ -24,6 +25,7 @@ enum {
 	WM_USER_RADIO_MANAGER_NOTIFY,	// Sent by RadioNotifyListener to notify RadioManager evens.
 	WM_USER_CONNECT_DEVICE_RESULT,	// Sent after connecting device.
 	WM_USER_WLAN_NOTIFY,			// Sent by CWLan to notify Wi-Fi is connected/disconnected.
+	WM_USER_NET_NOTIFY,				// Sent by CNet to notify connectivity changed.
 };
 
 // Deleter for MAllocPtr.
@@ -96,6 +98,7 @@ protected:
 	std::map<CString, RadioState> m_previousRadioStates;
 
 	CWLan m_wlan;
+	CNet m_net;
 
 	// Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -128,6 +131,7 @@ protected:
 	afx_msg LRESULT OnUserRadioManagerNotify(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserWLanNotify(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUserNetNotify(WPARAM wParam, LPARAM lParam);
 	//virtual void PostNcDestroy();
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);

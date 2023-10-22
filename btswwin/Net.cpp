@@ -57,7 +57,7 @@ HRESULT __stdcall CNet::ConnectivityChanged(NLM_CONNECTIVITY newConnectivity)
 #undef ITEM
 	};
 
-	LOG4CXX_DEBUG(logger, _T(__FUNCTION__) _T(": ") << FlagValueToString(connectivities, newConnectivity).GetString());
+	LOG4CXX_DEBUG_FMT(logger, _T(__FUNCTION__) _T(": %s"), FlagValueToString(connectivities, newConnectivity).GetString());
 
 	return WIN32_EXPECT(PostMessage(m_hwnd, m_messageId, newConnectivity, 0L));
 }

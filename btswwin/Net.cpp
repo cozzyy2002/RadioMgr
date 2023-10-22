@@ -66,14 +66,13 @@ HRESULT __stdcall CNet::ConnectivityChanged(NLM_CONNECTIVITY newConnectivity)
 
 #pragma region Implementation of IUnknown
 
-HRESULT __stdcall CNet::QueryInterface(REFIID riid, void** ppvObject)
+HRESULT __stdcall CNet::QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
 {
 	static const QITAB qitab[] = {
 		QITABENT(CNet, INetworkListManagerEvents),
 		{0}
 	};
-
-	return HR_EXPECT_OK(QISearch(this, qitab, riid, ppvObject));
+	return QISearch(this, qitab, riid, ppvObject);
 }
 
 ULONG __stdcall CNet::AddRef(void)

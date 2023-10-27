@@ -801,12 +801,18 @@ LRESULT CbtswwinDlg::OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam)
 LRESULT CbtswwinDlg::OnUserWLanNotify(WPARAM wParam, LPARAM lParam)
 {
 	std::unique_ptr<CWLan::NotifyParam> param((CWLan::NotifyParam*)lParam);
+	LOG4CXX_INFO_FMT(logger, _T(__FUNCTION__) _T("(%s, %s, %s, %s)"),
+		param->sourceName, param->codeName, param->ssid.GetString(),
+		param->isSecurityEnabled ? _T("Secured") : _T("Unsecured"));
 
 	return LRESULT();
 }
 
 LRESULT CbtswwinDlg::OnUserNetNotify(WPARAM wParam, LPARAM lParam)
 {
+	auto connected = (wParam ? true : false);
+	LOG4CXX_INFO_FMT(logger, _T(__FUNCTION__) _T("(%s)"), connected ? _T("Connected") : _T("Disconnected"));
+
 	return LRESULT();
 }
 

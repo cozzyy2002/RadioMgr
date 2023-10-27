@@ -24,6 +24,7 @@ public:
 #pragma endregion
 
 protected:
+    NLM_CONNECTIVITY m_connectifity;
     CComPtr<INetworkListManager> m_mgr;
     HWND m_hwnd;
     UINT m_messageId;

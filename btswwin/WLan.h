@@ -26,11 +26,14 @@ public:
 		};
 
 		NotifyParam(Code code, const DOT11_SSID& dot11Ssid, bool isSecurityEnabled)
-			: code(code)
+			: sourceName(_T("Unknown")), codeName(_T("Unknown"))
+			, code(code)
 			, ssid((char*)dot11Ssid.ucSSID, dot11Ssid.uSSIDLength)
 			, isSecurityEnabled(isSecurityEnabled)
 		{}
 
+		LPCTSTR sourceName;
+		LPCTSTR codeName;
 		const Code code;
 		const CString ssid;
 		const bool isSecurityEnabled;

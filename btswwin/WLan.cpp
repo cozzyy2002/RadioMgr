@@ -107,12 +107,15 @@ HRESULT CWLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationDat
             if(func) {
                 auto notifyParam(func(pNotificationData));
                 if(notifyParam) {
+                    auto& code = FindValueName(codes, notifyParam->code);
                     LOG4CXX_INFO(logger, _T("Wi-Fi ")
                         << x.toString().GetString() << _T(" ")
-                        << ValueToString(codes, notifyParam->code).GetString()
+                        << code.toString().GetString()
                         << _T(": SSID = ") << notifyParam->ssid.GetString()
                         << _T(", ") << (notifyParam->isSecurityEnabled ? _T("Secured") : _T("Unsecured"))
                     );
+                    notifyParam->sourceName = x.name;
+                    notifyParam->codeName = code.name;
                     if(FAILED(WIN32_EXPECT(
                         PostMessage(m_hWnd, m_wndMsg, 0, (LPARAM)notifyParam)
                     ))) {

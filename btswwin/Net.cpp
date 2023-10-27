@@ -6,7 +6,8 @@
 static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CNet")));
 
 CNet::CNet()
-	: m_hwnd(NULL), m_messageId(WM_USER)
+	: m_connectifity(NLM_CONNECTIVITY_DISCONNECTED)
+	, m_hwnd(NULL), m_messageId(WM_USER)
 	, m_cookie(0), m_cRef(0)
 {
 }
@@ -59,7 +60,15 @@ HRESULT __stdcall CNet::ConnectivityChanged(NLM_CONNECTIVITY newConnectivity)
 
 	LOG4CXX_DEBUG_FMT(logger, _T(__FUNCTION__) _T(": %s"), FlagValueToString(connectivities, newConnectivity).GetString());
 
-	return WIN32_EXPECT(PostMessage(m_hwnd, m_messageId, newConnectivity, 0L));
+	static const auto mask = NLM_CONNECTIVITY_IPV4_INTERNET | NLM_CONNECTIVITY_IPV6_INTERNET;
+	auto isCurrentConnected = ((m_connectifity & mask) != NLM_CONNECTIVITY_DISCONNECTED);
+	auto isNewConnected = ((newConnectivity & mask) != NLM_CONNECTIVITY_DISCONNECTED);
+	if(isCurrentConnected ^ isNewConnected) {
+		WIN32_ASSERT(PostMessage(m_hwnd, m_messageId, (WPARAM)(isNewConnected ? 0 : 1), 0L));
+	}
+
+	m_connectifity = newConnectivity;
+	return S_OK;
 }
 
 #pragma endregion

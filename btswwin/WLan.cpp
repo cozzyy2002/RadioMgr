@@ -102,7 +102,7 @@ HRESULT CWLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationDat
 
     for(auto& x : Sources) {
         if(x.value & pNotificationData->NotificationSource) {
-            LOG4CXX_DEBUG(logger,
+            LOG4CXX_TRACE(logger,
                 x.name
                 << _T(", Code = ") << pNotificationData->NotificationCode
                 << _T(", Size = ") << pNotificationData->dwDataSize
@@ -113,7 +113,7 @@ HRESULT CWLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationDat
                 auto notifyParam(func(pNotificationData));
                 if(notifyParam) {
                     auto& code = FindValueName(codes, notifyParam->code);
-                    LOG4CXX_INFO(logger, _T("Wi-Fi ")
+                    LOG4CXX_DEBUG(logger, _T("Wi-Fi ")
                         << x.toString().GetString() << _T(" ")
                         << code.toString().GetString()
                         << _T(": SSID = ") << notifyParam->ssid.GetString()

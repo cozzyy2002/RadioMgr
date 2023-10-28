@@ -64,7 +64,7 @@ HRESULT __stdcall CNet::ConnectivityChanged(NLM_CONNECTIVITY newConnectivity)
 	auto isCurrentConnected = ((m_connectifity & mask) != NLM_CONNECTIVITY_DISCONNECTED);
 	auto isNewConnected = ((newConnectivity & mask) != NLM_CONNECTIVITY_DISCONNECTED);
 	if(isCurrentConnected ^ isNewConnected) {
-		WIN32_ASSERT(PostMessage(m_hwnd, m_messageId, (WPARAM)(isNewConnected ? 0 : 1), 0L));
+		WIN32_ASSERT(PostMessage(m_hwnd, m_messageId, (WPARAM)(isNewConnected ? 1 : 0), 0L));
 	}
 
 	m_connectifity = newConnectivity;

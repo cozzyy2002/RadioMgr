@@ -6,6 +6,7 @@
 class CWLan
 {
 public:
+	CWLan();
 	~CWLan();
 
 	HRESULT start(HWND hwnd, UINT wndMsg);

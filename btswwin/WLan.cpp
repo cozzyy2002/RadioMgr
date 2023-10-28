@@ -12,6 +12,11 @@ void CWLan::ClientHandleDeleter::operator() (HANDLE h) {
     HR_EXPECT_OK(HRESULT_FROM_WIN32(WlanCloseHandle(h, NULL)));
 }
 
+CWLan::CWLan()
+    : m_hWnd(NULL), m_wndMsg(0)
+{
+}
+
 CWLan::~CWLan()
 {
     stop();

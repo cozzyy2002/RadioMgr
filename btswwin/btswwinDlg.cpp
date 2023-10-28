@@ -30,6 +30,7 @@ CbtswwinDlg::CbtswwinDlg(CResourceReader& resourceReader, CWnd* pParent /*=nullp
 	, m_resourceReader(resourceReader)
 	, m_radioState(DRS_RADIO_INVALID)
 	, m_net(new CNet())
+	, m_wlanIsSecured(false), m_netIsConnected(false)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
@@ -805,15 +806,59 @@ LRESULT CbtswwinDlg::OnUserWLanNotify(WPARAM wParam, LPARAM lParam)
 		param->sourceName, param->codeName, param->ssid.GetString(),
 		param->isSecurityEnabled ? _T("Secured") : _T("Unsecured"));
 
+	if(param->code == CWLan::NotifyParam::Code::Connected) {
+		m_wlanConnectedSsid = param->ssid;
+		m_wlanIsSecured = param->isSecurityEnabled;
+		connectVpn();
+	} else {
+		m_wlanConnectedSsid.Empty();
+	}
+
 	return LRESULT();
 }
 
 LRESULT CbtswwinDlg::OnUserNetNotify(WPARAM wParam, LPARAM lParam)
 {
-	auto connected = (wParam ? true : false);
-	LOG4CXX_INFO_FMT(logger, _T(__FUNCTION__) _T("(%s)"), connected ? _T("Connected") : _T("Disconnected"));
+	m_netIsConnected = (wParam ? true : false);
+	LOG4CXX_INFO_FMT(logger, _T(__FUNCTION__) _T("(%s)"), m_netIsConnected ? _T("Connected") : _T("Disconnected"));
+
+	if(m_netIsConnected) {
+		connectVpn();
+	}
 
 	return LRESULT();
+}
+
+HRESULT CbtswwinDlg::connectVpn()
+{
+	if(
+		m_settings->vpnName->IsEmpty() ||
+		!m_netIsConnected
+	) { return S_FALSE; }
+
+	// Check if the VPN connection should be made.
+	switch((CMySettings::VpnConnection)m_settings->vpnConnection) {
+	case CMySettings::VpnConnection::None:
+		return S_FALSE;
+	case CMySettings::VpnConnection::UnsecuredWiFi:
+		if(m_wlanIsSecured) { return S_FALSE; }
+		// Go down to check SSID.
+	case CMySettings::VpnConnection::Wifi:
+		if(m_wlanConnectedSsid.IsEmpty()) { return S_FALSE; }
+		break;
+	case CMySettings::VpnConnection::Any:
+		break;
+	default:
+		LOG4CXX_WARN_FMT(logger, _T("Unknown CMySettings::VpnConnection value: %d"), *m_settings->vpnConnection);
+		return E_UNEXPECTED;
+	}
+
+	// TODO: Check if currently:
+	//   VPN connection is not available.
+	//   Connecting VPN is not running.
+
+	print(_T("Connecting VPN: %s"), m_settings->vpnName->GetString());
+	return S_OK;
 }
 
 void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)

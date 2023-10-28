@@ -100,6 +100,11 @@ protected:
 	CWLan m_wlan;
 	CComPtr<CNet> m_net;
 
+	CString m_wlanConnectedSsid;
+	bool m_wlanIsSecured;
+	bool m_netIsConnected;
+	HRESULT connectVpn();
+
 	// Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_BTSWWIN_DIALOG };

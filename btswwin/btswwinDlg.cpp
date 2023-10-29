@@ -30,7 +30,7 @@ CbtswwinDlg::CbtswwinDlg(CResourceReader& resourceReader, CWnd* pParent /*=nullp
 	, m_resourceReader(resourceReader)
 	, m_radioState(DRS_RADIO_INVALID)
 	, m_net(new CNet())
-	, m_wlanIsSecured(false), m_netIsConnected(false)
+	, m_wlanIsSecured(false), m_netIsConnected(false), m_lidIsOpened(true)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
@@ -425,6 +425,7 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 			UpdateData();
 			switch(setting->Data[0]) {
 			case 0:		// The lid is closed.
+				m_lidIsOpened = false;
 				if(m_settings->switchByLcdState) {
 					if(m_settings->restoreRadioState) {
 						// Save current state to restore when lid will be opened.
@@ -439,6 +440,7 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 				}
 				break;
 			case 1:		// The lid is opened.
+				m_lidIsOpened = true;
 				if(m_settings->autoCheckRadioInstance) {
 					m_radioInstances.For([this](int nItem, BOOL isChecked)
 						{
@@ -824,6 +826,10 @@ LRESULT CbtswwinDlg::OnUserNetNotify(WPARAM wParam, LPARAM lParam)
 
 	if(m_netIsConnected) {
 		connectVpn();
+	} else {
+		// We assume that Wi-Fi is also disconnected,
+		// and hope subsequent OnUserWLanNotify() that notifies Wi-Fi is connected.
+		m_wlanConnectedSsid.Empty();
 	}
 
 	return LRESULT();
@@ -831,19 +837,21 @@ LRESULT CbtswwinDlg::OnUserNetNotify(WPARAM wParam, LPARAM lParam)
 
 HRESULT CbtswwinDlg::connectVpn()
 {
+	// Do not connect VPN on the following conditions.
 	if(
-		m_settings->vpnName->IsEmpty() ||
-		!m_netIsConnected
+		m_settings->vpnName->IsEmpty() ||	// VPN is not specified in the settings.
+		!m_netIsConnected ||				// Network is not connected.
+		!m_lidIsOpened						// LID is closed.
 	) { return S_FALSE; }
 
-	// Check if the VPN connection should be made.
+	// Check VpnConnection setting whether the VPN connection should be made or not.
 	switch((CMySettings::VpnConnection)m_settings->vpnConnection) {
 	case CMySettings::VpnConnection::None:
 		return S_FALSE;
 	case CMySettings::VpnConnection::UnsecuredWiFi:
 		if(m_wlanIsSecured) { return S_FALSE; }
 		// Go down to check SSID.
-	case CMySettings::VpnConnection::Wifi:
+	case CMySettings::VpnConnection::WiFi:
 		if(m_wlanConnectedSsid.IsEmpty()) { return S_FALSE; }
 		break;
 	case CMySettings::VpnConnection::Any:

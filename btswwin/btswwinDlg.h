@@ -103,6 +103,7 @@ protected:
 	CString m_wlanConnectedSsid;
 	bool m_wlanIsSecured;
 	bool m_netIsConnected;
+	bool m_lidIsOpened;
 	HRESULT connectVpn();
 
 	// Dialog Data

@@ -19,7 +19,7 @@ struct CMySettings : public CSettings::BinaryValue<WINDOWPLACEMENT>::DefaultValu
 	enum class VpnConnection {
 		None,				// Never connect.
 		UnsecuredWiFi,		// When unsecured Wi-Fi is connected.
-		Wifi,				// When Wi-Fi is connected.
+		WiFi,				// When Wi-Fi is connected.
 		Any,				// When any network connection is available.
 	};
 	CSettings::EnumValue<VpnConnection> vpnConnection;

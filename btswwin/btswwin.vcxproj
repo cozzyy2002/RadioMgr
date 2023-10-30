@@ -195,6 +195,7 @@
     <ClInclude Include="btswwinDlg.h" />
     <ClInclude Include="MySettings.h" />
     <ClInclude Include="Net.h" />
+    <ClInclude Include="RasDial.h" />
     <ClInclude Include="ResourceReader.h" />
     <ClInclude Include="SettingsDlg.h" />
     <ClInclude Include="framework.h" />
@@ -221,6 +222,7 @@
     <ClCompile Include="btswwinDlg.cpp" />
     <ClCompile Include="MySettings.cpp" />
     <ClCompile Include="Net.cpp" />
+    <ClCompile Include="RasDial.cpp" />
     <ClCompile Include="ResourceReader.cpp" />
     <ClCompile Include="SettingsDlg.cpp" />
     <ClCompile Include="ItemList.cpp" />

@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <RasError.h>
 #include "RasDial.h"
 #include "ValueName.h"
 #include "../Common/Assert.h"
@@ -7,6 +8,7 @@
 
 static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CRasDial")));
 
+#define RAS_ERROR(exp, error) checkRasResult(error, exp, _T(__FILE__), __LINE__)
 #define RAS_ASSERT_OK(exp) do { auto _hr(RAS_EXPECT_OK(exp)); if(FAILED(_hr)) return _hr; } while(false)
 #define RAS_EXPECT_OK(exp) checkRasResult(exp, _T(#exp), _T(__FILE__), __LINE__)
 
@@ -47,7 +49,23 @@ CRasDial::CRasDial()
 
 bool CRasDial::isConnected() const
 {
-	return false;
+	DWORD dwCb = 0;
+	DWORD dwConnections = 0;
+	auto error = RasEnumConnections(NULL, &dwCb, &dwConnections);
+
+	auto ret = false;
+	switch(error) {
+	case ERROR_BUFFER_TOO_SMALL:
+		ret = true;
+		break;
+	case ERROR_SUCCESS:
+		break;
+	default:
+		RAS_ERROR(_T("RasEnumConnections()"), error);
+		break;
+	}
+	LOG4CXX_DEBUG_FMT(logger, _T(__FUNCTION__) _T(": %s"), ret ? _T("true") : _T("false"));
+	return ret;
 }
 
 HRESULT CRasDial::connect(HWND hwnd, UINT messageId, LPCTSTR vpnName)

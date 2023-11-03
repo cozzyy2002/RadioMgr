@@ -9,6 +9,7 @@
 #include "BluetoothDeviceList.h"
 #include "WLan.h"
 #include "Net.h"
+#include "RasDial.h"
 #include "MySettings.h"
 #include "ResourceReader.h"
 
@@ -26,6 +27,7 @@ enum {
 	WM_USER_CONNECT_DEVICE_RESULT,	// Sent after connecting device.
 	WM_USER_WLAN_NOTIFY,			// Sent by CWLan to notify Wi-Fi is connected/disconnected.
 	WM_USER_NET_NOTIFY,				// Sent by CNet to notify connectivity changed.
+	WM_USER_VPN_NOTIFY,				// Sent by CRasDial to notify result of connecting VPN.
 };
 
 // Deleter for MAllocPtr.
@@ -99,6 +101,7 @@ protected:
 
 	CWLan m_wlan;
 	CComPtr<CNet> m_net;
+	CRasDial m_rasDial;
 
 	CString m_wlanConnectedSsid;
 	bool m_wlanIsSecured;
@@ -138,6 +141,7 @@ protected:
 	afx_msg LRESULT OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserWLanNotify(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserNetNotify(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUserVpnNotify(WPARAM wParam, LPARAM lParam);
 	//virtual void PostNcDestroy();
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);

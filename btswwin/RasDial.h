@@ -9,6 +9,7 @@ class CRasDial
 public:
 	CRasDial();
 
+	// Returns true if any VPN is connected.
 	bool isConnected() const;
 	bool isConnecting() const { return m_hRasconn ? true : false; }
 

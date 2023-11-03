@@ -113,6 +113,7 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_MESSAGE(WM_USER_CONNECT_DEVICE_RESULT, &CbtswwinDlg::OnUserConnectDeviceResult)
 	ON_MESSAGE(WM_USER_WLAN_NOTIFY, &CbtswwinDlg::OnUserWLanNotify)
 	ON_MESSAGE(WM_USER_NET_NOTIFY, &CbtswwinDlg::OnUserNetNotify)
+	ON_MESSAGE(WM_USER_VPN_NOTIFY, &CbtswwinDlg::OnUserVpnNotify)
 	ON_WM_TIMER()
 	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
 	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
@@ -841,6 +842,7 @@ HRESULT CbtswwinDlg::connectVpn()
 	if(
 		m_settings->vpnName->IsEmpty() ||	// VPN is not specified in the settings.
 		!m_netIsConnected ||				// Network is not connected.
+		!m_rasDial.canConnect() ||			// Connecting VPN can not be performed.
 		!m_lidIsOpened						// LID is closed.
 	) { return S_FALSE; }
 
@@ -861,12 +863,22 @@ HRESULT CbtswwinDlg::connectVpn()
 		return E_UNEXPECTED;
 	}
 
-	// TODO: Check if currently:
-	//   VPN connection is not available.
-	//   Connecting VPN is not running.
-
 	print(_T("Connecting VPN: %s"), m_settings->vpnName->GetString());
-	return S_OK;
+	return m_rasDial.connect(m_hWnd, WM_USER_VPN_NOTIFY, m_settings->vpnName->GetString());
+}
+
+LRESULT CbtswwinDlg::OnUserVpnNotify(WPARAM wParam, LPARAM lParam)
+{
+	std::unique_ptr<CRasDial::ConnectResult> result((CRasDial::ConnectResult*)lParam);
+	if(result->success()) {
+		print(_T("VPN connected"));
+	} else {
+		print(_T("Failed to connect VPN. Error=%s(%d), %d")
+			, result->errorString.GetString(), result->error, result->exerror
+		);
+	}
+
+	return LRESULT();
 }
 
 void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)

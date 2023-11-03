@@ -19,7 +19,7 @@ static CString getRasErrorString(UINT error)
 	) {
 		ret.Format(_T("%s(%d)"), errorMsg, error);
 	} else {
-		ret.Format(_T("%d"));
+		ret.Format(_T("%d"), error);
 	}
 	return ret;
 }
@@ -28,7 +28,7 @@ static HRESULT checkRasResult(UINT error, LPCTSTR exp, LPCTSTR sourceFile, int l
 {
 	auto hr = HRESULT_FROM_WIN32(error);
 	if(error != ERROR_SUCCESS) {
-		TCHAR msg[1000];
+		TCHAR msg[1000] = {0};
 		_tprintf_s(msg, _T("`%s` failed. %s\n  %s:%d"),
 			exp, getRasErrorString(error).GetString(), sourceFile, line
 		);
@@ -41,17 +41,20 @@ static HRESULT checkRasResult(UINT error, LPCTSTR exp, LPCTSTR sourceFile, int l
 }
 
 CRasDial::CRasDial()
-	: m_hwnd(NULL), m_messageId(0)
+	: m_hwnd(NULL), m_messageId(0), m_hRasconn(NULL)
 {
 }
 
-bool CRasDial::canConnect() const
+bool CRasDial::isConnected() const
 {
 	return false;
 }
 
 HRESULT CRasDial::connect(HWND hwnd, UINT messageId, LPCTSTR vpnName)
 {
+	m_hwnd = hwnd;
+	m_messageId = messageId;
+
 	RASDIALPARAMS params = {sizeof(params)};
 	_tcscpy_s(params.szEntryName, vpnName);
 	BOOL gotPassword = FALSE;
@@ -59,13 +62,14 @@ HRESULT CRasDial::connect(HWND hwnd, UINT messageId, LPCTSTR vpnName)
 
 	// Value of dwCallbackId should be passed to RasDialCallback2() as 1st argument.
 	params.dwCallbackId = (UINT_PTR)this;
-	HRASCONN hrasconn = NULL;
-	RAS_ASSERT_OK(RasDial(NULL, NULL, &params, 2, rasDialCallback2, &hrasconn));
+	RAS_ASSERT_OK(RasDial(NULL, NULL, &params, 2, rasDialCallback2, &m_hRasconn));
 
 	return S_OK;
 }
 
-DWORD CRasDial::rasDialCallback2(ULONG_PTR dwCallbackId, DWORD unnamedParam2, HRASCONN hrasconn, UINT uint, tagRASCONNSTATE state, DWORD error, DWORD exerror)
+DWORD CRasDial::rasDialCallback2(
+	ULONG_PTR dwCallbackId, DWORD unnamedParam2, HRASCONN hrasconn, UINT uint,
+	tagRASCONNSTATE state, DWORD error, DWORD exerror)
 {
 	static const ValueName<RASCONNSTATE> states[] = {
 #define ITEM(x) { RASCS_##x, _T(#x) }
@@ -120,10 +124,18 @@ DWORD CRasDial::rasDialCallback2(ULONG_PTR dwCallbackId, DWORD unnamedParam2, HR
 
 HRESULT CRasDial::rasDialCallback(HRASCONN hrasconn, tagRASCONNSTATE state, DWORD error, DWORD exerror)
 {
-	return E_NOTIMPL;
+	if((state == RASCS_DONE) || (error != 0)) {
+		m_hRasconn = NULL;
+		auto result = new ConnectResult(error, exerror);
+		if(FAILED(WIN32_EXPECT(PostMessage(m_hwnd, m_messageId, 0, (LPARAM)result)))) {
+			delete result;
+		}
+	}
+	return S_OK;
 }
 
-HRESULT CRasDial::cancelConnect()
+CRasDial::ConnectResult::ConnectResult(DWORD error, DWORD exerror)
+	: error(error), exerror(exerror)
+	, errorString(error ? getRasErrorString(error).GetString() : _T(""))
 {
-	return E_NOTIMPL;
 }

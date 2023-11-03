@@ -12,35 +12,8 @@ static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CRasDial")));
 #define RAS_ASSERT_OK(exp) do { auto _hr(RAS_EXPECT_OK(exp)); if(FAILED(_hr)) return _hr; } while(false)
 #define RAS_EXPECT_OK(exp) checkRasResult(exp, _T(#exp), _T(__FILE__), __LINE__)
 
-static CString getRasErrorString(UINT error)
-{
-	CString ret;
-	TCHAR errorMsg[512];
-	if(SUCCEEDED(HR_EXPECT_OK(HRESULT_FROM_WIN32(
-		RasGetErrorString(error, errorMsg, ARRAYSIZE(errorMsg)))))
-	) {
-		ret.Format(_T("%s(%d)"), errorMsg, error);
-	} else {
-		ret.Format(_T("%d"), error);
-	}
-	return ret;
-}
-
-static HRESULT checkRasResult(UINT error, LPCTSTR exp, LPCTSTR sourceFile, int line)
-{
-	auto hr = HRESULT_FROM_WIN32(error);
-	if(error != ERROR_SUCCESS) {
-		TCHAR msg[1000] = {0};
-		_tprintf_s(msg, _T("`%s` failed. %s\n  %s:%d"),
-			exp, getRasErrorString(error).GetString(), sourceFile, line
-		);
-		auto writer = tsm::Assert::onAssertFailedWriter
-			? tsm::Assert::onAssertFailedWriter
-			: tsm::Assert::defaultAssertFailedWriter;
-		writer(msg);
-	}
-	return hr;
-}
+static CString getRasErrorString(UINT error);
+static HRESULT checkRasResult(UINT error, LPCTSTR exp, LPCTSTR sourceFile, int line);
 
 CRasDial::CRasDial()
 	: m_hwnd(NULL), m_messageId(0), m_hRasconn(NULL)
@@ -156,4 +129,34 @@ CRasDial::ConnectResult::ConnectResult(DWORD error, DWORD exerror)
 	: error(error), exerror(exerror)
 	, errorString(error ? getRasErrorString(error).GetString() : _T(""))
 {
+}
+
+/*static*/ CString getRasErrorString(UINT error)
+{
+	CString ret;
+	TCHAR errorMsg[512];
+	if(SUCCEEDED(HR_EXPECT_OK(HRESULT_FROM_WIN32(
+		RasGetErrorString(error, errorMsg, ARRAYSIZE(errorMsg)))))
+		) {
+		ret.Format(_T("%s(%d)"), errorMsg, error);
+	} else {
+		ret.Format(_T("%d"), error);
+	}
+	return ret;
+}
+
+/*static*/ HRESULT checkRasResult(UINT error, LPCTSTR exp, LPCTSTR sourceFile, int line)
+{
+	auto hr = HRESULT_FROM_WIN32(error);
+	if(error != ERROR_SUCCESS) {
+		TCHAR msg[1000] = {0};
+		_tprintf_s(msg, _T("`%s` failed. %s\n  %s:%d"),
+			exp, getRasErrorString(error).GetString(), sourceFile, line
+		);
+		auto writer = tsm::Assert::onAssertFailedWriter
+			? tsm::Assert::onAssertFailedWriter
+			: tsm::Assert::defaultAssertFailedWriter;
+		writer(msg);
+	}
+	return hr;
 }

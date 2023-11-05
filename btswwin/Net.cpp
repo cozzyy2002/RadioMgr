@@ -5,10 +5,34 @@
 
 static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CNet")));
 
+// Class to implement INetworkListManagerEvents interface.
+class NetworkListManagerEvents : public INetworkListManagerEvents
+{
+public:
+	NetworkListManagerEvents(HWND hwnd, UINT messageId)
+		: m_connectifity(NLM_CONNECTIVITY_DISCONNECTED)
+		, m_hwnd(hwnd), m_messageId(messageId), m_cRef(0) {}
+
+#pragma region Implementation of INetworkListManagerEvents
+	virtual HRESULT STDMETHODCALLTYPE ConnectivityChanged(
+		/* [in] */ NLM_CONNECTIVITY newConnectivity);
+
+	virtual HRESULT STDMETHODCALLTYPE QueryInterface(
+		/* [in] */ REFIID riid,
+		/* [iid_is][out] */ _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject);
+	virtual ULONG STDMETHODCALLTYPE AddRef(void);
+	virtual ULONG STDMETHODCALLTYPE Release(void);
+#pragma endregion
+
+protected:
+	NLM_CONNECTIVITY m_connectifity;
+	HWND m_hwnd;
+	UINT m_messageId;
+	ULONG m_cRef;
+};
+
 CNet::CNet()
-	: m_connectifity(NLM_CONNECTIVITY_DISCONNECTED)
-	, m_hwnd(NULL), m_messageId(WM_USER)
-	, m_cookie(0), m_cRef(0)
+	: m_cookie(0)
 {
 }
 
@@ -19,14 +43,13 @@ CNet::~CNet()
 
 HRESULT CNet::start(HWND hwnd, UINT messageId)
 {
-	m_hwnd = hwnd;
-	m_messageId = messageId;
-
 	HR_ASSERT_OK(m_mgr.CoCreateInstance(CLSID_NetworkListManager));
 	CComPtr<IConnectionPointContainer> cpc;
 	HR_ASSERT_OK(m_mgr.QueryInterface(&cpc));
 	HR_ASSERT_OK(cpc->FindConnectionPoint(IID_INetworkListManagerEvents, &m_cp));
-	HR_ASSERT_OK(m_cp->Advise(this, &m_cookie));
+
+	m_events = new NetworkListManagerEvents(hwnd, messageId);
+	HR_ASSERT_OK(m_cp->Advise(m_events, &m_cookie));
 	return S_OK;
 }
 
@@ -37,12 +60,13 @@ HRESULT CNet::stop()
 		hr = HR_EXPECT_OK(m_cp->Unadvise(m_cookie));
 		m_cp.Release();
 	}
+	m_events.Release();
 	return hr;
 }
 
 #pragma region Implementation of INetworkListManagerEvents
 
-HRESULT __stdcall CNet::ConnectivityChanged(NLM_CONNECTIVITY newConnectivity)
+HRESULT __stdcall NetworkListManagerEvents::ConnectivityChanged(NLM_CONNECTIVITY newConnectivity)
 {
 	static const ValueName<NLM_CONNECTIVITY> connectivities[] = {
 #define ITEM(x) { NLM_CONNECTIVITY_##x, _T(#x) }
@@ -75,7 +99,7 @@ HRESULT __stdcall CNet::ConnectivityChanged(NLM_CONNECTIVITY newConnectivity)
 
 #pragma region Implementation of IUnknown
 
-HRESULT __stdcall CNet::QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
+HRESULT __stdcall NetworkListManagerEvents::QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
 {
 	static const QITAB qitab[] = {
 		QITABENT(CNet, INetworkListManagerEvents),
@@ -84,12 +108,12 @@ HRESULT __stdcall CNet::QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR*
 	return QISearch(this, qitab, riid, ppvObject);
 }
 
-ULONG __stdcall CNet::AddRef(void)
+ULONG __stdcall NetworkListManagerEvents::AddRef(void)
 {
 	return InterlockedIncrement(&m_cRef);
 }
 
-ULONG __stdcall CNet::Release(void)
+ULONG __stdcall NetworkListManagerEvents::Release(void)
 {
 	auto cRef = InterlockedDecrement(&m_cRef);
 	if(cRef == 0) {

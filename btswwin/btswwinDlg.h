@@ -100,7 +100,7 @@ protected:
 	std::map<CString, RadioState> m_previousRadioStates;
 
 	CWLan m_wlan;
-	CComPtr<CNet> m_net;
+	CNet m_net;
 	CRasDial m_rasDial;
 
 	CString m_wlanConnectedSsid;

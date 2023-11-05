@@ -136,8 +136,8 @@ CRasDial::ConnectResult::ConnectResult(DWORD error, DWORD exerror)
 	CString ret;
 	TCHAR errorMsg[512];
 	if(SUCCEEDED(HR_EXPECT_OK(HRESULT_FROM_WIN32(
-		RasGetErrorString(error, errorMsg, ARRAYSIZE(errorMsg)))))
-		) {
+		RasGetErrorString(error, errorMsg, ARRAYSIZE(errorMsg))
+	)))) {
 		ret.Format(_T("%s(%d)"), errorMsg, error);
 	} else {
 		ret.Format(_T("%d"), error);

@@ -873,8 +873,8 @@ LRESULT CbtswwinDlg::OnUserVpnNotify(WPARAM wParam, LPARAM lParam)
 	if(result->success()) {
 		print(_T("VPN connected"));
 	} else {
-		print(_T("Failed to connect VPN. Error=%s(%d), %d")
-			, result->errorString.GetString(), result->error, result->exerror
+		print(_T("Failed to connect VPN. Error=%s(%d), %d"),
+			result->errorString.GetString(), result->error, result->exerror
 		);
 	}
 

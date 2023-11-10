@@ -29,6 +29,9 @@
 #define IDR_MENU_MAIN                   144
 #define IDR_MENU_RADIO_LIST             145
 #define IDD_SETTINGS                    146
+#define IDD_SETTINGS_BLUETOOTH          149
+#define IDD_SETTINGS_NETWORK            150
+#define IDD_SETTINGS_MISC               153
 #define ID_LIST_LOG                     1001
 #define IDC_CHECK_SWITCH_BY_LCD_STATE   1002
 #define IDC_CHECK_RESTORE_RADIO_STATE   1003
@@ -52,6 +55,7 @@
 #define IDC_EDIT_SET_RADIO_ON_DELAY     1011
 #define IDC_SPIN_SET_RADIO_ON_DELAY     1012
 #define IDC_STATIC_SET_RADIO_ON_DELAY   1013
+#define IDC_TAB_SETTINGS                1014
 #define ID_CONNECT_CONNECT              32771
 #define File                            32772
 #define ID_DEVICE_CONNECT               32773
@@ -94,9 +98,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        149
+#define _APS_NEXT_RESOURCE_VALUE        155
 #define _APS_NEXT_COMMAND_VALUE         32808
-#define _APS_NEXT_CONTROL_VALUE         1014
+#define _APS_NEXT_CONTROL_VALUE         1015
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -51,6 +51,7 @@ public:
 protected:
 	CMySettings& m_settings;
 	std::vector<std::unique_ptr<IController>> m_controllers;
+	std::vector<std::unique_ptr<CDialogEx>> m_tabs;
 
 	void updateUIState();
 	void applyChanges();
@@ -85,4 +86,6 @@ public:
 	CEdit m_setRadioOnDelay;
 	CSpinButtonCtrl m_setRadioOnDelaySpin;
 	CButton m_autoCheckRadioInstance;
+	CTabCtrl m_tabCtrl;
+	afx_msg void OnTcnSelchangeTabSettings(NMHDR* pNMHDR, LRESULT* pResult);
 };

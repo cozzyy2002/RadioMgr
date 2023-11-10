@@ -191,10 +191,13 @@
     <ClInclude Include="..\Common\Assert.h" />
     <ClInclude Include="AboutDlg.h" />
     <ClInclude Include="BluetoothDeviceList.h" />
+    <ClInclude Include="BluetoothTabItem.h" />
     <ClInclude Include="btswwin.h" />
     <ClInclude Include="btswwinDlg.h" />
+    <ClInclude Include="MiscTabItem.h" />
     <ClInclude Include="MySettings.h" />
     <ClInclude Include="Net.h" />
+    <ClInclude Include="NetworkTabItem.h" />
     <ClInclude Include="RasDial.h" />
     <ClInclude Include="ResourceReader.h" />
     <ClInclude Include="SettingsDlg.h" />
@@ -218,10 +221,13 @@
     </ClCompile>
     <ClCompile Include="AboutDlg.cpp" />
     <ClCompile Include="BluetoothDeviceList.cpp" />
+    <ClCompile Include="BluetoothTabItem.cpp" />
     <ClCompile Include="btswwin.cpp" />
     <ClCompile Include="btswwinDlg.cpp" />
+    <ClCompile Include="MiscTabItem.cpp" />
     <ClCompile Include="MySettings.cpp" />
     <ClCompile Include="Net.cpp" />
+    <ClCompile Include="NetworkTabItem.cpp" />
     <ClCompile Include="RasDial.cpp" />
     <ClCompile Include="ResourceReader.cpp" />
     <ClCompile Include="SettingsDlg.cpp" />

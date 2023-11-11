@@ -11,13 +11,32 @@
 
 IMPLEMENT_DYNAMIC(CBluetoothTabItem, CDialogEx)
 
-CBluetoothTabItem::CBluetoothTabItem()
-	: CTabItem(IDD_SETTINGS_BLUETOOTH)
+CBluetoothTabItem::CBluetoothTabItem(CMySettings& settings)
+	: CTabItem(IDD_SETTINGS_BLUETOOTH, _T("Bluetooth"), settings)
 {
+	addController(m_settings.switchByLcdState, m_switchByLcdState);
+	addController(m_settings.restoreRadioState, m_restoreRadioState);
+	addController(m_settings.setRadioStateTimeout, m_setRadioStateTimeout);
+	addController(m_settings.setRadioOnDelay, m_setRadioOnDelay);
+	addController(m_settings.autoCheckRadioInstance, m_autoCheckRadioInstance);
+	addController(m_settings.autoSelectDevice, m_autoSelectDevice);
 }
 
 CBluetoothTabItem::~CBluetoothTabItem()
 {
+}
+
+void CBluetoothTabItem::updateUIState()
+{
+	// Set enabled state of the controls depending on whether switchByLcdState is checked.
+	static const int ids[] = {
+		IDC_CHECK_RESTORE_RADIO_STATE,
+		IDC_STATIC_SET_RADIO_ON_DELAY, IDC_EDIT_SET_RADIO_ON_DELAY, IDC_SPIN_SET_RADIO_ON_DELAY
+	};
+	auto enable = isButtonChecked(m_switchByLcdState);
+	for(auto id : ids) {
+		GetDlgItem(id)->EnableWindow(enable);
+	}
 }
 
 void CBluetoothTabItem::DoDataExchange(CDataExchange* pDX)
@@ -35,7 +54,12 @@ void CBluetoothTabItem::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CBluetoothTabItem, CDialogEx)
-//	ON_WM_CREATE()
+	ON_BN_CLICKED(IDC_CHECK_SWITCH_BY_LCD_STATE, &CBluetoothTabItem::OnClickedCheckButton)
+	ON_BN_CLICKED(IDC_CHECK_RESTORE_RADIO_STATE, &CBluetoothTabItem::OnClickedCheckButton)
+	ON_BN_CLICKED(IDC_CHECK_AUTO_CHECK_RADIO_INSTANCE, &CBluetoothTabItem::OnClickedCheckButton)
+	ON_BN_CLICKED(IDC_CHECK_AUTO_SELECT_DEVICE, &CBluetoothTabItem::OnClickedCheckButton)
+	ON_EN_CHANGE(IDC_EDIT_SET_RADIO_STATE_TIMEOUT, &CBluetoothTabItem::OnEnChangeEdit)
+	ON_EN_CHANGE(IDC_EDIT_SET_RADIO_ON_DELAY, &CBluetoothTabItem::OnEnChangeEdit)
 END_MESSAGE_MAP()
 
 
@@ -43,7 +67,7 @@ END_MESSAGE_MAP()
 
 BOOL CBluetoothTabItem::OnInitDialog()
 {
-	CDialogEx::OnInitDialog();
+	CTabItem::onInitDialog();
 
 	m_setRadioOnDelaySpin.SetRange(0, 60);
 
@@ -53,4 +77,22 @@ BOOL CBluetoothTabItem::OnInitDialog()
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
+}
+
+
+void CBluetoothTabItem::OnClickedCheckButton()
+{
+	updateUIState();
+}
+
+
+void CBluetoothTabItem::OnEnChangeEdit()
+{
+	// Confirm that window handle of all controls are available
+	// to not call updateUIState() method inside constructor.
+	for(auto& c : m_controllers) {
+		if(!c->getCtrlWnd()->GetSafeHwnd()) { return; }
+	}
+
+	updateUIState();
 }

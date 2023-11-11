@@ -9,9 +9,13 @@ class CBluetoothTabItem : public CTabItem
 	DECLARE_DYNAMIC(CBluetoothTabItem)
 
 public:
-	CBluetoothTabItem();
+	CBluetoothTabItem(CMySettings& settings);
 	virtual ~CBluetoothTabItem();
 
+protected:
+	void updateUIState();
+
+public:
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_SETTINGS_BLUETOOTH };
@@ -32,4 +36,6 @@ public:
 	CButton m_autoCheckRadioInstance;
 //	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	virtual BOOL OnInitDialog();
+	afx_msg void OnClickedCheckButton();
+	afx_msg void OnEnChangeEdit();
 };

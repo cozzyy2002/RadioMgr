@@ -11,8 +11,8 @@
 
 IMPLEMENT_DYNAMIC(CNetworkTabItem, CDialogEx)
 
-CNetworkTabItem::CNetworkTabItem()
-	: CTabItem(IDD_SETTINGS_NETWORK)
+CNetworkTabItem::CNetworkTabItem(CMySettings& settings)
+	: CTabItem(IDD_SETTINGS_NETWORK, _T("Network"), settings)
 {
 }
 
@@ -23,6 +23,13 @@ CNetworkTabItem::~CNetworkTabItem()
 void CNetworkTabItem::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+}
+
+BOOL CNetworkTabItem::OnInitDialog()
+{
+	CTabItem::onInitDialog();
+
+	return 0;
 }
 
 

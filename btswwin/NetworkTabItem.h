@@ -9,7 +9,7 @@ class CNetworkTabItem : public CTabItem
 	DECLARE_DYNAMIC(CNetworkTabItem)
 
 public:
-	CNetworkTabItem();
+	CNetworkTabItem(CMySettings& settings);
 	virtual ~CNetworkTabItem();
 
 // Dialog Data
@@ -21,4 +21,6 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	DECLARE_MESSAGE_MAP()
+public:
+	virtual BOOL OnInitDialog();
 };

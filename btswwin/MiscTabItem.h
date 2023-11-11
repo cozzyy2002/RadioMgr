@@ -9,7 +9,7 @@ class CMiscTabItem : public CTabItem
 	DECLARE_DYNAMIC(CMiscTabItem)
 
 public:
-	CMiscTabItem();
+	CMiscTabItem(CMySettings& settings);
 	virtual ~CMiscTabItem();
 
 // Dialog Data
@@ -22,5 +22,7 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
+	virtual BOOL OnInitDialog();
 	CButton m_saveWindowPlacement;
+	afx_msg void OnClickedCheckButton();
 };

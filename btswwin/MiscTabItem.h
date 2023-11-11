@@ -1,15 +1,15 @@
 #pragma once
 #include "afxdialogex.h"
-
+#include "TabItem.h"
 
 // CMiscTabItem dialog
 
-class CMiscTabItem : public CDialogEx
+class CMiscTabItem : public CTabItem
 {
 	DECLARE_DYNAMIC(CMiscTabItem)
 
 public:
-	CMiscTabItem(CWnd* pParent = nullptr);   // standard constructor
+	CMiscTabItem();
 	virtual ~CMiscTabItem();
 
 // Dialog Data
@@ -21,4 +21,6 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	DECLARE_MESSAGE_MAP()
+public:
+	CButton m_saveWindowPlacement;
 };

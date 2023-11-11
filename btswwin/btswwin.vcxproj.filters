@@ -84,6 +84,9 @@
     <ClInclude Include="MiscTabItem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TabItem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="btswwin.cpp">
@@ -144,6 +147,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MiscTabItem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TabItem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -3,6 +3,8 @@
 
 #include "MySettings.h"
 
+class CTabItem;
+
 // Interface used to exchange setting value and state of control.
 class IController
 {
@@ -51,7 +53,7 @@ public:
 protected:
 	CMySettings& m_settings;
 	std::vector<std::unique_ptr<IController>> m_controllers;
-	std::vector<std::unique_ptr<CDialogEx>> m_tabs;
+	std::vector<std::unique_ptr<CTabItem>> m_tabItems;
 
 	void updateUIState();
 	void applyChanges();
@@ -72,20 +74,11 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
-	CButton m_switchByLcdState;
-	CButton m_restoreRadioState;
-	CButton m_saveWindowPlacement;
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnClickedCheckButton();
 	afx_msg void OnClickedSaveSettings();
-	CEdit m_setRadioStateTimeout;
-	CSpinButtonCtrl m_setRadioStateTimeoutSpin;
 	afx_msg void OnEnChangeEdit();
-	CButton m_autoSelectDevice;
-	CEdit m_setRadioOnDelay;
-	CSpinButtonCtrl m_setRadioOnDelaySpin;
-	CButton m_autoCheckRadioInstance;
 	CTabCtrl m_tabCtrl;
 	afx_msg void OnTcnSelchangeTabSettings(NMHDR* pNMHDR, LRESULT* pResult);
 };

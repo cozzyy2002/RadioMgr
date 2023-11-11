@@ -11,10 +11,9 @@
 
 IMPLEMENT_DYNAMIC(CMiscTabItem, CDialogEx)
 
-CMiscTabItem::CMiscTabItem(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_SETTINGS_MISC, pParent)
+CMiscTabItem::CMiscTabItem()
+	: CTabItem(IDD_SETTINGS_MISC)
 {
-
 }
 
 CMiscTabItem::~CMiscTabItem()
@@ -24,6 +23,7 @@ CMiscTabItem::~CMiscTabItem()
 void CMiscTabItem::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_CHECK_SAVE_WINDOW_PLACEMENT, m_saveWindowPlacement);
 }
 
 

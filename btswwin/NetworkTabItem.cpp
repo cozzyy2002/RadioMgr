@@ -11,10 +11,9 @@
 
 IMPLEMENT_DYNAMIC(CNetworkTabItem, CDialogEx)
 
-CNetworkTabItem::CNetworkTabItem(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_SETTINGS_NETWORK, pParent)
+CNetworkTabItem::CNetworkTabItem()
+	: CTabItem(IDD_SETTINGS_NETWORK)
 {
-
 }
 
 CNetworkTabItem::~CNetworkTabItem()

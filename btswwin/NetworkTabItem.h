@@ -1,15 +1,15 @@
 #pragma once
 #include "afxdialogex.h"
-
+#include "TabItem.h"
 
 // CNetworkTabItem dialog
 
-class CNetworkTabItem : public CDialogEx
+class CNetworkTabItem : public CTabItem
 {
 	DECLARE_DYNAMIC(CNetworkTabItem)
 
 public:
-	CNetworkTabItem(CWnd* pParent = nullptr);   // standard constructor
+	CNetworkTabItem();
 	virtual ~CNetworkTabItem();
 
 // Dialog Data

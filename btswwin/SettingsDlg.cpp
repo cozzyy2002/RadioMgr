@@ -93,10 +93,10 @@ void CSettingsDlg::updateUIState()
 		IDC_CHECK_RESTORE_RADIO_STATE,
 		IDC_STATIC_SET_RADIO_ON_DELAY, IDC_EDIT_SET_RADIO_ON_DELAY, IDC_SPIN_SET_RADIO_ON_DELAY
 	};
-	auto enable = isButtonChecked(m_switchByLcdState);
-	for(auto id : ids) {
-		GetDlgItem(id)->EnableWindow(enable);
-	}
+	//auto enable = isButtonChecked(m_switchByLcdState);
+	//for(auto id : ids) {
+	//	GetDlgItem(id)->EnableWindow(enable);
+	//}
 
 	// Set enabled state of [Save] button.
 	// The button is enabled if at least one setting value is different from it's setting storage.
@@ -122,15 +122,6 @@ void CSettingsDlg::applyChanges()
 void CSettingsDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	//DDX_Control(pDX, IDC_CHECK_SWITCH_BY_LCD_STATE, m_switchByLcdState);
-	//DDX_Control(pDX, IDC_CHECK_RESTORE_RADIO_STATE, m_restoreRadioState);
-	//DDX_Control(pDX, IDC_CHECK_SAVE_WINDOW_PLACEMENT, m_saveWindowPlacement);
-	//DDX_Control(pDX, IDC_EDIT_SET_RADIO_STATE_TIMEOUT, m_setRadioStateTimeout);
-	//DDX_Control(pDX, IDC_SPIN_SET_RADIO_STATE_TIMEOUT, m_setRadioStateTimeoutSpin);
-	//DDX_Control(pDX, IDC_CHECK_AUTO_SELECT_DEVICE, m_autoSelectDevice);
-	//DDX_Control(pDX, IDC_EDIT_SET_RADIO_ON_DELAY, m_setRadioOnDelay);
-	//DDX_Control(pDX, IDC_SPIN_SET_RADIO_ON_DELAY, m_setRadioOnDelaySpin);
-	//DDX_Control(pDX, IDC_CHECK_AUTO_CHECK_RADIO_INSTANCE, m_autoCheckRadioInstance);
 	DDX_Control(pDX, IDC_TAB_SETTINGS, m_tabCtrl);
 }
 
@@ -156,32 +147,23 @@ BOOL CSettingsDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	m_tabs.push_back(std::unique_ptr<CDialogEx>(new CBluetoothTabItem()));
-	m_tabs.push_back(std::unique_ptr<CDialogEx>(new CNetworkTabItem()));
-	m_tabs.push_back(std::unique_ptr<CDialogEx>(new CMiscTabItem()));
-	m_tabs[0]->Create(IDD_SETTINGS_BLUETOOTH, this);
-	m_tabs[1]->Create(IDD_SETTINGS_NETWORK, this);
-	m_tabs[2]->Create(IDD_SETTINGS_MISC, this);
+	m_tabItems.push_back(std::unique_ptr<CTabItem>(new CBluetoothTabItem()));
+	m_tabItems.push_back(std::unique_ptr<CTabItem>(new CNetworkTabItem()));
+	m_tabItems.push_back(std::unique_ptr<CTabItem>(new CMiscTabItem()));
 	m_tabCtrl.InsertItem(0, _T("Bluetooth"));
 	m_tabCtrl.InsertItem(1, _T("Network"));
 	m_tabCtrl.InsertItem(2, _T("Misc"));
-	CRect rect;
+	CRect rect, tabRect;
 	m_tabCtrl.GetWindowRect(&rect);
 	m_tabCtrl.AdjustRect(FALSE, &rect);
 	m_tabCtrl.ScreenToClient(&rect);
-	CRect tabRect;
 	m_tabCtrl.GetItemRect(0, &tabRect);
 	rect.top += tabRect.Height();
-	for each(auto& d in m_tabs) {
-		d->MoveWindow(&rect);
+	for(auto& item : m_tabItems) {
+		item->Create(this);
+		item->MoveWindow(&rect);
 	}
 	OnTcnSelchangeTabSettings(nullptr, nullptr);
-
-	//m_setRadioOnDelaySpin.SetRange(0, 60);
-
-	// Set timeout range of IRadioInstance::SetRadioState() method.
-	// See "https://learn.microsoft.com/en-us/previous-versions/windows/hardware/radio/hh406610(v=vs.85)"
-	//m_setRadioStateTimeoutSpin.SetRange(1, 5);
 
 	// Set all setting values to corresponding control.
 	for(auto& c : m_controllers) {
@@ -198,8 +180,8 @@ BOOL CSettingsDlg::OnInitDialog()
 void CSettingsDlg::OnTcnSelchangeTabSettings(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	auto sel = m_tabCtrl.GetCurSel();
-	for(int i = 0; i < m_tabs.size(); i++) {
-		m_tabs[i]->ShowWindow((i == sel) ? SW_SHOW : SW_HIDE);
+	for(int i = 0; i < m_tabItems.size(); i++) {
+		m_tabItems[i]->ShowWindow((i == sel) ? SW_SHOW : SW_HIDE);
 	}
 
 	if(pResult) { *pResult = 0; }
@@ -234,11 +216,11 @@ void CSettingsDlg::OnEnChangeEdit()
 
 void CSettingsDlg::OnClickedSaveSettings()
 {
-	if(m_saveWindowPlacement.GetCheck())
-	{
-		m_settings.windowPlacement->length = sizeof(WINDOWPLACEMENT);
-		WIN32_EXPECT(GetWindowPlacement(m_settings.windowPlacement));
-	}
+	//if(m_saveWindowPlacement.GetCheck())
+	//{
+	//	m_settings.windowPlacement->length = sizeof(WINDOWPLACEMENT);
+	//	WIN32_EXPECT(GetWindowPlacement(m_settings.windowPlacement));
+	//}
 
 	applyChanges();
 	m_settings.save();

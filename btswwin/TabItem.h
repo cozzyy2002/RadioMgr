@@ -38,7 +38,8 @@ protected:
 
 
 // Sets check state of the button.
-inline void setButtonCheck(CButton& button, const CSettings::Value<bool>& value) { button.SetCheck(value ? BST_CHECKED : BST_UNCHECKED); }
+inline void setButtonCheck(CButton& button, bool value) { button.SetCheck(value ? BST_CHECKED : BST_UNCHECKED); }
+inline void setButtonCheck(CButton& button, const CSettings::Value<bool>& value) { setButtonCheck(button, (bool)value); }
 
 // Returns TRUE if the button is checked, otherwise FALSE.
 inline BOOL isButtonChecked(const CButton& button) { return (button.GetCheck() == BST_CHECKED) ? TRUE : FALSE; }

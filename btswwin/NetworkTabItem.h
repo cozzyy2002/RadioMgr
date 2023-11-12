@@ -29,8 +29,26 @@ public:
 	virtual BOOL OnInitDialog();
 	CButton m_connectVpn;
 	CEdit m_vpnName;
-	CButton m_vpnConnection;
 	afx_msg void OnChangeEdit();
 	afx_msg void OnClickedCheck();
 	afx_msg void OnClickedRadio();
+};
+
+
+class VpnConnectionController : public IController
+{
+public:
+	VpnConnectionController(CNetworkTabItem* dlg, CSettings::EnumValue<CMySettings::VpnConnection>& value)
+		: m_dlg(dlg), m_value(value) {}
+
+	virtual void setValueToCtrl() override;
+	virtual void getValueFromCtrl() override;
+	virtual bool isChanged() const override;
+	virtual CWnd* getCtrlWnd() const override { return &m_dlg->m_connectVpn; }
+
+protected:
+	CNetworkTabItem* m_dlg;
+	CSettings::EnumValue<CMySettings::VpnConnection>& m_value;
+
+	CMySettings::VpnConnection getVpnConnection() const;
 };

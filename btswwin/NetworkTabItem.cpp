@@ -5,7 +5,9 @@
 #include "btswwin.h"
 #include "afxdialogex.h"
 #include "NetworkTabItem.h"
+#include "MySettings.h"
 
+static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CNetworkTabItem")));
 
 // CNetworkTabItem dialog
 
@@ -15,6 +17,7 @@ CNetworkTabItem::CNetworkTabItem(CMySettings& settings)
 	: CTabItem(IDD_SETTINGS_NETWORK, _T("Network"), settings)
 {
 	addController(m_settings.vpnName, m_vpnName);
+	addController(new VpnConnectionController(this, m_settings.vpnConnection));
 }
 
 CNetworkTabItem::~CNetworkTabItem()
@@ -32,8 +35,6 @@ void CNetworkTabItem::updateUIState()
 	for(auto id : ids) {
 		GetDlgItem(id)->EnableWindow(enable);
 	}
-
-	notifyValueChanged();
 }
 
 void CNetworkTabItem::DoDataExchange(CDataExchange* pDX)
@@ -41,12 +42,13 @@ void CNetworkTabItem::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_CHECK_CONNECT_VPN, m_connectVpn);
 	DDX_Control(pDX, IDC_EDIT_VPN_NAME, m_vpnName);
-	DDX_Control(pDX, IDC_RADIO_VPN_CONNECTION, m_vpnConnection);
 }
 
 BOOL CNetworkTabItem::OnInitDialog()
 {
 	CTabItem::onInitDialog();
+
+	updateUIState();
 
 	return 0;
 }
@@ -67,6 +69,7 @@ END_MESSAGE_MAP()
 void CNetworkTabItem::OnClickedCheck()
 {
 	updateUIState();
+	notifyValueChanged();
 }
 
 
@@ -76,11 +79,76 @@ void CNetworkTabItem::OnChangeEdit()
 	// to not call updateUIState() method inside constructor.
 	if(!areAllControlsAvailable()) { return; }
 
-	updateUIState();
+	notifyValueChanged();
 }
 
 
 void CNetworkTabItem::OnClickedRadio()
 {
-	updateUIState();
+	notifyValueChanged();
+}
+
+#pragma region Implementation of VpnConnectionController
+void VpnConnectionController::setValueToCtrl()
+{
+	auto isConnectVpnChecked = true;
+	auto buttonIdToCheck = 0;
+	switch((CMySettings::VpnConnection)m_value) {
+	case CMySettings::VpnConnection::None:
+		buttonIdToCheck = IDC_RADIO_VPN_CONNECTION;
+		isConnectVpnChecked = false;
+		break;
+	case CMySettings::VpnConnection::UnsecuredWiFi:
+		buttonIdToCheck = IDC_RADIO_VPN_CONNECTION;
+		break;
+	case CMySettings::VpnConnection::WiFi:
+		buttonIdToCheck = IDC_RADIO_VPN_CONNECTION_WIFI;
+		break;
+	case CMySettings::VpnConnection::Any:
+		buttonIdToCheck = IDC_RADIO_VPN_CONNECTION_ANY;
+		break;
+	default:
+		LOG4CXX_ERROR_FMT(logger, _T("Unknown VpnConnection value: %d"), (int)m_value);
+		return;
+	}
+
+	setButtonCheck(m_dlg->m_connectVpn, isConnectVpnChecked);
+	m_dlg->CheckRadioButton(IDC_RADIO_VPN_CONNECTION, IDC_RADIO_VPN_CONNECTION_ANY, buttonIdToCheck);
+}
+
+void VpnConnectionController::getValueFromCtrl()
+{
+	m_value = getVpnConnection();
+}
+
+bool VpnConnectionController::isChanged() const
+{
+	auto eValue = getVpnConnection();
+	return (m_value != eValue) || m_value.isChanged();
+}
+#pragma endregion
+
+// Returns CMySettings::VpnConnection value
+// specified by [Connect VPN] check box and radio buttons.
+CMySettings::VpnConnection VpnConnectionController::getVpnConnection() const
+{
+	auto ret = CMySettings::VpnConnection::None;
+	if(m_dlg->m_connectVpn.GetCheck()) {
+		auto checkedButtonId = m_dlg->GetCheckedRadioButton(IDC_RADIO_VPN_CONNECTION, IDC_RADIO_VPN_CONNECTION_ANY);
+		switch(checkedButtonId) {
+		case IDC_RADIO_VPN_CONNECTION:
+			ret = CMySettings::VpnConnection::UnsecuredWiFi;
+			break;
+		case IDC_RADIO_VPN_CONNECTION_WIFI:
+			ret = CMySettings::VpnConnection::WiFi;
+			break;
+		case IDC_RADIO_VPN_CONNECTION_ANY:
+			ret = CMySettings::VpnConnection::Any;
+			break;
+		default:
+			LOG4CXX_ERROR_FMT(logger, _T("Unknown RadioButton ID: %d"), checkedButtonId);
+			break;
+		}
+	}
+	return ret;
 }

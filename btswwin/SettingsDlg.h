@@ -37,4 +37,6 @@ public:
 	afx_msg void OnClickedSaveSettings();
 	CTabCtrl m_tabCtrl;
 	afx_msg void OnTcnSelchangeTabSettings(NMHDR* pNMHDR, LRESULT* pResult);
+protected:
+	afx_msg LRESULT OnTabItemValueChanged(WPARAM wParam, LPARAM lParam);
 };

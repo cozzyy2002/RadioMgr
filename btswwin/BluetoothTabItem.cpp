@@ -37,6 +37,8 @@ void CBluetoothTabItem::updateUIState()
 	for(auto id : ids) {
 		GetDlgItem(id)->EnableWindow(enable);
 	}
+
+	notifyValueChanged();
 }
 
 void CBluetoothTabItem::DoDataExchange(CDataExchange* pDX)

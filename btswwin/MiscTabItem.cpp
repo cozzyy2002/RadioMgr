@@ -21,6 +21,11 @@ CMiscTabItem::~CMiscTabItem()
 {
 }
 
+void CMiscTabItem::updateUIState()
+{
+	notifyValueChanged();
+}
+
 void CMiscTabItem::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
@@ -45,5 +50,5 @@ BOOL CMiscTabItem::OnInitDialog()
 
 void CMiscTabItem::OnClickedCheckButton()
 {
-	//updateUIState();
+	updateUIState();
 }

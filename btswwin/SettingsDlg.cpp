@@ -57,6 +57,7 @@ BEGIN_MESSAGE_MAP(CSettingsDlg, CDialogEx)
 	ON_BN_CLICKED(IDOK, &CSettingsDlg::OnBnClickedOk)
 	ON_BN_CLICKED(ID_SAVE_SETTINGS, &CSettingsDlg::OnClickedSaveSettings)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB_SETTINGS, &CSettingsDlg::OnTcnSelchangeTabSettings)
+	ON_MESSAGE(WM_TABITEM_VALUE_CHANGED, &CSettingsDlg::OnTabItemValueChanged)
 END_MESSAGE_MAP()
 
 
@@ -127,4 +128,11 @@ void CSettingsDlg::OnClickedSaveSettings()
 	m_settings.save();
 
 	updateUIState();
+}
+
+
+afx_msg LRESULT CSettingsDlg::OnTabItemValueChanged(WPARAM wParam, LPARAM lParam)
+{
+	updateUIState();
+	return 0;
 }

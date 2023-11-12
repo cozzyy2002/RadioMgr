@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "TabItem.h"
+#include "../Common/Assert.h"
 
 CTabItem::CTabItem(UINT nIDTemplate, LPCTSTR name, CMySettings& settings)
     : CDialogEx(nIDTemplate), m_name(name), m_settings(settings)
@@ -37,6 +38,13 @@ BOOL CTabItem::onInitDialog()
 		c->setValueToCtrl();
 	}
 	return 0;
+}
+
+void CTabItem::notifyValueChanged()
+{
+	WIN32_EXPECT(
+		::PostMessage(GetParent()->m_hWnd, WM_TABITEM_VALUE_CHANGED, 0, 0)
+	);
 }
 
 

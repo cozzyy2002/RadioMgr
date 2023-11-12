@@ -12,6 +12,10 @@ public:
 	CMiscTabItem(CMySettings& settings);
 	virtual ~CMiscTabItem();
 
+protected:
+	void updateUIState();
+
+public:
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_SETTINGS_MISC };

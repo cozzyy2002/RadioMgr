@@ -4,6 +4,8 @@
 
 class IController;
 
+#define WM_TABITEM_VALUE_CHANGED (WM_USER + 20)
+
 class CTabItem : public CDialogEx
 {
 public:
@@ -26,6 +28,7 @@ protected:
 	}
 
 	BOOL onInitDialog();
+	void notifyValueChanged();
 
 	CMySettings& m_settings;
 	const CString m_name;

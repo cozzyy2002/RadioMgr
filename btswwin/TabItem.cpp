@@ -47,6 +47,15 @@ void CTabItem::notifyValueChanged()
 	);
 }
 
+// Returns true if all added controls are available.
+bool CTabItem::areAllControlsAvailable() const
+{
+	for(auto& c : m_controllers) {
+		if(!c->getCtrlWnd()->GetSafeHwnd()) { return false; }
+	}
+	return true;
+}
+
 
 #pragma region Controller<bool, CButton>
 template<>
@@ -94,5 +103,29 @@ bool Controller<int, CEdit>::isChanged() const
 	ctrl.GetWindowText(text);
 	auto iValue = _tstoi(text.GetString());
 	return (value != iValue) || value.isChanged();
+}
+#pragma endregion
+
+#pragma region Controller<CString, CEdit>
+template<>
+void Controller<CString, CEdit>::setValueToCtrl()
+{
+	ctrl.SetWindowText(value->GetString());
+}
+
+template<>
+void Controller<CString, CEdit>::getValueFromCtrl()
+{
+	CString text;
+	ctrl.GetWindowText(text);
+	value = text;
+}
+
+template<>
+bool Controller<CString, CEdit>::isChanged() const
+{
+	CString text;
+	ctrl.GetWindowText(text);
+	return (value != text) || value.isChanged();
 }
 #pragma endregion

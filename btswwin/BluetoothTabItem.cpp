@@ -92,9 +92,7 @@ void CBluetoothTabItem::OnEnChangeEdit()
 {
 	// Confirm that window handle of all controls are available
 	// to not call updateUIState() method inside constructor.
-	for(auto& c : m_controllers) {
-		if(!c->getCtrlWnd()->GetSafeHwnd()) { return; }
-	}
+	if(!areAllControlsAvailable()) { return; }
 
 	updateUIState();
 }

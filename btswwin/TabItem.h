@@ -29,6 +29,7 @@ protected:
 
 	BOOL onInitDialog();
 	void notifyValueChanged();
+	bool areAllControlsAvailable() const;
 
 	CMySettings& m_settings;
 	const CString m_name;

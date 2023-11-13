@@ -29,7 +29,8 @@ void CTabItem::applyChanges()
 	}
 }
 
-BOOL CTabItem::onInitDialog()
+
+BOOL CTabItem::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
@@ -37,8 +38,11 @@ BOOL CTabItem::onInitDialog()
 	for(auto& c : m_controllers) {
 		c->setValueToCtrl();
 	}
-	return 0;
+
+	return TRUE;  // return TRUE unless you set the focus to a control
+	// EXCEPTION: OCX Property Pages should return FALSE
 }
+
 
 void CTabItem::notifyValueChanged()
 {

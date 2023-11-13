@@ -23,7 +23,6 @@ CMiscTabItem::~CMiscTabItem()
 
 void CMiscTabItem::updateUIState()
 {
-	notifyValueChanged();
 }
 
 void CMiscTabItem::DoDataExchange(CDataExchange* pDX)
@@ -43,12 +42,12 @@ END_MESSAGE_MAP()
 
 BOOL CMiscTabItem::OnInitDialog()
 {
-	CTabItem::onInitDialog();
+	CTabItem::OnInitDialog();
 
 	return 0;
 }
 
 void CMiscTabItem::OnClickedCheckButton()
 {
-	updateUIState();
+	notifyValueChanged();
 }

@@ -30,7 +30,7 @@ public:
 	CButton m_connectVpn;
 	CEdit m_vpnName;
 	afx_msg void OnChangeEdit();
-	afx_msg void OnClickedCheck();
+	afx_msg void OnClickedCheckConnectVpn();
 	afx_msg void OnClickedRadio();
 };
 
@@ -38,8 +38,8 @@ public:
 class VpnConnectionController : public IController
 {
 public:
-	VpnConnectionController(CNetworkTabItem* dlg, CSettings::EnumValue<CMySettings::VpnConnection>& value)
-		: m_dlg(dlg), m_value(value) {}
+	VpnConnectionController(CNetworkTabItem* dlg, CMySettings& settings)
+		: m_dlg(dlg), m_value(settings.vpnConnection) {}
 
 	virtual void setValueToCtrl() override;
 	virtual void getValueFromCtrl() override;

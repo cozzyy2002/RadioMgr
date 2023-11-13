@@ -27,13 +27,14 @@ protected:
 		m_controllers.push_back(std::unique_ptr<IController>(controller));
 	}
 
-	BOOL onInitDialog();
 	void notifyValueChanged();
 	bool areAllControlsAvailable() const;
 
 	CMySettings& m_settings;
 	const CString m_name;
 	std::vector<std::unique_ptr<IController>> m_controllers;
+public:
+	virtual BOOL OnInitDialog();
 };
 
 

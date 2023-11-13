@@ -69,7 +69,7 @@ END_MESSAGE_MAP()
 
 BOOL CBluetoothTabItem::OnInitDialog()
 {
-	CTabItem::onInitDialog();
+	CTabItem::OnInitDialog();
 
 	m_setRadioOnDelaySpin.SetRange(0, 60);
 

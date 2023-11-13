@@ -17,7 +17,7 @@ CNetworkTabItem::CNetworkTabItem(CMySettings& settings)
 	: CTabItem(IDD_SETTINGS_NETWORK, _T("Network"), settings)
 {
 	addController(m_settings.vpnName, m_vpnName);
-	addController(new VpnConnectionController(this, m_settings.vpnConnection));
+	addController(new VpnConnectionController(this, m_settings));
 }
 
 CNetworkTabItem::~CNetworkTabItem()
@@ -26,7 +26,7 @@ CNetworkTabItem::~CNetworkTabItem()
 
 void CNetworkTabItem::updateUIState()
 {
-	// Set enabled state of the controls depending on whether [Connect VPN] is checked.
+	// Set enabled state of the controls depending on whether [Connect VPN] is checked or not.
 	static const int ids[] = {
 		IDC_EDIT_VPN_NAME,
 		IDC_RADIO_VPN_CONNECTION,IDC_RADIO_VPN_CONNECTION_WIFI, IDC_RADIO_VPN_CONNECTION_ANY
@@ -46,7 +46,7 @@ void CNetworkTabItem::DoDataExchange(CDataExchange* pDX)
 
 BOOL CNetworkTabItem::OnInitDialog()
 {
-	CTabItem::onInitDialog();
+	CTabItem::OnInitDialog();
 
 	updateUIState();
 
@@ -59,14 +59,14 @@ BEGIN_MESSAGE_MAP(CNetworkTabItem, CDialogEx)
 	ON_BN_CLICKED(IDC_RADIO_VPN_CONNECTION_WIFI, &CNetworkTabItem::OnClickedRadio)
 	ON_BN_CLICKED(IDC_RADIO_VPN_CONNECTION_ANY, &CNetworkTabItem::OnClickedRadio)
 	ON_EN_CHANGE(IDC_EDIT_VPN_NAME, &CNetworkTabItem::OnChangeEdit)
-	ON_BN_CLICKED(IDC_CHECK_CONNECT_VPN, &CNetworkTabItem::OnClickedCheck)
+	ON_BN_CLICKED(IDC_CHECK_CONNECT_VPN, &CNetworkTabItem::OnClickedCheckConnectVpn)
 END_MESSAGE_MAP()
 
 
 // CNetworkTabItem message handlers
 
 
-void CNetworkTabItem::OnClickedCheck()
+void CNetworkTabItem::OnClickedCheckConnectVpn()
 {
 	updateUIState();
 	notifyValueChanged();

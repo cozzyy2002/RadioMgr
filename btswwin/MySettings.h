@@ -15,6 +15,16 @@ struct CMySettings : public CSettings::BinaryValue<WINDOWPLACEMENT>::DefaultValu
 	CSettings::Value<bool> saveWindowPlacement;
 	CSettings::BinaryValue<WINDOWPLACEMENT> windowPlacement;
 
+	// Specifies condition to connect VPN.
+	enum class VpnConnection {
+		None,				// Never connect.
+		UnsecuredWiFi,		// When unsecured Wi-Fi is connected.
+		WiFi,				// When Wi-Fi is connected.
+		Any,				// When any network connection is available.
+	};
+	CSettings::EnumValue<VpnConnection> vpnConnection;
+	CSettings::Value<CString> vpnName;
+
 	void load();
 	void save();
 

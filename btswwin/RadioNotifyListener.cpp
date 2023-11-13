@@ -52,7 +52,7 @@ HRESULT RadioNotifyListener::postMessage(Message::Type type, IRadioInstance* rad
 
 
 #pragma region Implementation of IUnknown
-HRESULT __stdcall RadioNotifyListener::QueryInterface(REFIID riid, void** ppvObject)
+HRESULT __stdcall RadioNotifyListener::QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
 {
 	static const QITAB qitab[] = {
 		QITABENT(RadioNotifyListener, IMediaRadioManagerNotifySink),

@@ -27,12 +27,24 @@
     <ClCompile Include="NetworkEvents.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IpAdapterAddresses.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WLan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ValueName.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NetworkEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IpAdapterAddresses.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WLan.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

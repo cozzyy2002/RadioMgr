@@ -5,61 +5,9 @@
 #include "btswwin.h"
 #include "afxdialogex.h"
 #include "SettingsDlg.h"
-
-// Sets check state of the button.
-static void setButtonCheck(CButton& button, const CSettings::Value<bool>& value) { button.SetCheck(value ? BST_CHECKED : BST_UNCHECKED); }
-
-// Returns TRUE if the button is checked, otherwise FALSE.
-static BOOL isButtonChecked(const CButton& button) { return (button.GetCheck() == BST_CHECKED) ? TRUE : FALSE; }
-
-#pragma region Controller<bool, CButton>
-template<>
-void Controller<bool, CButton>::setValueToCtrl()
-{
-	setButtonCheck(ctrl, value);
-}
-
-template<>
-void Controller<bool, CButton>::getValueFromCtrl()
-{
-	value = isButtonChecked(ctrl) ? true : false;
-}
-
-template<>
-bool Controller<bool, CButton>::isChanged() const
-{
-	auto buttonChecked = isButtonChecked(ctrl);
-	auto bValue = (value ? TRUE : FALSE);
-	return (buttonChecked != bValue) || value.isChanged();
-}
-#pragma endregion
-
-#pragma region Controller<int, CEdit>
-template<>
-void Controller<int, CEdit>::setValueToCtrl()
-{
-	CString text;
-	text.Format(_T("%d"), (int)value);
-	ctrl.SetWindowText(text);
-}
-
-template<>
-void Controller<int, CEdit>::getValueFromCtrl()
-{
-	CString text;
-	ctrl.GetWindowText(text);
-	value = _tstoi(text.GetString());
-}
-
-template<>
-bool Controller<int, CEdit>::isChanged() const
-{
-	CString text;
-	ctrl.GetWindowText(text);
-	auto iValue = _tstoi(text.GetString());
-	return (value != iValue) || value.isChanged();
-}
-#pragma endregion
+#include "BluetoothTabItem.h"
+#include "NetworkTabItem.h"
+#include "MiscTabItem.h"
 
 // CSettingsDlg dialog
 
@@ -68,13 +16,6 @@ IMPLEMENT_DYNAMIC(CSettingsDlg, CDialogEx)
 CSettingsDlg::CSettingsDlg(CMySettings& settings, CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_SETTINGS, pParent), m_settings(settings)
 {
-	addController(m_settings.switchByLcdState, m_switchByLcdState);
-	addController(m_settings.restoreRadioState, m_restoreRadioState);
-	addController(m_settings.setRadioStateTimeout, m_setRadioStateTimeout);
-	addController(m_settings.setRadioOnDelay, m_setRadioOnDelay);
-	addController(m_settings.autoCheckRadioInstance, m_autoCheckRadioInstance);
-	addController(m_settings.autoSelectDevice, m_autoSelectDevice);
-	addController(m_settings.saveWindowPlacement, m_saveWindowPlacement);
 }
 
 CSettingsDlg::~CSettingsDlg()
@@ -83,62 +24,40 @@ CSettingsDlg::~CSettingsDlg()
 
 void CSettingsDlg::updateUIState()
 {
-	// Set enabled state of the controls depending on whether switchByLcdState is checked.
-	static const int ids[] = {
-		IDC_CHECK_RESTORE_RADIO_STATE,
-		IDC_STATIC_SET_RADIO_ON_DELAY, IDC_EDIT_SET_RADIO_ON_DELAY, IDC_SPIN_SET_RADIO_ON_DELAY
-	};
-	auto enable = isButtonChecked(m_switchByLcdState);
-	for(auto id : ids) {
-		GetDlgItem(id)->EnableWindow(enable);
+	// Set enabled state of [Save] and [OK] buttons.
+	//   [Save] button is enabled when all values are valid and at least one value is changed.
+	//   [OK] button is enabled when all values are valid.
+	auto isValid = true;	// All setting values are valid.
+	auto isChanged = false;	// At least one setting value is changed.
+	for(auto& item : m_tabItems) {
+		isValid &= item->isValid();
+		isChanged |= item->isChanged();
 	}
 
-	// Set enabled state of [Save] button.
-	// The button is enabled if at least one setting value is different from it's setting storage.
-	auto isChanged = FALSE;
-	for(auto& c : m_controllers) {
-		if(c->isChanged()) {
-			isChanged = TRUE;
-			break;
-		}
-	}
-	auto button = GetDlgItem(ID_SAVE_SETTINGS);
-	button->EnableWindow(isChanged);
+	GetDlgItem(ID_SAVE_SETTINGS)->EnableWindow((isValid && isChanged) ? TRUE : FALSE);
+	GetDlgItem(IDOK)->EnableWindow(isValid ? TRUE : FALSE);
 }
 
 // Sets state of all controls to corresponding settings value.
 void CSettingsDlg::applyChanges()
 {
-	for(auto& c : m_controllers) {
-		c->getValueFromCtrl();
-	}
+	for(auto& item : m_tabItems) {
+		item->applyChanges();
+	};
 }
 
 void CSettingsDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_CHECK_SWITCH_BY_LCD_STATE, m_switchByLcdState);
-	DDX_Control(pDX, IDC_CHECK_RESTORE_RADIO_STATE, m_restoreRadioState);
-	DDX_Control(pDX, IDC_CHECK_SAVE_WINDOW_PLACEMENT, m_saveWindowPlacement);
-	DDX_Control(pDX, IDC_EDIT_SET_RADIO_STATE_TIMEOUT, m_setRadioStateTimeout);
-	DDX_Control(pDX, IDC_SPIN_SET_RADIO_STATE_TIMEOUT, m_setRadioStateTimeoutSpin);
-	DDX_Control(pDX, IDC_CHECK_AUTO_SELECT_DEVICE, m_autoSelectDevice);
-	DDX_Control(pDX, IDC_EDIT_SET_RADIO_ON_DELAY, m_setRadioOnDelay);
-	DDX_Control(pDX, IDC_SPIN_SET_RADIO_ON_DELAY, m_setRadioOnDelaySpin);
-	DDX_Control(pDX, IDC_CHECK_AUTO_CHECK_RADIO_INSTANCE, m_autoCheckRadioInstance);
+	DDX_Control(pDX, IDC_TAB_SETTINGS, m_tabCtrl);
 }
 
 
 BEGIN_MESSAGE_MAP(CSettingsDlg, CDialogEx)
 	ON_BN_CLICKED(IDOK, &CSettingsDlg::OnBnClickedOk)
-	ON_BN_CLICKED(IDC_CHECK_SWITCH_BY_LCD_STATE, &CSettingsDlg::OnClickedCheckButton)
-	ON_BN_CLICKED(IDC_CHECK_RESTORE_RADIO_STATE, &CSettingsDlg::OnClickedCheckButton)
-	ON_BN_CLICKED(IDC_CHECK_SAVE_WINDOW_PLACEMENT, &CSettingsDlg::OnClickedCheckButton)
-	ON_BN_CLICKED(IDC_CHECK_AUTO_CHECK_RADIO_INSTANCE, &CSettingsDlg::OnClickedCheckButton)
-	ON_BN_CLICKED(IDC_CHECK_AUTO_SELECT_DEVICE, &CSettingsDlg::OnClickedCheckButton)
 	ON_BN_CLICKED(ID_SAVE_SETTINGS, &CSettingsDlg::OnClickedSaveSettings)
-	ON_EN_CHANGE(IDC_EDIT_SET_RADIO_STATE_TIMEOUT, &CSettingsDlg::OnEnChangeEdit)
-	ON_EN_CHANGE(IDC_EDIT_SET_RADIO_ON_DELAY, &CSettingsDlg::OnEnChangeEdit)
+	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB_SETTINGS, &CSettingsDlg::OnTcnSelchangeTabSettings)
+	ON_MESSAGE(WM_TABITEM_VALUE_CHANGED, &CSettingsDlg::OnTabItemValueChanged)
 END_MESSAGE_MAP()
 
 
@@ -149,21 +68,42 @@ BOOL CSettingsDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	m_setRadioOnDelaySpin.SetRange(0, 60);
-
-	// Set timeout range of IRadioInstance::SetRadioState() method.
-	// See "https://learn.microsoft.com/en-us/previous-versions/windows/hardware/radio/hh406610(v=vs.85)"
-	m_setRadioStateTimeoutSpin.SetRange(1, 5);
-
-	// Set all setting values to corresponding control.
-	for(auto& c : m_controllers) {
-		c->setValueToCtrl();
-	}
+	// Create DialogBoxes and attach them as tab items of CTabCtrl.
+	m_tabItems.push_back(std::unique_ptr<CTabItem>(new CBluetoothTabItem(m_settings)));
+	m_tabItems.push_back(std::unique_ptr<CTabItem>(new CNetworkTabItem(m_settings)));
+	m_tabItems.push_back(std::unique_ptr<CTabItem>(new CMiscTabItem(m_settings)));
+	// NOTE: Tab items should be inserted before retrieving position of them.
+	for(int i = 0; i < m_tabItems.size(); i++) {
+		auto item = m_tabItems[i].get();
+		m_tabCtrl.InsertItem(i, item->getName());
+	};
+	CRect rect, tabRect;
+	m_tabCtrl.GetWindowRect(&rect);
+	m_tabCtrl.GetItemRect(0, &tabRect);
+	m_tabCtrl.AdjustRect(FALSE, &rect);
+	m_tabCtrl.ScreenToClient(&rect);
+	rect.top += tabRect.Height();
+	for(auto& item : m_tabItems) {
+		item->Create(this);
+		item->MoveWindow(&rect);
+	};
+	OnTcnSelchangeTabSettings(nullptr, nullptr);
 
 	updateUIState();
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
+}
+
+
+void CSettingsDlg::OnTcnSelchangeTabSettings(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	auto sel = m_tabCtrl.GetCurSel();
+	for(int i = 0; i < m_tabItems.size(); i++) {
+		m_tabItems[i]->ShowWindow((i == sel) ? SW_SHOW : SW_HIDE);
+	}
+
+	if(pResult) { *pResult = 0; }
 }
 
 
@@ -175,34 +115,24 @@ void CSettingsDlg::OnBnClickedOk()
 }
 
 
-void CSettingsDlg::OnClickedCheckButton()
-{
-	updateUIState();
-}
-
-
-void CSettingsDlg::OnEnChangeEdit()
-{
-	// Confirm that window handle of all controls are available
-	// to not call updateUIState() method inside constructor.
-	for(auto& c : m_controllers) {
-		if(!c->getCtrlWnd()->GetSafeHwnd()) { return; }
-	}
-
-	updateUIState();
-}
-
-
 void CSettingsDlg::OnClickedSaveSettings()
 {
-	if(m_saveWindowPlacement.GetCheck())
+	applyChanges();
+
+	if(m_settings.saveWindowPlacement)
 	{
 		m_settings.windowPlacement->length = sizeof(WINDOWPLACEMENT);
 		WIN32_EXPECT(GetWindowPlacement(m_settings.windowPlacement));
 	}
 
-	applyChanges();
 	m_settings.save();
 
 	updateUIState();
+}
+
+
+afx_msg LRESULT CSettingsDlg::OnTabItemValueChanged(WPARAM wParam, LPARAM lParam)
+{
+	updateUIState();
+	return 0;
 }

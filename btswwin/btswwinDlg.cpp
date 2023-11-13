@@ -29,6 +29,7 @@ CbtswwinDlg::CbtswwinDlg(CResourceReader& resourceReader, CWnd* pParent /*=nullp
 	: CDialogEx(IDD_BTSWWIN_DIALOG, pParent)
 	, m_resourceReader(resourceReader)
 	, m_radioState(DRS_RADIO_INVALID)
+	, m_wlanIsSecured(false), m_netIsConnected(false), m_lidIsOpened(true)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
@@ -50,11 +51,14 @@ static void AssertFailedProc(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int li
 	if(formatResult) {
 		CString formattedMsg(msg);
 		LocalFree(msg);
-		_msg.Format(_T("%s(0x%x)"), formattedMsg.TrimRight(_T("\r\n")).GetString(), hr);
-	} else {
-		_msg.Format(_T("0x%x"), hr);
+		_msg.Format(_T(": %s"), formattedMsg.TrimRight(_T("\r\n")).GetString());
 	}
-	LOG4CXX_ERROR(logger, _T("`") << exp << _T("` failed: ") << _msg.GetString());
+	LOG4CXX_ERROR_FMT(logger,
+		_T("`%s` failed.\n")
+		_T("  HRESULT=0x%x%s")
+		_T("\n  Source: %s(%d)"),
+		exp, hr, _msg.GetString(), sourceFile, line
+	);
 }
 
 void CbtswwinDlg::print(const CString& text)
@@ -106,6 +110,9 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_MESSAGE(WM_USER_PRINT, &CbtswwinDlg::OnUserPrint)
 	ON_MESSAGE(WM_USER_RADIO_MANAGER_NOTIFY, &CbtswwinDlg::OnUserRadioManagerNotify)
 	ON_MESSAGE(WM_USER_CONNECT_DEVICE_RESULT, &CbtswwinDlg::OnUserConnectDeviceResult)
+	ON_MESSAGE(WM_USER_WLAN_NOTIFY, &CbtswwinDlg::OnUserWLanNotify)
+	ON_MESSAGE(WM_USER_NET_NOTIFY, &CbtswwinDlg::OnUserNetNotify)
+	ON_MESSAGE(WM_USER_VPN_NOTIFY, &CbtswwinDlg::OnUserVpnNotify)
 	ON_WM_TIMER()
 	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
 	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
@@ -206,6 +213,9 @@ BOOL CbtswwinDlg::OnInitDialog()
 	m_bluetoothDevices.OnInitCtrl();
 	checkBluetoothDevice();
 
+	m_wlan.start(m_hWnd, WM_USER_WLAN_NOTIFY);
+	m_net.start(m_hWnd, WM_USER_NET_NOTIFY);
+
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -238,6 +248,9 @@ void CbtswwinDlg::OnDestroy()
 	}
 
 	resetThread(m_setRadioOnThread);
+
+	m_wlan.stop();
+	m_net.stop();
 
 	m_settings->windowPlacement->length = sizeof(WINDOWPLACEMENT);
 	WIN32_EXPECT(GetWindowPlacement(m_settings->windowPlacement));
@@ -412,6 +425,7 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 			UpdateData();
 			switch(setting->Data[0]) {
 			case 0:		// The lid is closed.
+				m_lidIsOpened = false;
 				if(m_settings->switchByLcdState) {
 					if(m_settings->restoreRadioState) {
 						// Save current state to restore when lid will be opened.
@@ -426,6 +440,7 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 				}
 				break;
 			case 1:		// The lid is opened.
+				m_lidIsOpened = true;
 				if(m_settings->autoCheckRadioInstance) {
 					m_radioInstances.For([this](int nItem, BOOL isChecked)
 						{
@@ -784,6 +799,85 @@ LRESULT CbtswwinDlg::OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam)
 	resetThread(m_connectDeviceThread);
 	EndWaitCursor();
 	return LRESULT(0);
+}
+
+LRESULT CbtswwinDlg::OnUserWLanNotify(WPARAM wParam, LPARAM lParam)
+{
+	std::unique_ptr<CWLan::NotifyParam> param((CWLan::NotifyParam*)lParam);
+	LOG4CXX_INFO_FMT(logger, _T(__FUNCTION__) _T("(%s, %s, %s, %s)"),
+		param->sourceName, param->codeName, param->ssid.GetString(),
+		param->isSecurityEnabled ? _T("Secured") : _T("Unsecured"));
+
+	if(param->code == CWLan::NotifyParam::Code::Connected) {
+		m_wlanConnectedSsid = param->ssid;
+		m_wlanIsSecured = param->isSecurityEnabled;
+		connectVpn();
+	} else {
+		m_wlanConnectedSsid.Empty();
+	}
+
+	return LRESULT();
+}
+
+LRESULT CbtswwinDlg::OnUserNetNotify(WPARAM wParam, LPARAM lParam)
+{
+	m_netIsConnected = (wParam ? true : false);
+	LOG4CXX_INFO_FMT(logger, _T(__FUNCTION__) _T("(%s)"), m_netIsConnected ? _T("Connected") : _T("Disconnected"));
+
+	if(m_netIsConnected) {
+		connectVpn();
+	} else {
+		// We assume that Wi-Fi is also disconnected,
+		// and hope subsequent OnUserWLanNotify() that notifies Wi-Fi is connected.
+		m_wlanConnectedSsid.Empty();
+	}
+
+	return LRESULT();
+}
+
+HRESULT CbtswwinDlg::connectVpn()
+{
+	// Do not connect VPN on the following conditions.
+	if(
+		m_settings->vpnName->IsEmpty() ||	// VPN is not specified in the settings.
+		!m_netIsConnected ||				// Network is not connected.
+		!m_rasDial.canConnect() ||			// Connecting VPN can not be performed.
+		!m_lidIsOpened						// LID is closed.
+	) { return S_FALSE; }
+
+	// Check VpnConnection setting whether the VPN connection should be made or not.
+	switch((CMySettings::VpnConnection)m_settings->vpnConnection) {
+	case CMySettings::VpnConnection::None:
+		return S_FALSE;
+	case CMySettings::VpnConnection::UnsecuredWiFi:
+		if(m_wlanIsSecured) { return S_FALSE; }
+		// Go down to check SSID.
+	case CMySettings::VpnConnection::WiFi:
+		if(m_wlanConnectedSsid.IsEmpty()) { return S_FALSE; }
+		break;
+	case CMySettings::VpnConnection::Any:
+		break;
+	default:
+		LOG4CXX_WARN_FMT(logger, _T("Unknown CMySettings::VpnConnection value: %d"), *m_settings->vpnConnection);
+		return E_UNEXPECTED;
+	}
+
+	print(_T("Connecting VPN: %s"), m_settings->vpnName->GetString());
+	return m_rasDial.connect(m_hWnd, WM_USER_VPN_NOTIFY, m_settings->vpnName->GetString());
+}
+
+LRESULT CbtswwinDlg::OnUserVpnNotify(WPARAM wParam, LPARAM lParam)
+{
+	std::unique_ptr<CRasDial::ConnectResult> result((CRasDial::ConnectResult*)lParam);
+	if(result->success()) {
+		print(_T("VPN connected"));
+	} else {
+		print(_T("Failed to connect VPN. Error=%s, %d"),
+			result->errorString.GetString(), result->exerror
+		);
+	}
+
+	return LRESULT();
 }
 
 void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)

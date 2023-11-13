@@ -11,15 +11,19 @@
 #include "../Common/Assert.h"
 #include "ValueName.h"
 #include "NetworkEvents.h"
+#include "IpAdapterAddresses.h"
+#include "WLan.h"
 
 enum {
-	WM_NETWORK_CONNECTIVITYCHANGED = WM_USER + 1,
+	WM_NETWORK_CONNECTIVITYCHANGED = WM_USER + 1,	// Notification of NetworkListManagerEvents
+	WM_WLAN_NOTIFY,									// Notification of Wlan
 };
+
+extern void print(LPCTSTR format, ...);
 
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static void AssertFailedProc(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int line);
 static LPTSTR trim(LPTSTR str, int len);
-static void print(LPCTSTR format, ...);
 static BOOL WINAPI CtrlCHandler(DWORD ctrlType);
 
 static HWND g_hwnd(NULL);
@@ -170,6 +174,10 @@ int _tmain(int argc, TCHAR** argv)
 	tsm::Assert::onAssertFailedProc = AssertFailedProc;
 	tsm::Assert::onAssertFailedWriter = [](LPCTSTR msg) { _putts(msg); };
 
+	print(_T("---- IpAdapterAddresses ----"));
+	IpAdapterAddresses ipa;
+	ipa.update();
+
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = WndProc;
 	wc.lpszClassName = _T("Message-Only Window");
@@ -178,6 +186,11 @@ int _tmain(int argc, TCHAR** argv)
 	WIN32_ASSERT(atom != 0);
 	g_hwnd = CreateWindow((LPCTSTR)atom, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
 	WIN32_ASSERT(g_hwnd != NULL);
+
+	print(_T("---- WLan ----"));
+	WLan wlan;
+	wlan.start(g_hwnd, WM_WLAN_NOTIFY);
+	wlan.update();
 
 	// Register power setting notification.
 	using PowerNotifyHandle = std::unique_ptr<HPOWERNOTIFY, PowerNotifyHandleDeleter>;
@@ -329,7 +342,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT id, WPARAM wParam, LPARAM lParam
 }
 
 // Print current date/time, thread ID and formatted text.
-static void print(LPCTSTR format, ...)
+void print(LPCTSTR format, ...)
 {
 	CString text;
 	va_list args;

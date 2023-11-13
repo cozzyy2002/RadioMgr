@@ -191,9 +191,14 @@
     <ClInclude Include="..\Common\Assert.h" />
     <ClInclude Include="AboutDlg.h" />
     <ClInclude Include="BluetoothDeviceList.h" />
+    <ClInclude Include="BluetoothTabItem.h" />
     <ClInclude Include="btswwin.h" />
     <ClInclude Include="btswwinDlg.h" />
+    <ClInclude Include="MiscTabItem.h" />
     <ClInclude Include="MySettings.h" />
+    <ClInclude Include="Net.h" />
+    <ClInclude Include="NetworkTabItem.h" />
+    <ClInclude Include="RasDial.h" />
     <ClInclude Include="ResourceReader.h" />
     <ClInclude Include="SettingsDlg.h" />
     <ClInclude Include="framework.h" />
@@ -203,8 +208,10 @@
     <ClInclude Include="RadioNotifyListener.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Settings.h" />
+    <ClInclude Include="TabItem.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ValueName.h" />
+    <ClInclude Include="WLan.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\Assert.cpp">
@@ -215,9 +222,14 @@
     </ClCompile>
     <ClCompile Include="AboutDlg.cpp" />
     <ClCompile Include="BluetoothDeviceList.cpp" />
+    <ClCompile Include="BluetoothTabItem.cpp" />
     <ClCompile Include="btswwin.cpp" />
     <ClCompile Include="btswwinDlg.cpp" />
+    <ClCompile Include="MiscTabItem.cpp" />
     <ClCompile Include="MySettings.cpp" />
+    <ClCompile Include="Net.cpp" />
+    <ClCompile Include="NetworkTabItem.cpp" />
+    <ClCompile Include="RasDial.cpp" />
     <ClCompile Include="ResourceReader.cpp" />
     <ClCompile Include="SettingsDlg.cpp" />
     <ClCompile Include="ItemList.cpp" />
@@ -230,7 +242,9 @@
     <ClCompile Include="RadioInstanceList.cpp" />
     <ClCompile Include="RadioNotifyListener.cpp" />
     <ClCompile Include="Settings.cpp" />
+    <ClCompile Include="TabItem.cpp" />
     <ClCompile Include="ValueName.cpp" />
+    <ClCompile Include="WLan.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="btswwin.rc" />

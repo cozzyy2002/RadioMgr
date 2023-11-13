@@ -30,6 +30,7 @@ CbtswwinDlg::CbtswwinDlg(CResourceReader& resourceReader, CWnd* pParent /*=nullp
 	, m_resourceReader(resourceReader)
 	, m_radioState(DRS_RADIO_INVALID)
 	, m_wlanIsSecured(false), m_netIsConnected(false), m_lidIsOpened(true)
+	, m_selectedSettingsTab(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
@@ -1013,7 +1014,9 @@ BOOL CbtswwinDlg::PreTranslateMessage(MSG* pMsg)
 void CbtswwinDlg::OnFileSettings()
 {
 	CSettingsDlg dlg(*m_settings, this);
+	dlg.SelectedTab = m_selectedSettingsTab;
 	dlg.DoModal();
+	m_selectedSettingsTab = dlg.SelectedTab;
 }
 
 

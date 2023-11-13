@@ -15,6 +15,7 @@ IMPLEMENT_DYNAMIC(CSettingsDlg, CDialogEx)
 
 CSettingsDlg::CSettingsDlg(CMySettings& settings, CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_SETTINGS, pParent), m_settings(settings)
+	, SelectedTab(0)
 {
 }
 
@@ -87,6 +88,10 @@ BOOL CSettingsDlg::OnInitDialog()
 		item->Create(this);
 		item->MoveWindow(&rect);
 	};
+
+	if((0 <= SelectedTab) && (SelectedTab < m_tabCtrl.GetItemCount())) {
+		m_tabCtrl.SetCurSel(SelectedTab);
+	}
 	OnTcnSelchangeTabSettings(nullptr, nullptr);
 
 	updateUIState();
@@ -98,9 +103,9 @@ BOOL CSettingsDlg::OnInitDialog()
 
 void CSettingsDlg::OnTcnSelchangeTabSettings(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	auto sel = m_tabCtrl.GetCurSel();
+	SelectedTab = m_tabCtrl.GetCurSel();
 	for(int i = 0; i < m_tabItems.size(); i++) {
-		m_tabItems[i]->ShowWindow((i == sel) ? SW_SHOW : SW_HIDE);
+		m_tabItems[i]->ShowWindow((i == SelectedTab) ? SW_SHOW : SW_HIDE);
 	}
 
 	if(pResult) { *pResult = 0; }

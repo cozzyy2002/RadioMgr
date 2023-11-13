@@ -15,6 +15,8 @@ public:
 	CSettingsDlg(CMySettings& settings, CWnd* pParent = nullptr);   // standard constructor
 	virtual ~CSettingsDlg();
 
+	int SelectedTab;
+
 protected:
 	CMySettings& m_settings;
 	std::vector<std::unique_ptr<CTabItem>> m_tabItems;

@@ -109,6 +109,9 @@ protected:
 	bool m_lidIsOpened;
 	HRESULT connectVpn();
 
+	// Selected tab index of settings dialog.
+	int m_selectedSettingsTab;
+
 	// Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_BTSWWIN_DIALOG };

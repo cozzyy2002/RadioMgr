@@ -12,7 +12,8 @@ public:
 	CTabItem(UINT nIDTemplate, LPCTSTR name, CMySettings& settings);
 
 	virtual BOOL Create(CWnd* pParent);
-	virtual BOOL isChanged() const;
+	virtual bool isChanged() const;
+	virtual bool isValid() const { return true; }
 	virtual void applyChanges();
 	LPCTSTR getName() const { return m_name; }
 

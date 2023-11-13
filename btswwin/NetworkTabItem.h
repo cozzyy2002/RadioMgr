@@ -12,6 +12,8 @@ public:
 	CNetworkTabItem(CMySettings& settings);
 	virtual ~CNetworkTabItem();
 
+	virtual bool isValid() const override;
+
 protected:
 	void updateUIState();
 

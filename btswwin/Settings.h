@@ -165,8 +165,9 @@ void CSettings::BinaryValue<T>::read(CSettings* settings)
 {
 	std::unique_ptr<BYTE[]> p(settings->read(*this));
 	if(p) {
-		m_valueHandler->copy(m_value, *(T*)p.get());
-		m_valueHandler->copy(m_savedValue, *(T*)p.get());
+		auto src = *(T*)p.get();
+		m_valueHandler->copy(m_value, src);
+		m_valueHandler->copy(m_savedValue, src);
 	}
 }
 

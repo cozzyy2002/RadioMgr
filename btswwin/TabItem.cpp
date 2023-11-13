@@ -12,16 +12,18 @@ BOOL CTabItem::Create(CWnd* pParent)
     return CDialogEx::Create(m_lpszTemplateName, pParent);
 }
 
-BOOL CTabItem::isChanged() const
+// Returns true if at least one value is changed.
+bool CTabItem::isChanged() const
 {
 	for(auto& c : m_controllers) {
 		if(c->isChanged()) {
-			return TRUE;
+			return true;
 		}
 	}
-	return FALSE;
+	return false;
 }
 
+// Gets all setting values from state of the controls in the tab item.
 void CTabItem::applyChanges()
 {
 	for(auto& c : m_controllers) {

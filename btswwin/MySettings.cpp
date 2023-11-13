@@ -14,7 +14,7 @@ CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
 	, autoSelectDevice(_T("AudoSelectDevice"), TRUE)
 	, saveWindowPlacement(_T("SaveWindowPlacement"))
 	, windowPlacement(_T("WindowPlacement"), this)
-	, vpnConnection(_T("VpnConnection"), VpnConnection::UnsecuredWiFi)
+	, vpnConnection(_T("VpnConnection"), VpnConnection::None)
 	, vpnName(_T("VpnName"))
 	, debugSwitches(_T("DebugSwitches"))
 {

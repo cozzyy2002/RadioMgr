@@ -34,8 +34,8 @@ public:
 	CEdit m_setRadioOnDelay;
 	CSpinButtonCtrl m_setRadioOnDelaySpin;
 	CButton m_autoCheckRadioInstance;
-//	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	virtual BOOL OnInitDialog();
 	afx_msg void OnClickedCheckButton();
+	afx_msg void OnClickedCheckButtonSwitchByLcdState();
 	afx_msg void OnEnChangeEdit();
 };

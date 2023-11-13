@@ -37,8 +37,6 @@ void CBluetoothTabItem::updateUIState()
 	for(auto id : ids) {
 		GetDlgItem(id)->EnableWindow(enable);
 	}
-
-	notifyValueChanged();
 }
 
 void CBluetoothTabItem::DoDataExchange(CDataExchange* pDX)
@@ -56,7 +54,7 @@ void CBluetoothTabItem::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CBluetoothTabItem, CDialogEx)
-	ON_BN_CLICKED(IDC_CHECK_SWITCH_BY_LCD_STATE, &CBluetoothTabItem::OnClickedCheckButton)
+	ON_BN_CLICKED(IDC_CHECK_SWITCH_BY_LCD_STATE, &CBluetoothTabItem::OnClickedCheckButtonSwitchByLcdState)
 	ON_BN_CLICKED(IDC_CHECK_RESTORE_RADIO_STATE, &CBluetoothTabItem::OnClickedCheckButton)
 	ON_BN_CLICKED(IDC_CHECK_AUTO_CHECK_RADIO_INSTANCE, &CBluetoothTabItem::OnClickedCheckButton)
 	ON_BN_CLICKED(IDC_CHECK_AUTO_SELECT_DEVICE, &CBluetoothTabItem::OnClickedCheckButton)
@@ -84,7 +82,13 @@ BOOL CBluetoothTabItem::OnInitDialog()
 
 void CBluetoothTabItem::OnClickedCheckButton()
 {
+	notifyValueChanged();
+}
+
+void CBluetoothTabItem::OnClickedCheckButtonSwitchByLcdState()
+{
 	updateUIState();
+	notifyValueChanged();
 }
 
 
@@ -94,5 +98,5 @@ void CBluetoothTabItem::OnEnChangeEdit()
 	// to not call updateUIState() method inside constructor.
 	if(!areAllControlsAvailable()) { return; }
 
-	updateUIState();
+	notifyValueChanged();
 }

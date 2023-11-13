@@ -24,18 +24,18 @@ CSettingsDlg::~CSettingsDlg()
 
 void CSettingsDlg::updateUIState()
 {
-	// Set enabled state of [Save] button.
-	// The button is enabled if at least one setting value in all tab items
-	// is different from it's setting storage.
-	auto isChanged = FALSE;
+	// Set enabled state of [Save] and [OK] buttons.
+	//   [Save] button is enabled when all values are valid and at least one value is changed.
+	//   [OK] button is enabled when all values are valid.
+	auto isValid = true;	// All setting values are valid.
+	auto isChanged = false;	// At least one setting value is changed.
 	for(auto& item : m_tabItems) {
-		if(item->isChanged()) {
-			isChanged = TRUE;
-			break;
-		}
-	};
-	auto button = GetDlgItem(ID_SAVE_SETTINGS);
-	button->EnableWindow(isChanged);
+		isValid &= item->isValid();
+		isChanged |= item->isChanged();
+	}
+
+	GetDlgItem(ID_SAVE_SETTINGS)->EnableWindow((isValid && isChanged) ? TRUE : FALSE);
+	GetDlgItem(IDOK)->EnableWindow(isValid ? TRUE : FALSE);
 }
 
 // Sets state of all controls to corresponding settings value.

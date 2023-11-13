@@ -24,6 +24,18 @@ CNetworkTabItem::~CNetworkTabItem()
 {
 }
 
+bool CNetworkTabItem::isValid() const
+{
+	// If [Connect VPN] is checked, VPN name should not be empty.
+	CString vpnName;
+	m_vpnName.GetWindowText(vpnName);
+	if(m_connectVpn.GetCheck() && vpnName.IsEmpty()) {
+		return false;
+	}
+
+	return true;
+}
+
 void CNetworkTabItem::updateUIState()
 {
 	// Set enabled state of the controls depending on whether [Connect VPN] is checked or not.

@@ -16,6 +16,8 @@ CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
 	, windowPlacement(_T("WindowPlacement"), this)
 	, vpnConnection(_T("VpnConnection"), VpnConnection::None)
 	, vpnName(_T("VpnName"))
+	, vpnConnectionDelay(_T("VpnConnectionDelay"), 2)
+	, vpnConnectionRetry(_T("VpnConnectionRetry"))
 	, debugSwitches(_T("DebugSwitches"))
 {
 }
@@ -32,6 +34,7 @@ void CMySettings::load()
 		&saveWindowPlacement,
 		&windowPlacement,
 		&vpnConnection, &vpnName,
+		& vpnConnectionDelay, &vpnConnectionRetry
 	};
 	HR_EXPECT_OK(settings.load(valueList));
 }

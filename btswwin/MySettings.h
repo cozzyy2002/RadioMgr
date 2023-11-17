@@ -24,6 +24,8 @@ struct CMySettings : public CSettings::BinaryValue<WINDOWPLACEMENT>::DefaultValu
 	};
 	CSettings::EnumValue<VpnConnection> vpnConnection;
 	CSettings::Value<CString> vpnName;
+	CSettings::Value<int> vpnConnectionDelay;
+	CSettings::Value<int> vpnConnectionRetry;
 
 	void load();
 	void save();

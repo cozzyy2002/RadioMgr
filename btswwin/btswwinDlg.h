@@ -53,6 +53,11 @@ public:
 	void print(LPCTSTR, ...);
 
 protected:
+	enum class TimerId : UINT_PTR {
+		Polling = 1,		// Polling timer for Bluetooth Radio and Device.
+		VpnConnection,		// Delay timer to connect VPN.
+	};
+
 	std::unique_ptr<CMySettings> m_settings;
 	CResourceReader& m_resourceReader;
 	CComPtr<IMediaRadioManager> m_radioManager;
@@ -69,7 +74,7 @@ protected:
 	HRESULT setRadioState(DEVICE_RADIO_STATE, bool restore = false);
 	HRESULT setRadioState(RadioInstanceData& data, DEVICE_RADIO_STATE, bool restore = false);
 
-	static const UINT_PTR PollingTimerId = 1;
+	static const UINT_PTR PollingTimerId = static_cast<UINT_PTR>(TimerId::Polling);
 	HRESULT checkRadioState();
 	HRESULT checkBluetoothDevice();
 	void resetThread(std::unique_ptr<std::thread>&);
@@ -107,6 +112,11 @@ protected:
 	bool m_wlanIsSecured;
 	bool m_netIsConnected;
 	bool m_lidIsOpened;
+	int m_vpnConnectRetry;
+	static const UINT_PTR vpnConnectionTimerId = static_cast<UINT_PTR>(TimerId::VpnConnection);
+
+	void startConnectingVpn(bool isRetry = false);
+	void stopConnectingVpn();
 	HRESULT connectVpn();
 
 	// Selected tab index of settings dialog.

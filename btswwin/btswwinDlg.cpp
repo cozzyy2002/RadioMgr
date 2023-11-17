@@ -812,9 +812,10 @@ LRESULT CbtswwinDlg::OnUserWLanNotify(WPARAM wParam, LPARAM lParam)
 	if(param->code == CWLan::NotifyParam::Code::Connected) {
 		m_wlanConnectedSsid = param->ssid;
 		m_wlanIsSecured = param->isSecurityEnabled;
-		connectVpn();
+		startConnectingVpn();
 	} else {
 		m_wlanConnectedSsid.Empty();
+		stopConnectingVpn();
 	}
 
 	return LRESULT();
@@ -826,14 +827,42 @@ LRESULT CbtswwinDlg::OnUserNetNotify(WPARAM wParam, LPARAM lParam)
 	LOG4CXX_INFO_FMT(logger, _T(__FUNCTION__) _T("(%s)"), m_netIsConnected ? _T("Connected") : _T("Disconnected"));
 
 	if(m_netIsConnected) {
-		connectVpn();
+		startConnectingVpn();
 	} else {
-		// We assume that Wi-Fi is also disconnected,
-		// and hope subsequent OnUserWLanNotify() that notifies Wi-Fi is connected.
-		m_wlanConnectedSsid.Empty();
+		stopConnectingVpn();
 	}
 
 	return LRESULT();
+}
+
+void CbtswwinDlg::startConnectingVpn(bool isRetry /*= false*/)
+{
+	if(isRetry) {
+		if(m_settings->vpnConnectionRetry < ++m_vpnConnectRetry) {
+			// Retry failed.
+			return;
+		}
+	} else {
+		m_vpnConnectRetry = 0;
+	}
+
+	auto delay = *m_settings->vpnConnectionDelay;
+	if(0 < delay) {
+		// Start connecting after elapse of the time.
+		// Timer is restarted if timer already started.
+		SetTimer(vpnConnectionTimerId, delay * 1000, nullptr);
+	} else {
+		// Start connecting immediately.
+		connectVpn();
+	}
+}
+
+void CbtswwinDlg::stopConnectingVpn()
+{
+	auto delay = *m_settings->vpnConnectionDelay;
+	if(0 < delay) {
+		KillTimer(vpnConnectionTimerId);
+	}
 }
 
 HRESULT CbtswwinDlg::connectVpn()
@@ -863,7 +892,7 @@ HRESULT CbtswwinDlg::connectVpn()
 		return E_UNEXPECTED;
 	}
 
-	print(_T("Connecting VPN: %s"), m_settings->vpnName->GetString());
+	print(_T("Connecting VPN: %s, Retry=%d"), m_settings->vpnName->GetString(), m_vpnConnectRetry);
 	return m_rasDial.connect(m_hWnd, WM_USER_VPN_NOTIFY, m_settings->vpnName->GetString());
 }
 
@@ -876,6 +905,8 @@ LRESULT CbtswwinDlg::OnUserVpnNotify(WPARAM wParam, LPARAM lParam)
 		print(_T("Failed to connect VPN. Error=%s, %d"),
 			result->errorString.GetString(), result->exerror
 		);
+		// Retry connecting
+		startConnectingVpn(true);
 	}
 
 	return LRESULT();
@@ -887,6 +918,10 @@ void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)
 	case PollingTimerId:
 		checkRadioState();
 		checkBluetoothDevice();
+		break;
+	case vpnConnectionTimerId:
+		KillTimer(vpnConnectionTimerId);
+		connectVpn();
 		break;
 	}
 

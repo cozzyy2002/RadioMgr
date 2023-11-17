@@ -20,6 +20,7 @@ CBluetoothTabItem::CBluetoothTabItem(CMySettings& settings)
 	addController(m_settings.setRadioOnDelay, m_setRadioOnDelay);
 	addController(m_settings.autoCheckRadioInstance, m_autoCheckRadioInstance);
 	addController(m_settings.autoSelectDevice, m_autoSelectDevice);
+	addController(m_settings.bluetoothPollingTimer, m_bluetoothPollingTimer);
 }
 
 CBluetoothTabItem::~CBluetoothTabItem()
@@ -50,6 +51,8 @@ void CBluetoothTabItem::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_SET_RADIO_ON_DELAY, m_setRadioOnDelay);
 	DDX_Control(pDX, IDC_SPIN_SET_RADIO_ON_DELAY, m_setRadioOnDelaySpin);
 	DDX_Control(pDX, IDC_CHECK_AUTO_CHECK_RADIO_INSTANCE, m_autoCheckRadioInstance);
+	DDX_Control(pDX, IDC_EDIT_BLUETOOTH_POLLING_TIMER, m_bluetoothPollingTimer);
+	DDX_Control(pDX, IDC_SPIN_BLUETOOTH_POLLING_TIMER, m_bluetoothPollingTimerSpin);
 }
 
 
@@ -60,6 +63,7 @@ BEGIN_MESSAGE_MAP(CBluetoothTabItem, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_AUTO_SELECT_DEVICE, &CBluetoothTabItem::OnClickedCheckButton)
 	ON_EN_CHANGE(IDC_EDIT_SET_RADIO_STATE_TIMEOUT, &CBluetoothTabItem::OnEnChangeEdit)
 	ON_EN_CHANGE(IDC_EDIT_SET_RADIO_ON_DELAY, &CBluetoothTabItem::OnEnChangeEdit)
+	ON_EN_CHANGE(IDC_EDIT_BLUETOOTH_POLLING_TIMER, &CBluetoothTabItem::OnEnChangeEdit)
 END_MESSAGE_MAP()
 
 
@@ -74,6 +78,10 @@ BOOL CBluetoothTabItem::OnInitDialog()
 	// Set timeout range of IRadioInstance::SetRadioState() method.
 	// See "https://learn.microsoft.com/en-us/previous-versions/windows/hardware/radio/hh406610(v=vs.85)"
 	m_setRadioStateTimeoutSpin.SetRange(1, 5);
+
+	m_bluetoothPollingTimerSpin.SetRange(1, 60);
+
+	updateUIState();
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE

@@ -38,4 +38,6 @@ public:
 	afx_msg void OnClickedCheckButton();
 	afx_msg void OnClickedCheckButtonSwitchByLcdState();
 	afx_msg void OnEnChangeEdit();
+	CEdit m_bluetoothPollingTimer;
+	CSpinButtonCtrl m_bluetoothPollingTimerSpin;
 };

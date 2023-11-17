@@ -12,6 +12,7 @@ struct CMySettings : public CSettings::BinaryValue<WINDOWPLACEMENT>::DefaultValu
 	CSettings::Value<int> setRadioStateTimeout;
 	CSettings::Value<bool> autoCheckRadioInstance;
 	CSettings::Value<bool> autoSelectDevice;
+	CSettings::Value<int> bluetoothPollingTimer;
 	CSettings::Value<bool> saveWindowPlacement;
 	CSettings::BinaryValue<WINDOWPLACEMENT> windowPlacement;
 

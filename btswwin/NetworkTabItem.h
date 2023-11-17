@@ -34,6 +34,10 @@ public:
 	afx_msg void OnChangeEdit();
 	afx_msg void OnClickedCheckConnectVpn();
 	afx_msg void OnClickedRadio();
+	CEdit m_vpnConnectionDelay;
+	CSpinButtonCtrl m_vpnConnectionDelaySpin;
+	CEdit m_vpnConnectionRetry;
+	CSpinButtonCtrl m_vpnConnectionRetrySpin;
 };
 
 

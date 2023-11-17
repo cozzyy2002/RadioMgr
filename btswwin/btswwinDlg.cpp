@@ -543,7 +543,9 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 			name.Format(_T("%s:%s"), data.id.GetString(), data.name.GetString());
 
 			// Start polling timer when first instance is added.
-			if(m_radioInstances.GetItemCount() == 1) { SetTimer(PollingTimerId, 1000, NULL); }
+			if(m_radioInstances.GetItemCount() == 1) {
+				SetTimer(PollingTimerId, m_settings->bluetoothPollingTimer * 1000, NULL);
+			}
 		}
 		break;
 	case RadioNotifyListener::Message::Type::InstanceRemove:

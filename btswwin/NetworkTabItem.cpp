@@ -18,6 +18,8 @@ CNetworkTabItem::CNetworkTabItem(CMySettings& settings)
 {
 	addController(m_settings.vpnName, m_vpnName);
 	addController(new VpnConnectionController(this, m_settings));
+	addController(m_settings.vpnConnectionDelay, m_vpnConnectionDelay);
+	addController(m_settings.vpnConnectionRetry, m_vpnConnectionRetry);
 }
 
 CNetworkTabItem::~CNetworkTabItem()
@@ -41,7 +43,9 @@ void CNetworkTabItem::updateUIState()
 	// Set enabled state of the controls depending on whether [Connect VPN] is checked or not.
 	static const int ids[] = {
 		IDC_EDIT_VPN_NAME,
-		IDC_RADIO_VPN_CONNECTION,IDC_RADIO_VPN_CONNECTION_WIFI, IDC_RADIO_VPN_CONNECTION_ANY
+		IDC_RADIO_VPN_CONNECTION, IDC_RADIO_VPN_CONNECTION_WIFI, IDC_RADIO_VPN_CONNECTION_ANY,
+		IDC_STATIC_VPN_CONNECTION_DELAY, IDC_EDIT_VPN_CONNECTION_DELAY, IDC_SPIN_VPN_CONNECTION_DELAY,
+		IDC_STATIC_VPN_CONNECTION_RETRY, IDC_EDIT_VPN_CONNECTION_RETRY, IDC_SPIN_VPN_CONNECTION_RETRY,
 	};
 	auto enable = isButtonChecked(m_connectVpn);
 	for(auto id : ids) {
@@ -54,11 +58,18 @@ void CNetworkTabItem::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_CHECK_CONNECT_VPN, m_connectVpn);
 	DDX_Control(pDX, IDC_EDIT_VPN_NAME, m_vpnName);
+	DDX_Control(pDX, IDC_EDIT_VPN_CONNECTION_DELAY, m_vpnConnectionDelay);
+	DDX_Control(pDX, IDC_SPIN_VPN_CONNECTION_DELAY, m_vpnConnectionDelaySpin);
+	DDX_Control(pDX, IDC_EDIT_VPN_CONNECTION_RETRY, m_vpnConnectionRetry);
+	DDX_Control(pDX, IDC_SPIN_VPN_CONNECTION_RETRY, m_vpnConnectionRetrySpin);
 }
 
 BOOL CNetworkTabItem::OnInitDialog()
 {
 	CTabItem::OnInitDialog();
+
+	m_vpnConnectionDelaySpin.SetRange(0, 60);
+	m_vpnConnectionRetrySpin.SetRange(0, 10);
 
 	updateUIState();
 
@@ -67,11 +78,13 @@ BOOL CNetworkTabItem::OnInitDialog()
 
 
 BEGIN_MESSAGE_MAP(CNetworkTabItem, CDialogEx)
+	ON_BN_CLICKED(IDC_CHECK_CONNECT_VPN, &CNetworkTabItem::OnClickedCheckConnectVpn)
 	ON_BN_CLICKED(IDC_RADIO_VPN_CONNECTION, &CNetworkTabItem::OnClickedRadio)
 	ON_BN_CLICKED(IDC_RADIO_VPN_CONNECTION_WIFI, &CNetworkTabItem::OnClickedRadio)
 	ON_BN_CLICKED(IDC_RADIO_VPN_CONNECTION_ANY, &CNetworkTabItem::OnClickedRadio)
 	ON_EN_CHANGE(IDC_EDIT_VPN_NAME, &CNetworkTabItem::OnChangeEdit)
-	ON_BN_CLICKED(IDC_CHECK_CONNECT_VPN, &CNetworkTabItem::OnClickedCheckConnectVpn)
+	ON_EN_CHANGE(IDC_EDIT_VPN_CONNECTION_DELAY, &CNetworkTabItem::OnChangeEdit)
+	ON_EN_CHANGE(IDC_EDIT_VPN_CONNECTION_RETRY, &CNetworkTabItem::OnChangeEdit)
 END_MESSAGE_MAP()
 
 

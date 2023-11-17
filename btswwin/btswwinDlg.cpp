@@ -31,6 +31,7 @@ CbtswwinDlg::CbtswwinDlg(CResourceReader& resourceReader, CWnd* pParent /*=nullp
 	, m_radioState(DRS_RADIO_INVALID)
 	, m_wlanIsSecured(false), m_netIsConnected(false), m_lidIsOpened(true)
 	, m_selectedSettingsTab(0)
+	, m_vpnConnectRetry(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 

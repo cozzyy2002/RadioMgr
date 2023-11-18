@@ -5,7 +5,7 @@
 // CMySettings members
 
 CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
-	: settings(companyName, applicationName)
+	: CSettings(companyName, applicationName)
 	, switchByLcdState(_T("SwitchByLcdState"), TRUE)
 	, restoreRadioState(_T("RestoreRadioState"), TRUE)
 	, setRadioOnDelay(_T("SetRadioOnDelay"))
@@ -14,18 +14,19 @@ CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
 	, autoSelectDevice(_T("AudoSelectDevice"), TRUE)
 	, bluetoothPollingTimer(_T("BluetoothPollingTimer"), 1)
 	, saveWindowPlacement(_T("SaveWindowPlacement"))
-	, windowPlacement(_T("WindowPlacement"), this)
+	, windowPlacement(_T("WindowPlacement"), &m_windowPlacementValueHandler)
 	, vpnConnection(_T("VpnConnection"), VpnConnection::None)
 	, vpnName(_T("VpnName"))
 	, vpnConnectionDelay(_T("VpnConnectionDelay"), 2)
 	, vpnConnectionRetry(_T("VpnConnectionRetry"))
 	, debugSwitches(_T("DebugSwitches"))
+	, m_windowPlacementValueHandler(this)
 {
 }
 
 void CMySettings::load()
 {
-	CSettings::IValue* valueList[] = {
+	IValue* valueList[] = {
 		&switchByLcdState,
 		&restoreRadioState,
 		&setRadioOnDelay,
@@ -35,20 +36,15 @@ void CMySettings::load()
 		&saveWindowPlacement,
 		&windowPlacement,
 		&vpnConnection, &vpnName,
-		& vpnConnectionDelay, &vpnConnectionRetry
+		&vpnConnectionDelay, &vpnConnectionRetry
 	};
-	HR_EXPECT_OK(settings.load(valueList));
+	HR_EXPECT_OK(CSettings::load(valueList));
 }
 
-void CMySettings::save()
-{
-	HR_EXPECT_OK(settings.save());
-}
-
-bool CMySettings::isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b)
+bool CMySettings::WindowPlacementValueHandler::isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b)
 {
 	// If saving window position is not necessary, return as unchnged.
-	if(!saveWindowPlacement) { return false; }
+	if(!m_owner->saveWindowPlacement) { return false; }
 
 	return
 		(a.showCmd != b.showCmd)
@@ -59,7 +55,7 @@ bool CMySettings::isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b)
 		;
 }
 
-CString CMySettings::valueToString(const CSettings::BinaryValue<WINDOWPLACEMENT>& value) const
+CString CMySettings::WindowPlacementValueHandler::valueToString(const BinaryValue<WINDOWPLACEMENT>& value) const
 {
 	static const ValueName<UINT> ShowCmds[] = {
 		VALUE_NAME_ITEM(SW_HIDE),
@@ -90,6 +86,6 @@ const DWORD CSettings::BinaryValue<WINDOWPLACEMENT>::RegType = REG_BINARY;
 
 bool CMySettings::isEnabled(DebugSwitch flag)
 {
-	debugSwitches.read(&settings);
+	debugSwitches.read(this);
 	return (flag & debugSwitches);
 }

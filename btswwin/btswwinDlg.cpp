@@ -440,6 +440,8 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 					}
 					HR_EXPECT_OK(setRadioState(DRS_SW_RADIO_OFF));
 				}
+
+				m_wlan.disconnect();
 				break;
 			case 1:		// The lid is opened.
 				m_lidIsOpened = true;
@@ -461,6 +463,8 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 							HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_settings->restoreRadioState));
 						});
 				}
+
+				m_wlan.connect();
 				break;
 			}
 		}

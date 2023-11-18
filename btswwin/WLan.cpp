@@ -60,6 +60,73 @@ HRESULT CWLan::stop()
     return S_OK;
 }
 
+HRESULT CWLan::updateInterfaceInfo()
+{
+    HR_ASSERT(m_clientHandle, E_ILLEGAL_METHOD_CALL);
+
+    WLAN_INTERFACE_INFO_LIST* p;
+    HR_ASSERT_OK(HRESULT_FROM_WIN32(WlanEnumInterfaces(m_clientHandle.get(), NULL, &p)));
+    m_interfaceList.reset(p);
+    LOG4CXX_DEBUG_FMT(logger, _T("Found %d interface(s)"), p->dwNumberOfItems);
+
+    return S_OK;
+}
+
+HRESULT CWLan::connect()
+{
+    auto hr = updateInterfaceInfo();
+    if(FAILED(hr)) { return hr; }
+
+    hr = S_FALSE;
+    if(m_interfaceList) {
+        for(auto i = 0UL; i < m_interfaceList->dwNumberOfItems; i++) {
+            auto& info = m_interfaceList->InterfaceInfo[i];
+            switch(info.isState) {
+            case wlan_interface_state_disconnected:
+                if(logger->isEnabledFor(log4cxx::Level::getDebug())) {
+                    CString name(info.strInterfaceDescription);
+                    LOG4CXX_DEBUG(logger, _T("Connecting ") << name.GetString());
+                }
+                WLAN_CONNECTION_PARAMETERS params = { wlan_connection_mode_discovery_secure };
+                params.dot11BssType = dot11_BSS_type_any;
+                params.dwFlags =
+                    WLAN_CONNECTION_PERSIST_DISCOVERY_PROFILE |
+                    WLAN_CONNECTION_PERSIST_DISCOVERY_PROFILE_CONNECTION_MODE_AUTO;
+                hr = HR_EXPECT_OK(HRESULT_FROM_WIN32(
+                    WlanConnect(m_clientHandle.get(), &info.InterfaceGuid, &params, NULL))
+                );
+                break;
+            }
+        }
+    }
+    return hr;
+}
+
+HRESULT CWLan::disconnect()
+{
+    auto hr = updateInterfaceInfo();
+    if(FAILED(hr)) { return hr; }
+
+    hr = S_FALSE;
+    if(m_interfaceList) {
+        for(auto i = 0UL; i < m_interfaceList->dwNumberOfItems; i++) {
+            auto& info = m_interfaceList->InterfaceInfo[i];
+            switch(info.isState) {
+            case wlan_interface_state_connected:
+                if(logger->isEnabledFor(log4cxx::Level::getDebug())) {
+                    CString name(info.strInterfaceDescription);
+                    LOG4CXX_DEBUG(logger, _T("Disconnecting ") << name.GetString());
+                }
+                hr = HR_EXPECT_OK(HRESULT_FROM_WIN32(
+                    WlanDisconnect(m_clientHandle.get(), &info.InterfaceGuid, NULL))
+                );
+                break;
+            }
+        }
+    }
+    return hr;
+}
+
 void CWLan::WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationData, PVOID pThis)
 {
     ((CWLan*)pThis)->WlanNotificationCallback(pNotificationData);

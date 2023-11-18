@@ -12,6 +12,10 @@ public:
 	HRESULT start(HWND hwnd, UINT wndMsg);
 	HRESULT stop();
 
+	HRESULT updateInterfaceInfo();
+	HRESULT connect();
+	HRESULT disconnect();
+
 	struct NotifyParam
 	{
 		enum class Code
@@ -50,6 +54,16 @@ protected:
 	};
 
 	std::unique_ptr<HANDLE, ClientHandleDeleter> m_clientHandle;
+
+	template<class T>
+	struct WlanMemoryDeleter {
+		void operator() (T* p) { WlanFreeMemory(p); }
+	};
+
+	template<class T>
+	using WlanPtr = std::unique_ptr<T, WlanMemoryDeleter<T>>;
+
+	WlanPtr<WLAN_INTERFACE_INFO_LIST> m_interfaceList;
 
 	static void WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pdata, PVOID pThis);
 	HRESULT WlanNotificationCallback(PWLAN_NOTIFICATION_DATA pNotificationData);

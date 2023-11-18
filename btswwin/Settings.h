@@ -2,6 +2,7 @@
 
 #include "../Common/Assert.h"
 #include <vector>
+#include <typeinfo>
 
 class CSettings
 {
@@ -214,8 +215,9 @@ bool CSettings::BinaryValue<T>::DefaultValueHandler::isChanged(const T& a, const
 template<typename T>
 CString CSettings::BinaryValue<T>::DefaultValueHandler::valueToString(const BinaryValue<T>& value) const
 {
+	CString typeName(typeid(T).name());
 	CString str;
-	str.Format(_T("Size=%d byte"), (int)sizeof(T));
+	str.Format(_T("%s Size=%d byte"), typeName.GetString(), (int)sizeof(T));
 	return str;
 }
 

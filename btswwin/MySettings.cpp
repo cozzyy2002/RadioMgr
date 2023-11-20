@@ -6,12 +6,12 @@
 
 CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
 	: CSettings(companyName, applicationName)
-	, switchByLcdState(_T("SwitchByLcdState"), TRUE)
-	, restoreRadioState(_T("RestoreRadioState"), TRUE)
-	, setRadioOnDelay(_T("SetRadioOnDelay"))
+	, switchByLcdState(_T("SwitchByLcdState"), true)
+	, restoreRadioState(_T("RestoreRadioState"), true)
+	, setRadioOnDelay(_T("SetRadioOnDelay"), 4)
 	, setRadioStateTimeout(_T("SetRadioStateTimeout"), 1)
-	, autoCheckRadioInstance(_T("AutoCheckRadioInstance"))
-	, autoSelectDevice(_T("AudoSelectDevice"), TRUE)
+	, autoCheckRadioInstance(_T("AutoCheckRadioInstance"), true)
+	, autoSelectDevice(_T("AudoSelectDevice"))
 	, bluetoothPollingTimer(_T("BluetoothPollingTimer"), 1)
 	, saveWindowPlacement(_T("SaveWindowPlacement"))
 	, windowPlacement(_T("WindowPlacement"), &m_windowPlacementValueHandler)
@@ -33,6 +33,7 @@ void CMySettings::load()
 		&setRadioStateTimeout,
 		&autoCheckRadioInstance,
 		&autoSelectDevice,
+		&bluetoothPollingTimer,
 		&saveWindowPlacement,
 		&windowPlacement,
 		&vpnConnection, &vpnName,

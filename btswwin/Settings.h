@@ -154,7 +154,12 @@ protected:
 	HRESULT write(LPCTSTR valueName, DWORD type, const BYTE* data, DWORD size);
 
 protected:
-	HKEY m_hKey;
+	struct HKEYDeleter {
+		using pointer = HKEY;
+		void operator() (HKEY h);
+	};
+	std::unique_ptr<HKEY, HKEYDeleter> m_hKey;
+
 	std::vector<IValue*> m_valueList;
 };
 

@@ -15,9 +15,19 @@ CSettings::CSettings(LPCTSTR companyName, LPCTSTR applicationName)
 	CString subKey;
 	subKey.Format(subKeyFormat, companyName, applicationName);
 
+	HKEY hKey;
+	if(SUCCEEDED(HR_EXPECT_OK(HRESULT_FROM_WIN32(
+		RegCreateKeyEx(HKEY_CURRENT_USER, subKey.GetString(), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hKey, NULL))
+	))) {
+		m_hKey.reset(hKey);
+	}
+}
+
+void CSettings::HKEYDeleter::operator()(HKEY h)
+{
 	HR_EXPECT_OK(HRESULT_FROM_WIN32(
-		RegCreateKeyEx(HKEY_CURRENT_USER, subKey.GetString(), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &m_hKey, NULL))
-	);
+		RegCloseKey(h)
+	));
 }
 
 HRESULT CSettings::load(IValue** valueList, size_t size)
@@ -60,7 +70,7 @@ HRESULT CSettings::read(LPCTSTR valueName, DWORD expectedType, std::unique_ptr<B
 	DWORD type;
 	if(0 == expectedSize) {
 		// Retrieve size of the value in registory.
-		auto errorRegGetValue = RegGetValue(m_hKey, NULL, valueName, RRF_RT_ANY, &type, NULL, &size);
+		auto errorRegGetValue = RegGetValue(m_hKey.get(), NULL, valueName, RRF_RT_ANY, &type, NULL, &size);
 		// If the value does not exist, return error.
 		if(errorRegGetValue == ERROR_FILE_NOT_FOUND) { return HRESULT_FROM_WIN32(errorRegGetValue); }
 		// Check error.
@@ -72,7 +82,7 @@ HRESULT CSettings::read(LPCTSTR valueName, DWORD expectedType, std::unique_ptr<B
 	}
 
 	data = std::make_unique<BYTE[]>(size);
-	auto errorRegGetValue = RegGetValue(m_hKey, NULL, valueName, RRF_RT_ANY, &type, data.get(), &size);
+	auto errorRegGetValue = RegGetValue(m_hKey.get(), NULL, valueName, RRF_RT_ANY, &type, data.get(), &size);
 	// If the value does not exist, return error.
 	if(errorRegGetValue == ERROR_FILE_NOT_FOUND) { return HRESULT_FROM_WIN32(errorRegGetValue); }
 	// Check another error.
@@ -88,7 +98,7 @@ HRESULT CSettings::read(LPCTSTR valueName, DWORD expectedType, std::unique_ptr<B
 
 HRESULT CSettings::write(LPCTSTR valueName, DWORD type, const BYTE* data, DWORD size)
 {
-	return HR_EXPECT_OK(HRESULT_FROM_WIN32(RegSetValueEx(m_hKey, valueName, 0, type, data, size)));
+	return HR_EXPECT_OK(HRESULT_FROM_WIN32(RegSetValueEx(m_hKey.get(), valueName, 0, type, data, size)));
 }
 
 

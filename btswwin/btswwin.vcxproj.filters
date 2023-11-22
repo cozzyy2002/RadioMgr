@@ -1,156 +1,122 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Bluetooth">
+      <UniqueIdentifier>{f4b421cd-63a4-4446-93ac-6d2aec71130c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{e0d40ec2-3acc-4ccd-af48-9b94740a528f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Settings">
+      <UniqueIdentifier>{fe1453ab-0523-468c-b7ff-6fa21739e9d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="btswwin.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="AboutDlg.h" />
+    <ClInclude Include="..\Common\Assert.h" />
+    <ClInclude Include="btswwin.h" />
+    <ClInclude Include="btswwinDlg.h" />
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="ResourceReader.h" />
+    <ClInclude Include="ValueName.h" />
+    <ClInclude Include="Bluetooth\BluetoothDeviceList.h">
+      <Filter>Bluetooth</Filter>
     </ClInclude>
-    <ClInclude Include="btswwinDlg.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Bluetooth\ItemList.h">
+      <Filter>Bluetooth</Filter>
     </ClInclude>
-    <ClInclude Include="framework.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Bluetooth\RadioInstanceList.h">
+      <Filter>Bluetooth</Filter>
     </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Bluetooth\RadioNotifyListener.h">
+      <Filter>Bluetooth</Filter>
     </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Network\Net.h">
+      <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="pch.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Network\RasDial.h">
+      <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="..\Common\Assert.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Network\WLan.h">
+      <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="ValueName.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Settings\MySettings.h">
+      <Filter>Settings</Filter>
     </ClInclude>
-    <ClInclude Include="RadioNotifyListener.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Settings\Settings.h">
+      <Filter>Settings</Filter>
     </ClInclude>
-    <ClInclude Include="RadioInstanceList.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Settings\SettingsDlg.h">
+      <Filter>Settings</Filter>
     </ClInclude>
-    <ClInclude Include="BluetoothDeviceList.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Settings\BluetoothTabItem.h">
+      <Filter>Settings</Filter>
     </ClInclude>
-    <ClInclude Include="ItemList.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Settings\MiscTabItem.h">
+      <Filter>Settings</Filter>
     </ClInclude>
-    <ClInclude Include="Settings.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Settings\NetworkTabItem.h">
+      <Filter>Settings</Filter>
     </ClInclude>
-    <ClInclude Include="SettingsDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MySettings.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourceReader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AboutDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WLan.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Net.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RasDial.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BluetoothTabItem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="NetworkTabItem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MiscTabItem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TabItem.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Settings\TabItem.h">
+      <Filter>Settings</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="btswwin.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="AboutDlg.cpp" />
+    <ClCompile Include="..\Common\Assert.cpp" />
+    <ClCompile Include="btswwin.cpp" />
+    <ClCompile Include="btswwinDlg.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="ResourceReader.cpp" />
+    <ClCompile Include="ValueName.cpp" />
+    <ClCompile Include="Bluetooth\BluetoothDeviceList.cpp">
+      <Filter>Bluetooth</Filter>
     </ClCompile>
-    <ClCompile Include="btswwinDlg.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Bluetooth\ItemList.cpp">
+      <Filter>Bluetooth</Filter>
     </ClCompile>
-    <ClCompile Include="pch.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Bluetooth\RadioInstanceList.cpp">
+      <Filter>Bluetooth</Filter>
     </ClCompile>
-    <ClCompile Include="..\Common\Assert.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Bluetooth\RadioNotifyListener.cpp">
+      <Filter>Bluetooth</Filter>
     </ClCompile>
-    <ClCompile Include="RadioNotifyListener.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Network\Net.cpp">
+      <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="RadioInstanceList.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Network\RasDial.cpp">
+      <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="BluetoothDeviceList.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Network\WLan.cpp">
+      <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="ItemList.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Settings\MySettings.cpp">
+      <Filter>Settings</Filter>
     </ClCompile>
-    <ClCompile Include="Settings.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Settings\Settings.cpp">
+      <Filter>Settings</Filter>
     </ClCompile>
-    <ClCompile Include="SettingsDlg.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Settings\SettingsDlg.cpp">
+      <Filter>Settings</Filter>
     </ClCompile>
-    <ClCompile Include="MySettings.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Settings\BluetoothTabItem.cpp">
+      <Filter>Settings</Filter>
     </ClCompile>
-    <ClCompile Include="ResourceReader.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Settings\MiscTabItem.cpp">
+      <Filter>Settings</Filter>
     </ClCompile>
-    <ClCompile Include="AboutDlg.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Settings\NetworkTabItem.cpp">
+      <Filter>Settings</Filter>
     </ClCompile>
-    <ClCompile Include="ValueName.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="WLan.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Net.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RasDial.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BluetoothTabItem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="NetworkTabItem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MiscTabItem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TabItem.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Settings\TabItem.cpp">
+      <Filter>Settings</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

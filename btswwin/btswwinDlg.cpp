@@ -6,7 +6,7 @@
 #include "framework.h"
 #include "btswwin.h"
 #include "btswwinDlg.h"
-#include "SettingsDlg.h"
+#include "Settings/SettingsDlg.h"
 #include "AboutDlg.h"
 #include "ValueName.h"
 #include "afxdialogex.h"

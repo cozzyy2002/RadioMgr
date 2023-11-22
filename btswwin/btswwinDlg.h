@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "RadioNotifyListener.h"
-#include "RadioInstanceList.h"
-#include "BluetoothDeviceList.h"
-#include "WLan.h"
-#include "Net.h"
-#include "RasDial.h"
-#include "MySettings.h"
+#include "Bluetooth/RadioNotifyListener.h"
+#include "Bluetooth/RadioInstanceList.h"
+#include "Bluetooth/BluetoothDeviceList.h"
+#include "Network/WLan.h"
+#include "Network/Net.h"
+#include "Network/RasDial.h"
+#include "Settings/MySettings.h"
 #include "ResourceReader.h"
 
 #include "../Common/SafeHandle.h"

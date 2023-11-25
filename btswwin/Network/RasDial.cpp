@@ -29,6 +29,8 @@ bool CRasDial::isConnected() const
 	auto ret = false;
 	switch(error) {
 	case ERROR_BUFFER_TOO_SMALL:
+		// One or more buffers are required to enumerate connections.
+		// That is There's any VPN connection.
 		ret = true;
 		break;
 	case ERROR_SUCCESS:

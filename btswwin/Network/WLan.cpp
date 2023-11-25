@@ -4,6 +4,8 @@
 #include "ValueName.h"
 #include "../Common/Assert.h"
 
+#include <typeinfo>
+
 #pragma comment(lib, "Wlanapi.lib")
 
 static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CWLan")));
@@ -143,8 +145,9 @@ CWLan::NotifyParam* createNotificationParam(PWLAN_NOTIFICATION_DATA pNotificatio
             auto pdata = (T*)pNotificationData->pData;
             ret = new CWLan::NotifyParam(code, pdata->dot11Ssid, pdata->bSecurityEnabled);
         } else {
-            LOG4CXX_WARN(logger, _T(__FUNCTION__)
-                _T(": Data size ") << pNotificationData->dwDataSize
+            CA2T typeName(typeid(T).name());
+            LOG4CXX_WARN(logger, _T(__FUNCTION__) _T("<") << (LPCTSTR)typeName << _T(">: ")
+                << _T("Data size ") << pNotificationData->dwDataSize
                 << _T(" is less than expected structure size ") << sizeof(T)
             );
         }

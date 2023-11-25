@@ -879,7 +879,7 @@ HRESULT CbtswwinDlg::connectVpn()
 	) { return S_FALSE; }
 
 	// Check VpnConnection setting whether the VPN connection should be made or not.
-	switch((CMySettings::VpnConnection)m_settings->vpnConnection) {
+	switch(*m_settings->vpnConnection) {
 	case CMySettings::VpnConnection::None:
 		return S_FALSE;
 	case CMySettings::VpnConnection::UnsecuredWiFi:

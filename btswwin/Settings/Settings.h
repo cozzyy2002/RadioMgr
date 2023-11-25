@@ -70,20 +70,31 @@ public:
 	};
 
 	template<typename T>
-	class EnumValue : public Value<int>
+	class EnumValue : public IValue
 	{
 	public:
-		explicit EnumValue(LPCTSTR name, const T& defaultValue) : Value(name, (int)defaultValue) {}
-		explicit EnumValue(LPCTSTR name) : Value(name, (int)T()) {}
+#pragma region Implementation of IValue interface.
+		void read(CSettings* settings) override { m_intValue.read(settings); }
+		void write(CSettings* settings) override { m_intValue.write(settings); }
+		bool isChanged() const override { return m_intValue.isChanged(); }
+		virtual CString toString() const override { return m_intValue.toString(); }
+#pragma endregion
+
+		explicit EnumValue(LPCTSTR name, const T& defaultValue) : m_intValue(name, (int)defaultValue) {}
+		explicit EnumValue(LPCTSTR name) : m_intValue(name, (int)T()) {}
 
 		EnumValue& operator =(const T& newValue)
 		{
-			m_value = (int)newValue;
+			m_intValue = (int)newValue;
 			return *this;
 		}
-		operator T() const { return (T)m_value; }
-		operator int() const { return (int)m_value; }
-		T getDefault() const { return (T)m_defaultValue; }
+		T operator *() { return (T)(int)m_intValue; }
+		operator T() const { return (T)(int)m_intValue; }
+		operator int() const { return (int)m_intValue; }
+		T getDefault() const { return (T)m_intValue.getDefault(); }
+
+	protected:
+		Value<int> m_intValue;
 	};
 
 	template<typename T>

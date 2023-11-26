@@ -92,7 +92,7 @@ HRESULT CBluetoothDeviceList::Update(const BLUETOOTH_DEVICE_INFO& info, UpdateMa
     HR_ASSERT(-1 < nItem, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
 
     if(mask & UpdateMask::Name) {
-        SetItemText(nItem, int(Column::Name), getDeviceName(info).GetString());
+        SetItemText(nItem, int(Column::Name), info.szName);
     }
 	if(mask & UpdateMask::ClassofDevice) {
 		CString majorDeviceClass, minorDeviceClass;
@@ -158,7 +158,9 @@ CString addressToString(const BLUETOOTH_ADDRESS& address)
     return str;
 }
 
-CString getDeviceName(const BLUETOOTH_DEVICE_INFO& info)
+// Returns Bluetooth device name.
+// If the name is empty, returns its address as string.
+CString getDeviceNameOrAddress(const BLUETOOTH_DEVICE_INFO& info)
 {
 	if(info.szName[0] != L'\0') {
 		return info.szName;

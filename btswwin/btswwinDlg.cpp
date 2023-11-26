@@ -650,7 +650,7 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 		const auto it = currentList.find(x.first);
 		if(it == currentList.end()) {
 			// The device is added.
-			print(_T("DeviceAdd %s"), getDeviceName(x.second).GetString());
+			print(_T("DeviceAdd %s"), getDeviceNameOrAddress(x.second).GetString());
 			m_bluetoothDevices.Add(x.second);
 			pChangedInfo = &x.second;
 		} else {
@@ -668,7 +668,7 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 			}
 			if(!changes.IsEmpty()) {
 				// State of the device is changed.
-				print(_T("DeviceStateChange %s: %s"), getDeviceName(x.second).GetString(), join(changes).GetString());
+				print(_T("DeviceStateChange %s: %s"), getDeviceNameOrAddress(x.second).GetString(), join(changes).GetString());
 				m_bluetoothDevices.StateChange(x.second);
 			}
 		}
@@ -696,7 +696,7 @@ HRESULT CbtswwinDlg::checkBluetoothDevice()
 				const auto it = newList.find(x.first);
 				if(it == newList.end()) {
 					// The device is removed.
-					print(_T("DeviceRemove %s"), getDeviceName(x.second).GetString());
+					print(_T("DeviceRemove %s"), getDeviceNameOrAddress(x.second).GetString());
 					m_bluetoothDevices.Remove(x.second);
 					// Start from the beginning of currentList
 					// because it has been changed by CBluetoothDeviceList::Remove().
@@ -739,7 +739,7 @@ void CbtswwinDlg::OnConnectDeviceCommand()
 			DWORD serviceCount = 0;
 			auto enumError = BluetoothEnumerateInstalledServices(hRadio, deviceInfo, &serviceCount, NULL);
 			HR_EXPECT(enumError == ERROR_MORE_DATA, HRESULT_FROM_WIN32(enumError));
-			CString deviceName(getDeviceName(*deviceInfo));
+			CString deviceName(getDeviceNameOrAddress(*deviceInfo));
 			if(serviceCount) {
 				print(_T("Connecting to %s(%d services) ..."), deviceName.GetString(), serviceCount);
 				auto serviceGuids = std::make_unique<GUID[]>(serviceCount);

@@ -92,8 +92,7 @@ HRESULT CBluetoothDeviceList::Update(const BLUETOOTH_DEVICE_INFO& info, UpdateMa
     HR_ASSERT(-1 < nItem, HRESULT_FROM_WIN32(ERROR_NOT_FOUND));
 
     if(mask & UpdateMask::Name) {
-        CString deviceName(info.szName);
-        SetItemText(nItem, int(Column::Name), deviceName);
+        SetItemText(nItem, int(Column::Name), getDeviceName(info).GetString());
     }
 	if(mask & UpdateMask::ClassofDevice) {
 		CString majorDeviceClass, minorDeviceClass;
@@ -153,6 +152,15 @@ CString addressToString(const BLUETOOTH_ADDRESS& address)
     auto& adr(address.rgBytes);
     str.Format(_T("%02x:%02x:%02x:%02x:%02x:%02x"), adr[5], adr[4], adr[3], adr[2], adr[1], adr[0]);
     return str;
+}
+
+CString getDeviceName(const BLUETOOTH_DEVICE_INFO& info)
+{
+	if(info.szName[0] != L'\0') {
+		return info.szName;
+	} else {
+		return addressToString(info.Address);
+	}
 }
 
 UINT CBluetoothDeviceList::getContextMenuId() const

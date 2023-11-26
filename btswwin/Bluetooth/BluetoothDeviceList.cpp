@@ -98,7 +98,11 @@ HRESULT CBluetoothDeviceList::Update(const BLUETOOTH_DEVICE_INFO& info, UpdateMa
 		CString majorDeviceClass, minorDeviceClass;
 		ClassOfDeviceToString(info.ulClassofDevice, nullptr, &majorDeviceClass, &minorDeviceClass);
 		CString text;
-		text.Format(_T("%s:%s"), majorDeviceClass.GetString(), minorDeviceClass.GetString());
+		if(!minorDeviceClass.IsEmpty()) {
+			text.Format(_T("%s:%s"), majorDeviceClass.GetString(), minorDeviceClass.GetString());
+		} else {
+			text = majorDeviceClass;
+		}
 		SetItemText(nItem, int(Column::ClassOfDevice), text);
 	}
     if(mask & UpdateMask::ConnectIcon) {
@@ -170,7 +174,7 @@ UINT CBluetoothDeviceList::getContextMenuId() const
 
 
 // TODO: Implement showing Minor Device Class.
-//       Currently implemented for Computer, Phone(not tested) and Audio/Video device.
+//       Currently implemented for Miscellaneous, Computer, Phone, Audio/Video and Imaging device.
 
 // Struct defines Major and Minor Device Class.
 struct MajorMinorDeviceClass {
@@ -184,6 +188,12 @@ struct MajorMinorDeviceClass {
 };
 
 static CString DefaultMinorDeviceCalssFunc(const MajorMinorDeviceClass&, ULONGLONG);
+
+// Returns empty string.
+static CString MiscellaneousMinorDeviceClassFunc(const MajorMinorDeviceClass&, ULONGLONG)
+{
+	return _T("");
+}
 
 static const LPCTSTR MajorServiceClasses[] = {
 	/*Bit*/
@@ -242,14 +252,32 @@ static const LPCTSTR AudioVideoMinorDeviceClasses[] = {
 	_T("Gaming/Toy"),
 };
 
+static CString ImagingMinorDeviceClassFunc(const MajorMinorDeviceClass& classes, ULONGLONG value)
+{
+	// MinorDeviceClass bitmap and name for Imaging MajorDeviceClass.
+	static const struct {
+		ULONGLONG value;
+		LPCTSTR name;
+	} MinorDeviceClasses[] = {
+		{ 0x10, _T("Display") },
+		{ 0x20, _T("Camera") },
+		{ 0x40, _T("Scanner") },
+		{ 0x80, _T("Printer") },
+	};
+	for(auto& x : MinorDeviceClasses) {
+		if(value & x.value) { return x.name; }
+	}
+	return DefaultMinorDeviceCalssFunc(classes, value);
+}
+
 static const MajorMinorDeviceClass MajorDeviceClasses[] = {
-	{_T("Miscellaneous")},
+	{_T("Miscellaneous"), 0, nullptr, MiscellaneousMinorDeviceClassFunc},
 	{_T("Computer"), ARRAYSIZE(ComputerMinorDeviceClasses), ComputerMinorDeviceClasses},
 	{_T("Phone"), ARRAYSIZE(PhoneMinorDeviceClasses), PhoneMinorDeviceClasses},
 	{_T("LAN/Network Access point")},
 	{_T("Audio/Video"), ARRAYSIZE(AudioVideoMinorDeviceClasses), AudioVideoMinorDeviceClasses},
 	{_T("Peripheral")},
-	{_T("Imaging")},
+	{_T("Imaging"), 0, nullptr, ImagingMinorDeviceClassFunc},
 	{_T("Wearable")},
 	{_T("Toy")},
 	{_T("Health")},
@@ -257,7 +285,7 @@ static const MajorMinorDeviceClass MajorDeviceClasses[] = {
 };
 
 // Returns string representing MajorServiceClass, MajorDeviceClass and MinorDeviceClass for Class of Device value.
-// See https://btprodspecificationrefs.blob.core.windows.net/assigned-numbers/Assigned%20Number%20Types/Assigned%20Numbers.pdf
+// See https://www.bluetooth.com/specifications/an/
 void ClassOfDeviceToString(ULONG value, CString* pServiceClasses, CString* pMajorDeviceClass, CString* pMinorDeviceClass)
 {
 	auto majorServiceClass = GET_COD_SERVICE(value);

@@ -271,6 +271,15 @@ static CString ImagingMinorDeviceClassFunc(const MajorMinorDeviceClass& classes,
 	}
 	return DefaultMinorDeviceCalssFunc(classes, value);
 }
+static const LPCTSTR WearableMinorDeviceClasses[] = {
+	_T("N/A"),			// value 0 is not used.
+	_T("Wristwatch"),
+	_T("Pager"),
+	_T("Jacket"),
+	_T("Helmet"),
+	_T("Glasses"),
+	_T("Pin"),
+};
 
 static const MajorMinorDeviceClass MajorDeviceClasses[] = {
 	{_T("Miscellaneous"), 0, nullptr, MiscellaneousMinorDeviceClassFunc},
@@ -280,7 +289,7 @@ static const MajorMinorDeviceClass MajorDeviceClasses[] = {
 	{_T("Audio/Video"), ARRAYSIZE(AudioVideoMinorDeviceClasses), AudioVideoMinorDeviceClasses},
 	{_T("Peripheral")},
 	{_T("Imaging"), 0, nullptr, ImagingMinorDeviceClassFunc},
-	{_T("Wearable")},
+	{_T("Wearable"), ARRAYSIZE(WearableMinorDeviceClasses), WearableMinorDeviceClasses},
 	{_T("Toy")},
 	{_T("Health")},
 	{_T("Uncategorized: device code not specified")},

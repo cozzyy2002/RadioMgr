@@ -175,9 +175,6 @@ UINT CBluetoothDeviceList::getContextMenuId() const
 }
 
 
-// TODO: Implement showing Minor Device Class.
-//       Currently implemented for Miscellaneous, Computer, Phone, Audio/Video and Imaging device.
-
 // Struct defines Major and Minor Device Class.
 struct MajorMinorDeviceClass {
 	LPCTSTR major;			// Major Device Class.
@@ -189,7 +186,7 @@ struct MajorMinorDeviceClass {
 	MinorDeviceClassFunc minorDeviceClassFunc;
 };
 
-static CString DefaultMinorDeviceCalssFunc(const MajorMinorDeviceClass&, ULONGLONG);
+static CString DefaultMinorDeviceClassFunc(const MajorMinorDeviceClass&, ULONGLONG);
 
 // Returns empty string.
 static CString MiscellaneousMinorDeviceClassFunc(const MajorMinorDeviceClass&, ULONGLONG)
@@ -232,6 +229,23 @@ static const LPCTSTR PhoneMinorDeviceClasses[] = {
 	_T("Common ISDN access"),
 };
 
+static CString LanNetworkMinorDeviceClassFunc(const MajorMinorDeviceClass&, ULONGLONG value)
+{
+	static const LPCTSTR MinorDeviceClasses[] = {
+		_T("Fully available"),
+		_T("1% to 17% utilized"),
+		_T("17% to 33% utilized"),
+		_T("33% to 50% utilized"),
+		_T("50% to 67% utilized"),
+		_T("67% to 83% utilized"),
+		_T("83% to 99% utilized"),
+		_T("No service available"),
+	};
+	// Bit 7 - 5 of value are used as index.
+	auto index = (value >> 3) & 0x07;
+	return MinorDeviceClasses[index];
+}
+
 static const LPCTSTR AudioVideoMinorDeviceClasses[] = {
 	_T("Uncategorized, code not assigned"),
 	_T("Wearable Headset Device"),
@@ -254,6 +268,49 @@ static const LPCTSTR AudioVideoMinorDeviceClasses[] = {
 	_T("Gaming/Toy"),
 };
 
+static CString PeripheralMinorDeviceClassFunc(const MajorMinorDeviceClass& classes, ULONGLONG value)
+{
+	// Assigned to bit 7 - 6
+	static const LPCTSTR UpperBits[] = {
+		_T("Uncategorized"),
+		_T("Keyboard"),
+		_T("Pointing Device"),
+		_T("Combo Keyboard/Pointing Device"),
+	};
+
+	// Assigned to bit 5 - 2
+	static const LPCTSTR LowerBits[] = {
+		_T("Uncategorized"),
+		_T("Joystick"),
+		_T("Gamepad"),
+		_T("Remote Control"),
+		_T("Sensing Device"),
+		_T("Digitizer Tablet"),
+		_T("Card Reader"),
+		_T("Digital Pen"),
+		_T("Handheld Scanner"),
+		_T("Handheld Gestural Input Device"),
+	};
+
+	LPCTSTR upper, lower;
+	// Note: value is passed after shifted 2 bits to the right.
+	auto index = (value >> 4) & 3;
+	if(index < ARRAYSIZE(UpperBits)) {
+		upper = UpperBits[index];
+	} else {
+		return DefaultMinorDeviceClassFunc(classes, value);
+	}
+	index = value & 0x0f;
+	if(index < ARRAYSIZE(LowerBits)) {
+		lower = LowerBits[index];
+	} else {
+		return DefaultMinorDeviceClassFunc(classes, value);
+	}
+	CString ret;
+	ret.Format(_T("%s/%s"), upper, lower);
+	return ret;
+}
+
 static CString ImagingMinorDeviceClassFunc(const MajorMinorDeviceClass& classes, ULONGLONG value)
 {
 	// MinorDeviceClass bitmap and name for Imaging MajorDeviceClass.
@@ -261,15 +318,15 @@ static CString ImagingMinorDeviceClassFunc(const MajorMinorDeviceClass& classes,
 		ULONGLONG value;
 		LPCTSTR name;
 	} MinorDeviceClasses[] = {
-		{ 0x10, _T("Display") },
-		{ 0x20, _T("Camera") },
-		{ 0x40, _T("Scanner") },
-		{ 0x80, _T("Printer") },
+		{ 0b000100, _T("Display") },
+		{ 0b001000, _T("Camera") },
+		{ 0b010000, _T("Scanner") },
+		{ 0b100000, _T("Printer") },
 	};
 	for(auto& x : MinorDeviceClasses) {
 		if(value & x.value) { return x.name; }
 	}
-	return DefaultMinorDeviceCalssFunc(classes, value);
+	return DefaultMinorDeviceClassFunc(classes, value);
 }
 static const LPCTSTR WearableMinorDeviceClasses[] = {
 	_T("N/A"),			// value 0 is not used.
@@ -281,17 +338,45 @@ static const LPCTSTR WearableMinorDeviceClasses[] = {
 	_T("Pin"),
 };
 
+static const LPCTSTR ToyMinorDeviceClasses[] = {
+	_T("N/A"),			// value 0 is not used.
+	_T("Robot"),
+	_T("Hehicle"),
+	_T("Doll/Action Figure"),
+	_T("Controller"),
+	_T("Game"),
+};
+
+static const LPCTSTR HealthMinorDeviceClasses[] = {
+	_T("Undefined"),
+	_T("Blood Pressure Monitor"),
+	_T("Thermometer"),
+	_T("Weighing Scale"),
+	_T("Glucose Meter"),
+	_T("Pulse Oximeter"),
+	_T("Heart/Pulse Rate Monitor"),
+	_T("Health Data Display"),
+	_T("Step Counter"),
+	_T("Body Composition Analyzer"),
+	_T("Peak Flow Monitor"),
+	_T("Medication Monitor"),
+	_T("Knee Prosthesis"),
+	_T("Ankle Prosthesis"),
+	_T("Generic Health Manager"),
+	_T("Personal Mobility Device"),
+};
+
 static const MajorMinorDeviceClass MajorDeviceClasses[] = {
 	{_T("Miscellaneous"), 0, nullptr, MiscellaneousMinorDeviceClassFunc},
 	{_T("Computer"), ARRAYSIZE(ComputerMinorDeviceClasses), ComputerMinorDeviceClasses},
 	{_T("Phone"), ARRAYSIZE(PhoneMinorDeviceClasses), PhoneMinorDeviceClasses},
-	{_T("LAN/Network Access point")},
+	{_T("LAN/Network Access point"), 0, nullptr, LanNetworkMinorDeviceClassFunc},
 	{_T("Audio/Video"), ARRAYSIZE(AudioVideoMinorDeviceClasses), AudioVideoMinorDeviceClasses},
-	{_T("Peripheral")},
+	{_T("Peripheral"), 0, nullptr, PeripheralMinorDeviceClassFunc},
 	{_T("Imaging"), 0, nullptr, ImagingMinorDeviceClassFunc},
 	{_T("Wearable"), ARRAYSIZE(WearableMinorDeviceClasses), WearableMinorDeviceClasses},
-	{_T("Toy")},
-	{_T("Health")},
+	{_T("Toy"), ARRAYSIZE(ToyMinorDeviceClasses), ToyMinorDeviceClasses},
+	{_T("Health"), ARRAYSIZE(HealthMinorDeviceClasses), HealthMinorDeviceClasses},
 	{_T("Uncategorized: device code not specified")},
 };
 
@@ -325,14 +410,14 @@ void ClassOfDeviceToString(ULONG value, CString* pServiceClasses, CString* pMajo
 
 	if(pMinorDeviceClass) {
 		auto func = deviceClass.minorDeviceClassFunc;
-		if(!func) { func = DefaultMinorDeviceCalssFunc; }
+		if(!func) { func = DefaultMinorDeviceClassFunc; }
 		*pMinorDeviceClass = func(deviceClass, minorDeviceClass);
 	}
 }
 
 // Returns Minor Device Class corresponding to the value.
 // The value is used as index of array that consits of Minor Devie Class strings.
-CString DefaultMinorDeviceCalssFunc(const MajorMinorDeviceClass& classes, ULONGLONG value)
+CString DefaultMinorDeviceClassFunc(const MajorMinorDeviceClass& classes, ULONGLONG value)
 {
 	LPCTSTR minor = _T("Unknown");
 	if(classes.minorSize && classes.pMinor) {

@@ -70,6 +70,8 @@
 #define IDC_SPIN_VPN_CONNECTION_RETRY   1023
 #define IDC_STATIC_VPN_CONNECTION_DELAY 1024
 #define IDC_STATIC_VPN_CONNECTION_RETRY 1025
+#define IDC_BUTTON1                     1026
+#define IDC_BUTTON_LOG_SETTINGS         1026
 #define ID_CONNECT_CONNECT              32771
 #define File                            32772
 #define ID_DEVICE_CONNECT               32773
@@ -114,7 +116,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        155
 #define _APS_NEXT_COMMAND_VALUE         32808
-#define _APS_NEXT_CONTROL_VALUE         1026
+#define _APS_NEXT_CONTROL_VALUE         1027
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

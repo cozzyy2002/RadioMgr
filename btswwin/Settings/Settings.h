@@ -155,6 +155,7 @@ public:
 	HRESULT save(bool force = false);
 
 	bool isChanged() const;
+	const auto& getValueList() const { return m_valueList; }
 
 protected:
 	template<typename T> T read(Value<T>& value);

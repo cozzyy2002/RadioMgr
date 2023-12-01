@@ -29,4 +29,5 @@ public:
 	virtual BOOL OnInitDialog();
 	CButton m_saveWindowPlacement;
 	afx_msg void OnClickedCheckButton();
+	afx_msg void OnBnClickedButtonLogSettings();
 };

@@ -6,6 +6,10 @@
 #include "afxdialogex.h"
 #include "MiscTabItem.h"
 
+#include <sstream>
+
+// Logger used to log all setting value.
+static auto& settingsLogger(log4cxx::Logger::getLogger(_T("btswwin")));
 
 // CMiscTabItem dialog
 
@@ -34,6 +38,7 @@ void CMiscTabItem::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CMiscTabItem, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_SAVE_WINDOW_PLACEMENT, &CMiscTabItem::OnClickedCheckButton)
+	ON_BN_CLICKED(IDC_BUTTON_LOG_SETTINGS, &CMiscTabItem::OnBnClickedButtonLogSettings)
 END_MESSAGE_MAP()
 
 
@@ -50,4 +55,22 @@ BOOL CMiscTabItem::OnInitDialog()
 void CMiscTabItem::OnClickedCheckButton()
 {
 	notifyValueChanged();
+}
+
+// Writes setting value to the log file.
+void CMiscTabItem::OnBnClickedButtonLogSettings()
+{
+#ifdef _UNICODE
+	std::wostringstream
+#else
+	std::ostringstream
+#endif
+		msg(_T("All setting values"));
+
+	for(auto& value : m_settings.getValueList()) {
+		msg << _T("\n")
+			<< (value->isChanged() ? _T(" * ") : _T("   "))
+			<< value->toString().GetString();
+	}
+	settingsLogger->forcedLog(settingsLogger->getEffectiveLevel(), msg.str());
 }

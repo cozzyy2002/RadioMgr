@@ -53,15 +53,6 @@ void CTabItem::notifyValueChanged()
 	);
 }
 
-// Returns true if all added controls are available.
-bool CTabItem::areAllControlsAvailable() const
-{
-	for(auto& c : m_controllers) {
-		if(!c->getCtrlWnd()->GetSafeHwnd()) { return false; }
-	}
-	return true;
-}
-
 
 #pragma region Controller<bool, CButton>
 template<>

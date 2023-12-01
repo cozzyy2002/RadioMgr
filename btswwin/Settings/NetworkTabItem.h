@@ -50,7 +50,6 @@ public:
 	virtual void setValueToCtrl() override;
 	virtual void getValueFromCtrl() override;
 	virtual bool isChanged() const override;
-	virtual CWnd* getCtrlWnd() const override { return &m_dlg->m_connectVpn; }
 
 protected:
 	CNetworkTabItem* m_dlg;

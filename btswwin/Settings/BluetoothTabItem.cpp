@@ -102,9 +102,5 @@ void CBluetoothTabItem::OnClickedCheckButtonSwitchByLcdState()
 
 void CBluetoothTabItem::OnEnChangeEdit()
 {
-	// Confirm that window handle of all controls are available
-	// to not call updateUIState() method inside constructor.
-	if(!areAllControlsAvailable()) { return; }
-
 	notifyValueChanged();
 }

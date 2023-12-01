@@ -126,3 +126,10 @@ bool Controller<CString, CEdit>::isChanged() const
 	return (value != text) || value.isChanged();
 }
 #pragma endregion
+
+
+BOOL CTabItem::PreTranslateMessage(MSG* pMsg)
+{
+	// Process [Ctrl] + ([Shift] +) TAB to change selected tab.
+	return GetParent()->PreTranslateMessage(pMsg);
+}

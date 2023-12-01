@@ -41,4 +41,6 @@ public:
 	afx_msg void OnTcnSelchangeTabSettings(NMHDR* pNMHDR, LRESULT* pResult);
 protected:
 	afx_msg LRESULT OnTabItemValueChanged(WPARAM wParam, LPARAM lParam);
+public:
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

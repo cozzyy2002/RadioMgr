@@ -35,6 +35,7 @@ protected:
 	std::vector<std::unique_ptr<IController>> m_controllers;
 public:
 	virtual BOOL OnInitDialog();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 
 

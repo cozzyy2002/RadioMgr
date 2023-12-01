@@ -106,9 +106,40 @@ void CSettingsDlg::OnTcnSelchangeTabSettings(NMHDR* pNMHDR, LRESULT* pResult)
 	SelectedTab = m_tabCtrl.GetCurSel();
 	for(int i = 0; i < m_tabItems.size(); i++) {
 		m_tabItems[i]->ShowWindow((i == SelectedTab) ? SW_SHOW : SW_HIDE);
+
+		// Set focus to [OK] button
+		// to ensure it doesn't remain on the hidden tab item.
+		GetDlgItem(IDOK)->SetFocus();
 	}
 
 	if(pResult) { *pResult = 0; }
+}
+
+
+BOOL CSettingsDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if(pMsg->message == WM_KEYDOWN) {
+		switch(pMsg->wParam) {
+		case VK_TAB:
+			{
+				auto ctrl = GetKeyState(VK_CONTROL) & 0x8000;
+				auto shift = GetKeyState(VK_SHIFT) & 0x8000;
+				if(ctrl) {
+					// Process [Ctrl] + ([Shift] +) TAB to change selected tab.
+					auto index = SelectedTab + (shift ? -1 : 1);
+					if(index < 0) index = (int)m_tabItems.size() - 1;
+					else if(m_tabItems.size() <= index) index = 0;
+					m_tabCtrl.SetCurSel(index);
+					OnTcnSelchangeTabSettings(nullptr, nullptr);
+
+					return TRUE;
+				}
+			}
+			break;
+		}
+	}
+
+	return CDialogEx::PreTranslateMessage(pMsg);
 }
 
 

@@ -51,6 +51,8 @@ inline BOOL isButtonChecked(const CButton& button) { return (button.GetCheck() =
 class IController
 {
 public:
+	virtual ~IController() {}
+
 	// Sets setting value to state of the control.
 	virtual void setValueToCtrl() = 0;
 

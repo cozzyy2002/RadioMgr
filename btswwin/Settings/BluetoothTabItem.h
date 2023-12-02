@@ -10,7 +10,6 @@ class CBluetoothTabItem : public CTabItem
 
 public:
 	CBluetoothTabItem(CMySettings& settings);
-	virtual ~CBluetoothTabItem();
 
 protected:
 	void updateUIState();

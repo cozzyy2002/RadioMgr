@@ -22,10 +22,6 @@ CNetworkTabItem::CNetworkTabItem(CMySettings& settings)
 	addController(m_settings.vpnConnectionRetry, m_vpnConnectionRetry);
 }
 
-CNetworkTabItem::~CNetworkTabItem()
-{
-}
-
 bool CNetworkTabItem::isValid() const
 {
 	// If [Connect VPN] is checked, VPN name should not be empty.

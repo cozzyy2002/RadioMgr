@@ -23,10 +23,6 @@ CBluetoothTabItem::CBluetoothTabItem(CMySettings& settings)
 	addController(m_settings.bluetoothPollingTimer, m_bluetoothPollingTimer);
 }
 
-CBluetoothTabItem::~CBluetoothTabItem()
-{
-}
-
 void CBluetoothTabItem::updateUIState()
 {
 	// Set enabled state of the controls depending on whether switchByLcdState is checked.

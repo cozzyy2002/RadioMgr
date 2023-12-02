@@ -10,6 +10,7 @@ class CTabItem : public CDialogEx
 {
 public:
 	CTabItem(UINT nIDTemplate, LPCTSTR name, CMySettings& settings);
+	virtual ~CTabItem() {}
 
 	virtual BOOL Create(CWnd* pParent);
 	virtual bool isChanged() const;

@@ -23,6 +23,7 @@ public:
 
 protected:
     CItemList() : m_columnCount(0), m_bitmaps(nullptr), m_bitmapCount(0) {}
+    virtual ~CItemList() {}
 
     size_t m_columnCount;
     CImageList m_imageList;

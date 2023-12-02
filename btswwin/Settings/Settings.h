@@ -10,6 +10,8 @@ public:
 	class IValue
 	{
 	public:
+		virtual ~IValue() {}
+
 		// Reads value from profile storage.
 		virtual void read(CSettings* settings) = 0;
 
@@ -111,6 +113,8 @@ public:
 		class IValueHandler
 		{
 		public:
+			virtual ~IValueHandler() {}
+
 			virtual void copy(T& dest, const T& source) = 0;
 			virtual bool isChanged(const T& a, const T& b) = 0;
 			virtual CString valueToString(const BinaryValue<T>& value) const = 0;

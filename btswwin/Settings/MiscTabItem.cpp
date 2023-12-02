@@ -21,10 +21,6 @@ CMiscTabItem::CMiscTabItem(CMySettings& settings)
 	addController(m_settings.saveWindowPlacement, m_saveWindowPlacement);
 }
 
-CMiscTabItem::~CMiscTabItem()
-{
-}
-
 void CMiscTabItem::updateUIState()
 {
 }

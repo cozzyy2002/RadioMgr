@@ -10,7 +10,6 @@ class CMiscTabItem : public CTabItem
 
 public:
 	CMiscTabItem(CMySettings& settings);
-	virtual ~CMiscTabItem();
 
 protected:
 	void updateUIState();

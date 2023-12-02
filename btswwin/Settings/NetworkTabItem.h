@@ -10,7 +10,6 @@ class CNetworkTabItem : public CTabItem
 
 public:
 	CNetworkTabItem(CMySettings& settings);
-	virtual ~CNetworkTabItem();
 
 	virtual bool isValid() const override;
 

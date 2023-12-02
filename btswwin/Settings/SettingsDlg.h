@@ -23,6 +23,7 @@ protected:
 
 	void updateUIState();
 	void applyChanges();
+	void selectTab(int nTab);
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME

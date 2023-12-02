@@ -47,6 +47,19 @@ void CSettingsDlg::applyChanges()
 	};
 }
 
+// Selects tab item.
+// If specified tab index is out of range,
+// the index is justified to the range by rotating fashion.
+void CSettingsDlg::selectTab(int nTab)
+{
+	if(nTab < 0) nTab = (int)m_tabItems.size() - 1;
+	else if(m_tabItems.size() <= nTab) nTab = 0;
+	m_tabCtrl.SetCurSel(nTab);
+	SelectedTab = nTab;
+
+	OnTcnSelchangeTabSettings(nullptr, nullptr);
+}
+
 void CSettingsDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
@@ -89,10 +102,7 @@ BOOL CSettingsDlg::OnInitDialog()
 		item->MoveWindow(&rect);
 	};
 
-	if((0 <= SelectedTab) && (SelectedTab < m_tabCtrl.GetItemCount())) {
-		m_tabCtrl.SetCurSel(SelectedTab);
-	}
-	OnTcnSelchangeTabSettings(nullptr, nullptr);
+	selectTab(SelectedTab);
 
 	updateUIState();
 
@@ -106,34 +116,32 @@ void CSettingsDlg::OnTcnSelchangeTabSettings(NMHDR* pNMHDR, LRESULT* pResult)
 	SelectedTab = m_tabCtrl.GetCurSel();
 	for(int i = 0; i < m_tabItems.size(); i++) {
 		m_tabItems[i]->ShowWindow((i == SelectedTab) ? SW_SHOW : SW_HIDE);
-
-		// Set focus to [OK] button
-		// to ensure it doesn't remain on the hidden tab item.
-		GetDlgItem(IDOK)->SetFocus();
 	}
+
+	// Set focus to the tab control itself
+	// to ensure it doesn't remain on the hidden tab item.
+	m_tabCtrl.SetFocus();
 
 	if(pResult) { *pResult = 0; }
 }
 
+static bool isKeyPressed(int nVertKey)
+{
+	return (GetKeyState(nVertKey) & 0x8000) ? true : false;
+}
 
 BOOL CSettingsDlg::PreTranslateMessage(MSG* pMsg)
 {
 	if(pMsg->message == WM_KEYDOWN) {
+		auto ctrl = isKeyPressed(VK_CONTROL);
+		auto shift = isKeyPressed(VK_SHIFT);
 		switch(pMsg->wParam) {
 		case VK_TAB:
-			{
-				auto ctrl = GetKeyState(VK_CONTROL) & 0x8000;
-				auto shift = GetKeyState(VK_SHIFT) & 0x8000;
-				if(ctrl) {
-					// Process [Ctrl] + ([Shift] +) TAB to change selected tab.
-					auto index = SelectedTab + (shift ? -1 : 1);
-					if(index < 0) index = (int)m_tabItems.size() - 1;
-					else if(m_tabItems.size() <= index) index = 0;
-					m_tabCtrl.SetCurSel(index);
-					OnTcnSelchangeTabSettings(nullptr, nullptr);
+			if(ctrl) {
+				// Process [Ctrl] + ([Shift] +) TAB to change selected tab.
+				selectTab(SelectedTab + (shift ? -1 : 1));
 
-					return TRUE;
-				}
+				return TRUE;
 			}
 			break;
 		}

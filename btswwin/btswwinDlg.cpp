@@ -828,6 +828,17 @@ LRESULT CbtswwinDlg::OnUserNetNotify(WPARAM wParam, LPARAM lParam)
 
 	if(m_netIsConnected) {
 		startConnectingVpn();
+
+		// Show VPN connection(s).
+		std::unique_ptr<RASCONN[]> rasConn;
+		auto count = m_rasDial.getConnection(&rasConn);
+		for(auto i = 0; i < count; i++) {
+			auto& x = rasConn[i];
+			CString msg;
+			msg.Format(_T("  %s, %s, %s\n"), x.szEntryName, x.szDeviceType, x.szDeviceName);
+			OutputDebugString(msg.GetString());
+			// Output: gigazoVPN, VPN, WAN Miniport (L2TP)
+		}
 	} else {
 		stopConnectingVpn();
 	}

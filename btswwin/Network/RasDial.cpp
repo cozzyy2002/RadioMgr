@@ -20,27 +20,39 @@ CRasDial::CRasDial()
 {
 }
 
-bool CRasDial::isConnected() const
+int CRasDial::getConnection(std::unique_ptr<RASCONN[]>* pRasConn /*= nullptr*/) const
 {
 	DWORD dwCb = 0;
 	DWORD dwConnections = 0;
 	auto error = RasEnumConnections(NULL, &dwCb, &dwConnections);
 
-	auto ret = false;
 	switch(error) {
 	case ERROR_BUFFER_TOO_SMALL:
 		// One or more buffers are required to enumerate connections.
 		// That is There's any VPN connection.
-		ret = true;
 		break;
 	case ERROR_SUCCESS:
-		break;
+		return 0;
 	default:
 		RAS_ERROR(_T("RasEnumConnections()"), error);
-		break;
+		return 0;
 	}
-	LOG4CXX_DEBUG_FMT(logger, _T(__FUNCTION__) _T(": %s"), ret ? _T("true") : _T("false"));
-	return ret;
+
+	auto ret = (int)(dwCb / sizeof(RASCONN));
+	LOG4CXX_DEBUG_FMT(logger, _T(__FUNCTION__) _T(": %d RASCONN(%d bytes)"), ret, dwCb);
+	if(!pRasConn || (ret == 0)) { return ret; }
+
+	*pRasConn = std::make_unique<RASCONN[]>(ret);
+	ZeroMemory(pRasConn->get(), dwCb);
+	(*pRasConn)[0].dwSize = sizeof(RASCONN);
+	if(SUCCEEDED(RAS_EXPECT_OK(
+		RasEnumConnections(pRasConn->get(), &dwCb, &dwConnections))
+	)) {
+		HR_ASSERT(ret == dwConnections, E_UNEXPECTED);
+		return ret;
+	} else {
+		return 0;
+	}
 }
 
 HRESULT CRasDial::connect(HWND hwnd, UINT messageId, LPCTSTR vpnName)

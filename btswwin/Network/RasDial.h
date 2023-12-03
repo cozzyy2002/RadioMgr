@@ -9,8 +9,11 @@ class CRasDial
 public:
 	CRasDial();
 
+	// Returns RAS connection(s) if any.
+	int getConnection(std::unique_ptr<RASCONN[]>* pRasConn = nullptr) const;
+
 	// Returns true if any VPN is connected.
-	bool isConnected() const;
+	bool isConnected() const { return (0 < getConnection()); }
 	bool isConnecting() const { return m_hRasconn ? true : false; }
 
 	// Returns whether connect() can be called or not.

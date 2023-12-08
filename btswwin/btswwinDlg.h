@@ -175,4 +175,6 @@ public:
 	afx_msg void OnFileSettings();
 	afx_msg void OnFileOpenLogCommandUI(CCmdUI*);
 	afx_msg void OnFileOpenLog(UINT);
+	CString m_RasStatus;
+	CString m_WiFiStatus;
 };

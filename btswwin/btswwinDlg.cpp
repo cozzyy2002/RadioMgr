@@ -32,6 +32,8 @@ CbtswwinDlg::CbtswwinDlg(CResourceReader& resourceReader, CWnd* pParent /*=nullp
 	, m_wlanIsSecured(false), m_netIsConnected(false), m_lidIsOpened(true)
 	, m_selectedSettingsTab(0)
 	, m_vpnConnectRetry(0)
+	, m_RasStatus(_T(""))
+	, m_WiFiStatus(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
@@ -100,6 +102,8 @@ void CbtswwinDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_RADIO_INSTANCES, m_radioInstances);
 	DDX_Control(pDX, IDC_LIST_BLUETOOTH_DEVICE, m_bluetoothDevices);
 	DDX_Control(pDX, IDC_STATIC_STATUS, m_StatusText);
+	DDX_Text(pDX, IDC_EDIT_RAS_STATUS, m_RasStatus);
+	DDX_Text(pDX, IDC_EDIT_WIFI_STATUS, m_WiFiStatus);
 }
 
 #define ID_DEBUG_LID_SWITCH (IDM_ABOUTBOX + 0x10)
@@ -805,18 +809,24 @@ LRESULT CbtswwinDlg::OnUserConnectDeviceResult(WPARAM wParam, LPARAM lParam)
 LRESULT CbtswwinDlg::OnUserWLanNotify(WPARAM wParam, LPARAM lParam)
 {
 	std::unique_ptr<CWLan::NotifyParam> param((CWLan::NotifyParam*)lParam);
+	auto isSecured = param->isSecurityEnabled ? _T("Secured") : _T("Unsecured");
 	LOG4CXX_INFO_FMT(logger, _T(__FUNCTION__) _T("(%s, %s, %s, %s)"),
-		param->sourceName, param->codeName, param->ssid.GetString(),
-		param->isSecurityEnabled ? _T("Secured") : _T("Unsecured"));
+		param->sourceName, param->codeName, param->ssid.GetString(), isSecured
+	);
 
 	if(param->code == CWLan::NotifyParam::Code::Connected) {
 		m_wlanConnectedSsid = param->ssid;
 		m_wlanIsSecured = param->isSecurityEnabled;
 		startConnectingVpn();
+
+		m_WiFiStatus.Format(_T("%s(%s)"), param->ssid.GetString(), isSecured);
 	} else {
 		m_wlanConnectedSsid.Empty();
 		stopConnectingVpn();
+
+		m_WiFiStatus.Empty();
 	}
+	UpdateData(FALSE);
 
 	return LRESULT();
 }
@@ -827,21 +837,24 @@ LRESULT CbtswwinDlg::OnUserNetNotify(WPARAM wParam, LPARAM lParam)
 	LOG4CXX_INFO_FMT(logger, _T(__FUNCTION__) _T("(%s)"), m_netIsConnected ? _T("Connected") : _T("Disconnected"));
 
 	if(m_netIsConnected) {
+		m_rasDial.onNetConnected();
 		startConnectingVpn();
 
 		// Show VPN connection(s).
-		std::unique_ptr<RASCONN[]> rasConn;
-		auto count = m_rasDial.getConnection(&rasConn);
-		for(auto i = 0; i < count; i++) {
-			auto& x = rasConn[i];
+		m_RasStatus.Empty();
+		for(auto x :  m_rasDial.getConnections()) {
 			CString msg;
-			msg.Format(_T("  %s, %s, %s\n"), x.szEntryName, x.szDeviceType, x.szDeviceName);
-			OutputDebugString(msg.GetString());
-			// Output: gigazoVPN, VPN, WAN Miniport (L2TP)
+			msg.Format(_T("%s: %s(%s)"), x->szDeviceType, x->szEntryName, x->szDeviceName);
+			if(!m_RasStatus.IsEmpty()) m_RasStatus += _T("\r\n");
+			m_RasStatus += msg;
 		}
 	} else {
+		m_rasDial.onNetDisconnected();
 		stopConnectingVpn();
+
+		m_RasStatus.Empty();
 	}
+	UpdateData(FALSE);
 
 	return LRESULT();
 }
@@ -880,10 +893,11 @@ HRESULT CbtswwinDlg::connectVpn()
 {
 	// Do not connect VPN on the following conditions.
 	if(
-		m_settings->vpnName->IsEmpty() ||	// VPN is not specified in the settings.
-		!m_netIsConnected ||				// Network is not connected.
-		!m_rasDial.canConnect() ||			// Connecting VPN can not be performed.
-		!m_lidIsOpened						// LID is closed.
+		m_settings->vpnName->IsEmpty() ||				// VPN is not specified in the settings.
+		!m_netIsConnected ||							// Network is not connected.
+		m_rasDial.isConnecting() ||						// Now connecting.
+		m_rasDial.isConnected(m_settings->vpnName) ||	// Specified VPN is connected already.
+		!m_lidIsOpened									// LID is closed.
 	) { return S_FALSE; }
 
 	// Check VpnConnection setting whether the VPN connection should be made or not.

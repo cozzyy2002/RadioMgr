@@ -20,8 +20,11 @@ CRasDial::CRasDial()
 {
 }
 
-int CRasDial::getConnection(std::unique_ptr<RASCONN[]>* pRasConn /*= nullptr*/) const
+HRESULT CRasDial::onNetConnected()
 {
+	m_connections.clear();
+	m_pRasConn.reset();
+
 	DWORD dwCb = 0;
 	DWORD dwConnections = 0;
 	auto error = RasEnumConnections(NULL, &dwCb, &dwConnections);
@@ -29,30 +32,45 @@ int CRasDial::getConnection(std::unique_ptr<RASCONN[]>* pRasConn /*= nullptr*/) 
 	switch(error) {
 	case ERROR_BUFFER_TOO_SMALL:
 		// One or more buffers are required to enumerate connections.
-		// That is There's any VPN connection.
+		// That is There's any RAS connection.
 		break;
 	case ERROR_SUCCESS:
-		return 0;
+		return S_OK;
 	default:
-		RAS_ERROR(_T("RasEnumConnections()"), error);
-		return 0;
+		return RAS_ERROR(_T("RasEnumConnections()"), error);
 	}
 
-	auto ret = (int)(dwCb / sizeof(RASCONN));
-	LOG4CXX_DEBUG_FMT(logger, _T(__FUNCTION__) _T(": %d RASCONN(%d bytes)"), ret, dwCb);
-	if(!pRasConn || (ret == 0)) { return ret; }
+	auto count = (int)(dwCb / sizeof(RASCONN));
+	LOG4CXX_DEBUG_FMT(logger, _T(__FUNCTION__) _T(": %d RASCONN(%d bytes)"), count, dwCb);
+	HR_ASSERT(0 < count, E_UNEXPECTED);
 
-	*pRasConn = std::make_unique<RASCONN[]>(ret);
-	ZeroMemory(pRasConn->get(), dwCb);
-	(*pRasConn)[0].dwSize = sizeof(RASCONN);
+	m_pRasConn = std::make_unique<RASCONN[]>(count);
+	ZeroMemory(m_pRasConn.get(), dwCb);
+	m_pRasConn[0].dwSize = sizeof(RASCONN);
 	if(SUCCEEDED(RAS_EXPECT_OK(
-		RasEnumConnections(pRasConn->get(), &dwCb, &dwConnections))
+		RasEnumConnections(m_pRasConn.get(), &dwCb, &dwConnections))
 	)) {
-		HR_ASSERT(ret == dwConnections, E_UNEXPECTED);
-		return ret;
-	} else {
-		return 0;
+		HR_ASSERT(count == dwConnections, E_UNEXPECTED);
+		for(int i = 0; i < count; i++) {
+			m_connections.push_back(&m_pRasConn[i]);
+		}
 	}
+	return S_OK;
+}
+
+HRESULT CRasDial::onNetDisconnected()
+{
+	m_connections.clear();
+	m_pRasConn.reset();
+	return S_OK;
+}
+
+bool CRasDial::isConnected(const CString& entryName) const
+{
+	for(auto x : m_connections) {
+		if(entryName == x->szEntryName) { return true; }
+	}
+	return false;
 }
 
 HRESULT CRasDial::connect(HWND hwnd, UINT messageId, LPCTSTR vpnName)

@@ -61,7 +61,8 @@ void CMiscTabItem::OnBnClickedButtonLogSettings()
 #else
 	std::ostringstream
 #endif
-		msg(_T("All setting values"));
+		msg;
+	msg << _T("All setting values");
 
 	for(auto& value : m_settings.getValueList()) {
 		msg << _T("\n")

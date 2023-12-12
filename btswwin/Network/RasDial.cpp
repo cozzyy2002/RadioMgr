@@ -42,7 +42,7 @@ HRESULT CRasDial::onNetConnected()
 
 	auto count = (int)(dwCb / sizeof(RASCONN));
 	LOG4CXX_DEBUG_FMT(logger, _T(__FUNCTION__) _T(": %d RASCONN(%d bytes)"), count, dwCb);
-	HR_ASSERT(0 < count, E_UNEXPECTED);
+	HR_ASSERT(dwCb == (count * sizeof(RASCONN)), E_UNEXPECTED);
 
 	m_pRasConn = std::make_unique<RASCONN[]>(count);
 	ZeroMemory(m_pRasConn.get(), dwCb);
@@ -148,6 +148,9 @@ DWORD CRasDial::rasDialCallback2(
 HRESULT CRasDial::rasDialCallback(HRASCONN hrasconn, tagRASCONNSTATE state, DWORD error, DWORD exerror)
 {
 	if((state == RASCS_DONE) || (error != 0)) {
+		if(error != 0) {
+			RAS_EXPECT_OK(RasHangUp(m_hRasconn));
+		}
 		m_hRasconn = NULL;
 		auto result = new ConnectResult(error, exerror);
 		if(FAILED(WIN32_EXPECT(PostMessage(m_hwnd, m_messageId, 0, (LPARAM)result)))) {

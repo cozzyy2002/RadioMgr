@@ -1,8 +1,11 @@
 #include "pch.h"
 #include "Settings.h"
 #include "../Common/Assert.h"
+#include "ValueName.h"
 
 static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CSettings")));
+
+static const ValueName<HKEY> RootKey = VALUE_NAME_ITEM(HKEY_CURRENT_USER);
 
 CSettings::CSettings(LPCTSTR companyName, LPCTSTR applicationName)
 {
@@ -12,12 +15,11 @@ CSettings::CSettings(LPCTSTR companyName, LPCTSTR applicationName)
 #endif
 	;
 
-	CString subKey;
-	subKey.Format(subKeyFormat, companyName, applicationName);
+	m_subKey.Format(subKeyFormat, companyName, applicationName);
 
 	HKEY hKey;
 	if(SUCCEEDED(HR_EXPECT_OK(HRESULT_FROM_WIN32(
-		RegCreateKeyEx(HKEY_CURRENT_USER, subKey.GetString(), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hKey, NULL))
+		RegCreateKeyEx(RootKey.value, m_subKey.GetString(), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hKey, NULL))
 	))) {
 		m_hKey.reset(hKey);
 	}
@@ -99,6 +101,14 @@ HRESULT CSettings::read(LPCTSTR valueName, DWORD expectedType, std::unique_ptr<B
 HRESULT CSettings::write(LPCTSTR valueName, DWORD type, const BYTE* data, DWORD size)
 {
 	return HR_EXPECT_OK(HRESULT_FROM_WIN32(RegSetValueEx(m_hKey.get(), valueName, 0, type, data, size)));
+}
+
+const CString& CSettings::getRegistryKeyName() const
+{
+	if(m_registryKeyName.IsEmpty()) {
+		m_registryKeyName.Format(_T("%s\\%s"), RootKey.name, m_subKey.GetString());
+	}
+	return m_registryKeyName;
 }
 
 

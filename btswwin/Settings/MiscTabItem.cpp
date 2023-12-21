@@ -62,7 +62,7 @@ void CMiscTabItem::OnBnClickedButtonLogSettings()
 	std::ostringstream
 #endif
 		msg;
-	msg << _T("All setting values");
+	msg << _T("All setting values in ") << m_settings.getRegistryKeyName().GetString();
 
 	for(auto& value : m_settings.getValueList()) {
 		msg << _T("\n")

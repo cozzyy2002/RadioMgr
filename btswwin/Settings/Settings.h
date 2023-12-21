@@ -160,6 +160,7 @@ public:
 
 	bool isChanged() const;
 	const auto& getValueList() const { return m_valueList; }
+	const CString& getRegistryKeyName() const;
 
 protected:
 	template<typename T> T read(Value<T>& value);
@@ -170,6 +171,9 @@ protected:
 	HRESULT write(LPCTSTR valueName, DWORD type, const BYTE* data, DWORD size);
 
 protected:
+	CString m_subKey;
+	mutable CString m_registryKeyName;
+
 	struct HKEYDeleter {
 		using pointer = HKEY;
 		void operator() (HKEY h);

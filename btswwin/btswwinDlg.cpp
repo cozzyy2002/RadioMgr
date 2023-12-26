@@ -848,6 +848,7 @@ LRESULT CbtswwinDlg::OnUserNetNotify(WPARAM wParam, LPARAM lParam)
 			if(!m_RasStatus.IsEmpty()) m_RasStatus += _T("\r\n");
 			m_RasStatus += msg;
 		}
+		LOG4CXX_INFO(logger, _T("RAS status: ") << m_RasStatus.GetString());
 	} else {
 		m_rasDial.onNetDisconnected();
 		stopConnectingVpn();

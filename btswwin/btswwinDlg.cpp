@@ -836,26 +836,14 @@ LRESULT CbtswwinDlg::OnUserNetNotify(WPARAM wParam, LPARAM lParam)
 	m_netIsConnected = (wParam ? true : false);
 	LOG4CXX_INFO_FMT(logger, _T(__FUNCTION__) _T("(%s)"), m_netIsConnected ? _T("Connected") : _T("Disconnected"));
 
+	m_rasDial.updateConnections();
 	if(m_netIsConnected) {
-		m_rasDial.onNetConnected();
 		startConnectingVpn();
-
-		// Show VPN connection(s).
-		m_RasStatus.Empty();
-		for(auto x :  m_rasDial.getConnections()) {
-			CString msg;
-			msg.Format(_T("%s: %s(%s)"), x->szDeviceType, x->szEntryName, x->szDeviceName);
-			if(!m_RasStatus.IsEmpty()) m_RasStatus += _T("\r\n");
-			m_RasStatus += msg;
-		}
-		LOG4CXX_INFO(logger, _T("RAS status: ") << m_RasStatus.GetString());
 	} else {
-		m_rasDial.onNetDisconnected();
 		stopConnectingVpn();
-
-		m_RasStatus.Empty();
 	}
-	UpdateData(FALSE);
+
+	showRasSatus();
 
 	return LRESULT();
 }
@@ -935,7 +923,26 @@ LRESULT CbtswwinDlg::OnUserVpnNotify(WPARAM wParam, LPARAM lParam)
 		startConnectingVpn(true);
 	}
 
+	m_rasDial.updateConnections();
+	showRasSatus();
+
 	return LRESULT();
+}
+
+void CbtswwinDlg::showRasSatus()
+{
+	CString rasStatus;
+	for(auto x : m_rasDial.getConnections()) {
+		CString msg;
+		msg.Format(_T("%s: %s(%s)"), x->szDeviceType, x->szEntryName, x->szDeviceName);
+		if(!rasStatus.IsEmpty()) rasStatus += _T("\r\n");
+		rasStatus += msg;
+	}
+	if(m_RasStatus != rasStatus) {
+		LOG4CXX_INFO(logger, _T("RAS status: ") << rasStatus.GetString());
+		m_RasStatus = rasStatus;
+		UpdateData(FALSE);
+	}
 }
 
 void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)
@@ -947,6 +954,7 @@ void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)
 		break;
 	case vpnConnectionTimerId:
 		KillTimer(vpnConnectionTimerId);
+		m_rasDial.updateConnections();
 		connectVpn();
 		break;
 	}

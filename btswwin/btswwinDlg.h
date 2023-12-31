@@ -118,6 +118,7 @@ protected:
 	void startConnectingVpn(bool isRetry = false);
 	void stopConnectingVpn();
 	HRESULT connectVpn();
+	void showRasSatus();
 
 	// Selected tab index of settings dialog.
 	int m_selectedSettingsTab;

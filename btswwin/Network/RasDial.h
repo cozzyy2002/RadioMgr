@@ -9,10 +9,10 @@ class CRasDial
 public:
 	CRasDial();
 
-	// Called when Network is connected.
-	HRESULT onNetConnected();
-	// Called when Network is disconnected.
-	HRESULT onNetDisconnected();
+	// Updates RAS connections.
+	// Call this method before calling isConnected() or getConnections()
+	// to retrieve latast RAS status.
+	HRESULT updateConnections();
 
 	// Returns RAS connection(s).
 	const std::vector<const RASCONN*>& getConnections() const { return m_connections; }

@@ -20,7 +20,7 @@ CRasDial::CRasDial()
 {
 }
 
-HRESULT CRasDial::onNetConnected()
+HRESULT CRasDial::updateConnections()
 {
 	m_connections.clear();
 	m_pRasConn.reset();
@@ -55,13 +55,6 @@ HRESULT CRasDial::onNetConnected()
 			m_connections.push_back(&m_pRasConn[i]);
 		}
 	}
-	return S_OK;
-}
-
-HRESULT CRasDial::onNetDisconnected()
-{
-	m_connections.clear();
-	m_pRasConn.reset();
 	return S_OK;
 }
 

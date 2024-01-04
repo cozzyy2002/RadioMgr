@@ -7,6 +7,10 @@ class CMySettings : public CSettings
 public:
 	CMySettings(LPCTSTR companyName, LPCTSTR applicationName);
 
+	CRegistryKey regKeyRoot;
+	CRegistryKey regKeyBluetooth;
+	CRegistryKey regKeyNetwork;
+
 	Value<bool> switchByLcdState;
 	Value<bool> restoreRadioState;
 	Value<int> setRadioOnDelay;

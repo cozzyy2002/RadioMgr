@@ -36,6 +36,8 @@ public:
 
 	void load();
 
+	CString getRegistryKeyName(bool isRelative = false) const;
+
 #pragma region DebugSwitches
 	enum class DebugSwitch
 	{

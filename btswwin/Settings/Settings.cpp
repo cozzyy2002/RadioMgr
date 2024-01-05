@@ -3,24 +3,6 @@
 #include "../Common/Assert.h"
 static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CSettings")));
 
-CSettings::CSettings(LPCTSTR companyName, LPCTSTR applicationName)
-{
-//	static const auto subKeyFormat = _T("Software\\%s\\%s")
-//#ifdef _DEBUG
-//		_T(".debug");
-//#endif
-//	;
-//
-//	m_subKey.Format(subKeyFormat, companyName, applicationName);
-//
-//	HKEY hKey;
-//	if(SUCCEEDED(HR_EXPECT_OK(HRESULT_FROM_WIN32(
-//		RegCreateKeyEx(RootKey.value, m_subKey.GetString(), 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hKey, NULL))
-//	))) {
-//		m_hKey.reset(hKey);
-//	}
-}
-
 HRESULT CSettings::load(IValue** valueList, size_t size)
 {
 	HR_ASSERT(valueList, E_POINTER);
@@ -88,7 +70,7 @@ HRESULT CSettings::read(IValue& value, std::unique_ptr<BYTE[]>& data, DWORD expe
 	}
 }
 
-HRESULT CSettings::write(const IValue& value, const BYTE* data, DWORD size)
+HRESULT CSettings::write(IValue& value, const BYTE* data, DWORD size)
 {
 	return HR_EXPECT_OK(HRESULT_FROM_WIN32(RegSetValueEx(value.getHKey(), value.getName().GetString(), 0, value.getRegType(), data, size)));
 }
@@ -155,25 +137,32 @@ const DWORD CSettings::Value<int>::RegType = REG_DWORD;
 template<>
 const DWORD CSettings::Value<CString>::RegType = REG_SZ;
 
-CString CSettings::Value<bool>::toString() const
+CString CSettings::ValueBase::toString(bool isRelativeKey /*= false*/) const
 {
 	CString str;
-	str.Format(_T("%s: %s"), m_name.GetString(), m_value ? _T("true") : _T("false"));
+	str.Format(_T("%s\\%s: %s"),
+		m_registryKey.getFullKeyName(isRelativeKey).GetString(),
+		m_name.GetString(),
+		valueToString().GetString()
+	);
+	return str;
+}
+
+CString CSettings::Value<bool>::valueToString() const
+{
+	return (m_value ? _T("true") : _T("false"));
+}
+
+template<>
+CString CSettings::Value<int>::valueToString() const
+{
+	CString str;
+	str.Format(_T("%d"), m_value);
 	return str;
 }
 
 template<>
-CString CSettings::Value<int>::toString() const
+CString CSettings::Value<CString>::valueToString() const
 {
-	CString str;
-	str.Format(_T("%s: %d"), m_name.GetString(), m_value);
-	return str;
-}
-
-template<>
-CString CSettings::Value<CString>::toString() const
-{
-	CString str;
-	str.Format(_T("%s: %s"), m_name.GetString(), m_value.GetString());
-	return str;
+	return m_value.GetString();
 }

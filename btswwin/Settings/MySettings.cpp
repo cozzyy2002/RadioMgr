@@ -7,8 +7,7 @@ static const ValueName<HKEY> RootKey = VALUE_NAME_ITEM(HKEY_CURRENT_USER);
 // CMySettings members
 
 CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
-	: CSettings(companyName, applicationName)
-	, switchByLcdState(regKeyBluetooth, _T("SwitchByLcdState"), true)
+	: switchByLcdState(regKeyBluetooth, _T("SwitchByLcdState"), true)
 	, restoreRadioState(regKeyBluetooth, _T("RestoreRadioState"), true)
 	, setRadioOnDelay(regKeyBluetooth, _T("SetRadioOnDelay"), 4)
 	, setRadioStateTimeout(regKeyBluetooth, _T("SetRadioStateTimeout"), 1)
@@ -55,6 +54,15 @@ void CMySettings::load()
 		&vpnConnectionDelay, &vpnConnectionRetry
 	};
 	HR_EXPECT_OK(CSettings::load(valueList));
+}
+
+CString CMySettings::getRegistryKeyName(bool isRelative /*= false*/) const
+{
+	CString ret;
+	ret.Format(_T("%s\\%s"),
+		RootKey.name, regKeyRoot.getFullKeyName(isRelative).GetString()
+	);
+	return ret;
 }
 
 bool CMySettings::WindowPlacementValueHandler::isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b)

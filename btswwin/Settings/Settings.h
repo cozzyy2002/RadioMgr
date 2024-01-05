@@ -24,9 +24,9 @@ public:
 		virtual bool isChanged() const = 0;
 
 		// Returns string that consist of it's name and value.
-		virtual CString toString() const = 0;
+		virtual CString toString(bool isRelativeKey = false) const = 0;
 
-		virtual const CRegKey& getHKey() const = 0;
+		virtual CRegKey& getHKey() = 0;
 		virtual const CString& getName() const = 0;
 		virtual DWORD getRegType() const = 0;
 	};
@@ -39,12 +39,17 @@ protected:
 		ValueBase(CRegistryKey& registryKey, LPCTSTR name)
 			: m_registryKey(registryKey), m_name(name) {}
 
-		const CRegKey& getHKey() const override { return m_registryKey.getHKey(); }
+#pragma region Implementation of IValue interface
+		CString toString(bool isRelativeKey = false) const override;
+		CRegKey& getHKey() override { return m_registryKey.getHKey(); }
 		const CString& getName() const override { return m_name; }
-
+#pragma endregion
 
 	protected:
-		const CRegistryKey& m_registryKey;
+		// Returns value as string to implement toString() method.
+		virtual CString valueToString() const = 0;
+
+		CRegistryKey& m_registryKey;
 		const CString m_name;
 	};
 
@@ -65,7 +70,8 @@ public:
 			m_savedValue = m_value;
 		}
 		bool isChanged() const override { return (m_value != m_savedValue); }
-		virtual CString toString() const override;	// Implemented for each type T.
+		CString valueToString() const override;	// Implemented for each type T.
+		DWORD getRegType() const override { return RegType; }
 #pragma endregion
 
 		explicit Value(CRegistryKey& registryKey, LPCTSTR name, const T& defaultValue)
@@ -79,8 +85,6 @@ public:
 		operator T() const { return m_value; }
 
 		const T& getDefault() const { return m_defaultValue; }
-
-		DWORD getRegType() const override { return RegType; }
 
 	protected:
 		void construct(const T& defaultValue)
@@ -102,7 +106,8 @@ public:
 		void read(CSettings* settings) override { m_intValue.read(settings); }
 		void write(CSettings* settings) override { m_intValue.write(settings); }
 		bool isChanged() const override { return m_intValue.isChanged(); }
-		virtual CString toString() const override { return m_intValue.toString(); }
+		CString valueToString() const override { return m_intValue.valueToString(); }
+		DWORD getRegType() const override { return m_intValue.getRegType(); }
 #pragma endregion
 
 		explicit EnumValue(CRegistryKey& registryKey, LPCTSTR name, const T& defaultValue)
@@ -119,7 +124,6 @@ public:
 		operator T() const { return (T)(int)m_intValue; }
 		operator int() const { return (int)m_intValue; }
 		T getDefault() const { return (T)m_intValue.getDefault(); }
-		DWORD getRegType() const override { return m_intValue.getRegType(); }
 
 	protected:
 		Value<int> m_intValue;
@@ -133,7 +137,8 @@ public:
 		void read(CSettings* settings) override;
 		void write(CSettings* settings) override;
 		bool isChanged() const override;
-		CString toString() const override;
+		CString valueToString() const override { return m_valueHandler->valueToString(*this); }
+		DWORD getRegType() const override { return RegType; }
 #pragma endregion
 
 		class IValueHandler
@@ -164,8 +169,6 @@ public:
 		operator const T& () const { return m_value; }
 		operator const T* () const { return &m_value; }
 
-		DWORD getRegType() const override { return RegType; }
-
 	protected:
 		T m_value;				// Current value.
 		T m_savedValue;			// Value saved in profile storage.
@@ -173,8 +176,6 @@ public:
 		static DefaultValueHandler m_defaultValueHandler;
 		static const DWORD RegType;
 	};
-
-	explicit CSettings(LPCTSTR companyName, LPCTSTR applicationName);
 
 	template<size_t size>
 	HRESULT load(IValue* (&valueList)[size]) { return load(valueList, size); }
@@ -191,7 +192,7 @@ protected:
 	template<typename T> BYTE* read(BinaryValue<T>& value);
 	template<typename T> void write(BinaryValue<T>& value);
 	HRESULT read(IValue& value, std::unique_ptr<BYTE[]>& data, DWORD expectedSize = 0);
-	HRESULT write(const IValue& value, const BYTE* data, DWORD size);
+	HRESULT write(IValue& value, const BYTE* data, DWORD size);
 
 protected:
 	std::vector<IValue*> m_valueList;
@@ -225,14 +226,6 @@ bool CSettings::BinaryValue<T>::isChanged() const
 }
 
 template<typename T>
-CString CSettings::BinaryValue<T>::toString() const
-{
-	CString str;
-	str.Format(_T("%s: %s"), m_name.GetString(), m_valueHandler->valueToString(*this).GetString());
-	return str;
-}
-
-template<typename T>
 void CSettings::BinaryValue<T>::DefaultValueHandler::copy(T& dest, const T& source)
 {
 	dest = source;
@@ -252,7 +245,7 @@ bool CSettings::BinaryValue<T>::DefaultValueHandler::isChanged(const T& a, const
 }
 
 template<typename T>
-CString CSettings::BinaryValue<T>::DefaultValueHandler::valueToString(const BinaryValue<T>& value) const
+CString CSettings::BinaryValue<T>::DefaultValueHandler::valueToString(const BinaryValue<T>&) const
 {
 	CString typeName(typeid(T).name());
 	CString str;

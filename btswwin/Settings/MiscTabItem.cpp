@@ -62,12 +62,12 @@ void CMiscTabItem::OnBnClickedButtonLogSettings()
 	std::ostringstream
 #endif
 		msg;
-	msg << _T("All setting values in ") << m_settings.regKeyRoot.getFullKeyName().GetString();
+	msg << _T("All setting values in ") << m_settings.getRegistryKeyName().GetString();
 
 	for(auto& value : m_settings.getValueList()) {
 		msg << _T("\n")
 			<< (value->isChanged() ? _T(" * ") : _T("   "))
-			<< value->toString().GetString();
+			<< value->toString(true).GetString();
 	}
 	settingsLogger->forcedLog(settingsLogger->getEffectiveLevel(), msg.str());
 }

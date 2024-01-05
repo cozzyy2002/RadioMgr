@@ -54,16 +54,17 @@ HRESULT CRegistryKey::open()
     return S_OK;
 }
 
-const CString& CRegistryKey::getFullKeyName() const
+// Returns full path of registry key.
+// If isRelative = true, root key returns "." instead of its name.
+CString CRegistryKey::getFullKeyName(bool isRelative /*= false*/) const
 {
-    if(m_fullKeyName.IsEmpty()) {
-        if(!m_parent) {
-            m_fullKeyName = m_keyName;
-        } else {
-            m_fullKeyName.Format(_T("%s\\%s"),
-                m_parent->getFullKeyName().GetString(), m_keyName.GetString()
-            );
-        }
+    if(!m_parent) {
+        return isRelative ? _T(".") : m_keyName;
+    } else {
+        CString fullKeyName;
+        fullKeyName.Format(_T("%s\\%s"),
+            m_parent->getFullKeyName(isRelative).GetString(), m_keyName.GetString()
+        );
+        return fullKeyName.GetString();
     }
-    return m_fullKeyName;
 }

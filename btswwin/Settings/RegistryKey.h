@@ -11,6 +11,7 @@ public:
 	HRESULT attach(CRegistryKey& parent, LPCTSTR keyName);
 
 	HRESULT open();
+	HRESULT close();
 	CString getFullKeyName(bool isRelative = false) const;
 
 	auto& getHKey() { return m_regKey; }

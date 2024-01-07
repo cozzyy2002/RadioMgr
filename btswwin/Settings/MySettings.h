@@ -35,6 +35,7 @@ public:
 	Value<int> vpnConnectionRetry;
 
 	void load();
+	void save();
 
 	CString getRegistryKeyName(bool isRelative = false) const;
 

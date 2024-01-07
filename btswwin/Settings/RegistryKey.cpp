@@ -54,6 +54,22 @@ HRESULT CRegistryKey::open()
     return S_OK;
 }
 
+HRESULT CRegistryKey::close()
+{
+    LOG4CXX_DEBUG(logger, _T("Closing: ") << getFullKeyName().GetString());
+
+    if(m_regKey.m_hKey) {
+        HR_ASSERT_OK(HRESULT_FROM_WIN32(
+            m_regKey.Close()
+        ));
+    }
+
+    for(auto subKey : m_subKeys) {
+        subKey->close();
+    }
+    return S_OK;
+}
+
 // Returns full path of registry key.
 // If isRelative = true, root key returns "." instead of its name.
 CString CRegistryKey::getFullKeyName(bool isRelative /*= false*/) const

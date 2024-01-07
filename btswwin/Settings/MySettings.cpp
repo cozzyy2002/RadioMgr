@@ -51,9 +51,19 @@ void CMySettings::load()
 		&saveWindowPlacement,
 		&windowPlacement,
 		&vpnConnection, &vpnName,
-		&vpnConnectionDelay, &vpnConnectionRetry
+		&vpnConnectionDelay, &vpnConnectionRetry,
+		&debugSwitches
 	};
 	HR_EXPECT_OK(CSettings::load(valueList));
+
+	regKeyRoot.close();
+}
+
+void CMySettings::save()
+{
+	regKeyRoot.open();
+	HR_EXPECT_OK(CSettings::save());
+	regKeyRoot.close();
 }
 
 CString CMySettings::getRegistryKeyName(bool isRelative /*= false*/) const
@@ -110,6 +120,5 @@ const DWORD CSettings::BinaryValue<WINDOWPLACEMENT>::RegType = REG_BINARY;
 
 bool CMySettings::isEnabled(DebugSwitch flag)
 {
-	debugSwitches.read(this);
 	return (flag & debugSwitches);
 }

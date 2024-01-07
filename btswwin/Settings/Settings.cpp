@@ -42,10 +42,11 @@ HRESULT CSettings::read(IValue& value, std::unique_ptr<BYTE[]>& data, DWORD expe
 	auto expectedType = value.getRegType();
 	auto size = expectedSize;
 	DWORD type;
+	auto& regKey = value.getHKey();
 	if(0 == expectedSize) {
 		// Retrieve size of the value in registory.
-		auto errorRegGetValue = RegGetValue(value.getHKey(), NULL, value.getName().GetString(), RRF_RT_ANY, &type, NULL, &size);
-		// If the value does not exist, return error.
+		auto errorRegGetValue = regKey.QueryValue(value.getName(), &type, NULL, &size);
+		// If the value does not exist, return error without logging.
 		if(errorRegGetValue == ERROR_FILE_NOT_FOUND) { return HRESULT_FROM_WIN32(errorRegGetValue); }
 		// Check error.
 		HR_ASSERT_OK(HRESULT_FROM_WIN32(errorRegGetValue));
@@ -56,7 +57,7 @@ HRESULT CSettings::read(IValue& value, std::unique_ptr<BYTE[]>& data, DWORD expe
 	}
 
 	data = std::make_unique<BYTE[]>(size);
-	auto errorRegGetValue = RegGetValue(value.getHKey(), NULL, value.getName().GetString(), RRF_RT_ANY, &type, data.get(), &size);
+	auto errorRegGetValue = regKey.QueryValue(value.getName(), &type, data.get(), &size);
 	// If the value does not exist, return error without logging.
 	if(errorRegGetValue == ERROR_FILE_NOT_FOUND) { return HRESULT_FROM_WIN32(errorRegGetValue); }
 	// Check another error.
@@ -72,7 +73,8 @@ HRESULT CSettings::read(IValue& value, std::unique_ptr<BYTE[]>& data, DWORD expe
 
 HRESULT CSettings::write(IValue& value, const BYTE* data, DWORD size)
 {
-	return HR_EXPECT_OK(HRESULT_FROM_WIN32(RegSetValueEx(value.getHKey(), value.getName().GetString(), 0, value.getRegType(), data, size)));
+	auto& regKey = value.getHKey();
+	return HR_EXPECT_OK(HRESULT_FROM_WIN32(regKey.SetValue(value.getName(), value.getRegType(), data, size)));
 }
 
 

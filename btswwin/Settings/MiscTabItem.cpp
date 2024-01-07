@@ -67,7 +67,7 @@ void CMiscTabItem::OnBnClickedButtonLogSettings()
 	for(auto& value : m_settings.getValueList()) {
 		msg << _T("\n")
 			<< (value->isChanged() ? _T(" * ") : _T("   "))
-			<< value->toString().GetString();
+			<< value->toString(true).GetString();
 	}
 	settingsLogger->forcedLog(settingsLogger->getEffectiveLevel(), msg.str());
 }

@@ -2,30 +2,44 @@
 #include "MySettings.h"
 #include "ValueName.h"
 
+static const ValueName<HKEY> RootKey = VALUE_NAME_ITEM(HKEY_CURRENT_USER);
+
 // CMySettings members
 
 CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
-	: CSettings(companyName, applicationName)
-	, switchByLcdState(_T("SwitchByLcdState"), true)
-	, restoreRadioState(_T("RestoreRadioState"), true)
-	, setRadioOnDelay(_T("SetRadioOnDelay"), 4)
-	, setRadioStateTimeout(_T("SetRadioStateTimeout"), 1)
-	, autoCheckRadioInstance(_T("AutoCheckRadioInstance"), true)
-	, autoSelectDevice(_T("AudoSelectDevice"))
-	, bluetoothPollingTimer(_T("BluetoothPollingTimer"), 1)
-	, saveWindowPlacement(_T("SaveWindowPlacement"))
-	, windowPlacement(_T("WindowPlacement"), &m_windowPlacementValueHandler)
-	, vpnConnection(_T("VpnConnection"), VpnConnection::None)
-	, vpnName(_T("VpnName"))
-	, vpnConnectionDelay(_T("VpnConnectionDelay"), 2)
-	, vpnConnectionRetry(_T("VpnConnectionRetry"))
-	, debugSwitches(_T("DebugSwitches"))
+	: switchByLcdState(regKeyBluetooth, _T("SwitchByLcdState"), true)
+	, restoreRadioState(regKeyBluetooth, _T("RestoreRadioState"), true)
+	, setRadioOnDelay(regKeyBluetooth, _T("SetRadioOnDelay"), 4)
+	, setRadioStateTimeout(regKeyBluetooth, _T("SetRadioStateTimeout"), 1)
+	, autoCheckRadioInstance(regKeyBluetooth, _T("AutoCheckRadioInstance"), true)
+	, autoSelectDevice(regKeyBluetooth, _T("AudoSelectDevice"))
+	, bluetoothPollingTimer(regKeyBluetooth, _T("BluetoothPollingTimer"), 1)
+	, saveWindowPlacement(regKeyRoot, _T("SaveWindowPlacement"))
+	, windowPlacement(regKeyRoot, _T("WindowPlacement"), &m_windowPlacementValueHandler)
+	, vpnConnection(regKeyNetwork, _T("VpnConnection"), VpnConnection::None)
+	, vpnName(regKeyNetwork, _T("VpnName"))
+	, vpnConnectionDelay(regKeyNetwork, _T("VpnConnectionDelay"), 2)
+	, vpnConnectionRetry(regKeyNetwork, _T("VpnConnectionRetry"))
+	, debugSwitches(regKeyRoot, _T("DebugSwitches"))
 	, m_windowPlacementValueHandler(this)
 {
+	static const auto subKeyFormat = _T("Software\\%s\\%s")
+#ifdef _DEBUG
+		_T(".debug");
+#endif
+	;
+	
+	CString subKey;
+	subKey.Format(subKeyFormat, companyName, applicationName);
+	regKeyRoot.attach(RootKey.value, subKey);
+	regKeyBluetooth.attach(regKeyRoot, _T("Bluetooth"));
+	regKeyNetwork.attach(regKeyRoot, _T("Network"));
 }
 
 void CMySettings::load()
 {
+	regKeyRoot.open();
+
 	IValue* valueList[] = {
 		&switchByLcdState,
 		&restoreRadioState,
@@ -37,9 +51,28 @@ void CMySettings::load()
 		&saveWindowPlacement,
 		&windowPlacement,
 		&vpnConnection, &vpnName,
-		&vpnConnectionDelay, &vpnConnectionRetry
+		&vpnConnectionDelay, &vpnConnectionRetry,
+		&debugSwitches
 	};
 	HR_EXPECT_OK(CSettings::load(valueList));
+
+	regKeyRoot.close();
+}
+
+void CMySettings::save()
+{
+	regKeyRoot.open();
+	HR_EXPECT_OK(CSettings::save());
+	regKeyRoot.close();
+}
+
+CString CMySettings::getRegistryKeyName(bool isRelative /*= false*/) const
+{
+	CString ret;
+	ret.Format(_T("%s\\%s"),
+		RootKey.name, regKeyRoot.getFullKeyName(isRelative).GetString()
+	);
+	return ret;
 }
 
 bool CMySettings::WindowPlacementValueHandler::isChanged(const WINDOWPLACEMENT& a, const WINDOWPLACEMENT& b)
@@ -87,6 +120,5 @@ const DWORD CSettings::BinaryValue<WINDOWPLACEMENT>::RegType = REG_BINARY;
 
 bool CMySettings::isEnabled(DebugSwitch flag)
 {
-	debugSwitches.read(this);
 	return (flag & debugSwitches);
 }

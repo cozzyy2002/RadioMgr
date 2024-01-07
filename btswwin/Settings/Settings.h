@@ -1,5 +1,6 @@
 #pragma once
 
+#include "RegistryKey.h"
 #include "../Common/Assert.h"
 #include <vector>
 #include <typeinfo>
@@ -23,11 +24,38 @@ public:
 		virtual bool isChanged() const = 0;
 
 		// Returns string that consist of it's name and value.
-		virtual CString toString() const = 0;
+		virtual CString toString(bool isRelativeKey = false) const = 0;
+
+		virtual CRegKey& getHKey() = 0;
+		virtual const CString& getName() const = 0;
+		virtual DWORD getRegType() const = 0;
 	};
 
+protected:
+	// Common base class for classes that implement IValue.
+	class ValueBase : public IValue
+	{
+	public:
+		ValueBase(CRegistryKey& registryKey, LPCTSTR name)
+			: m_registryKey(registryKey), m_name(name) {}
+
+#pragma region Implementation of IValue interface
+		CString toString(bool isRelativeKey = false) const override;
+		CRegKey& getHKey() override { return m_registryKey.getHKey(); }
+		const CString& getName() const override { return m_name; }
+#pragma endregion
+
+	protected:
+		// Returns value as string to implement toString() method.
+		virtual CString valueToString() const = 0;
+
+		CRegistryKey& m_registryKey;
+		const CString m_name;
+	};
+
+public:
 	template<typename T>
-	class Value : public IValue
+	class Value : public ValueBase
 	{
 	public:
 #pragma region Implementation of IValue interface.
@@ -42,48 +70,50 @@ public:
 			m_savedValue = m_value;
 		}
 		bool isChanged() const override { return (m_value != m_savedValue); }
-		virtual CString toString() const override;	// Implemented for each type T.
+		CString valueToString() const override;	// Implemented for each type T.
+		DWORD getRegType() const override { return RegType; }
 #pragma endregion
 
-		explicit Value(LPCTSTR name, const T& defaultValue) { construct(name, defaultValue); }
-		explicit Value(LPCTSTR name) { construct(name, T()); }
+		explicit Value(CRegistryKey& registryKey, LPCTSTR name, const T& defaultValue)
+			: ValueBase(registryKey, name) { construct(defaultValue); }
+		explicit Value(CRegistryKey& registryKey, LPCTSTR name)
+			: ValueBase(registryKey, name) {construct(T());}
 
 		T& operator =(const T& newValue) { return (m_value = newValue); }
 		T& operator *() { return m_value; }
 		T* operator ->() { return &m_value; }
 		operator T() const { return m_value; }
 
-		LPCTSTR getName() const { return m_name.GetString(); }
 		const T& getDefault() const { return m_defaultValue; }
 
-		static const DWORD RegType;
-
 	protected:
-		void construct(LPCTSTR name, const T& defaultValue)
+		void construct(const T& defaultValue)
 		{
-			m_name = name;
 			m_value = m_savedValue = m_defaultValue = defaultValue;
 		}
 
-		CString m_name;
 		T m_value;				// Current value.
 		T m_savedValue;			// Value saved in profile storage.
 		T m_defaultValue;		// Value to be set to m_value if the name doesn't exist when read() is called.
+		static const DWORD RegType;
 	};
 
 	template<typename T>
-	class EnumValue : public IValue
+	class EnumValue : public ValueBase
 	{
 	public:
 #pragma region Implementation of IValue interface.
 		void read(CSettings* settings) override { m_intValue.read(settings); }
 		void write(CSettings* settings) override { m_intValue.write(settings); }
 		bool isChanged() const override { return m_intValue.isChanged(); }
-		virtual CString toString() const override { return m_intValue.toString(); }
+		CString valueToString() const override { return m_intValue.valueToString(); }
+		DWORD getRegType() const override { return m_intValue.getRegType(); }
 #pragma endregion
 
-		explicit EnumValue(LPCTSTR name, const T& defaultValue) : m_intValue(name, (int)defaultValue) {}
-		explicit EnumValue(LPCTSTR name) : m_intValue(name, (int)T()) {}
+		explicit EnumValue(CRegistryKey& registryKey, LPCTSTR name, const T& defaultValue)
+			: ValueBase(registryKey, name), m_intValue(registryKey, name, (int)defaultValue) {}
+		explicit EnumValue(CRegistryKey& registryKey, LPCTSTR name)
+			: ValueBase(registryKey, name), m_intValue(registryKey, name, (int)T()) {}
 
 		EnumValue& operator =(const T& newValue)
 		{
@@ -100,14 +130,15 @@ public:
 	};
 
 	template<typename T>
-	class BinaryValue : public IValue
+	class BinaryValue : public ValueBase
 	{
 	public:
 #pragma region Implementation of IValue interface.
 		void read(CSettings* settings) override;
 		void write(CSettings* settings) override;
 		bool isChanged() const override;
-		CString toString() const override;
+		CString valueToString() const override { return m_valueHandler->valueToString(*this); }
+		DWORD getRegType() const override { return RegType; }
 #pragma endregion
 
 		class IValueHandler
@@ -128,8 +159,8 @@ public:
 			virtual CString valueToString(const BinaryValue<T>& value) const override;
 		};
 
-		explicit BinaryValue(LPCTSTR name, IValueHandler* valueHandler = &m_defaultValueHandler)
-			: m_name(name), m_value(T()), m_savedValue(T()), m_valueHandler(valueHandler) {}
+		explicit BinaryValue(CRegistryKey& registryKey, LPCTSTR name, IValueHandler* valueHandler = &m_defaultValueHandler)
+			: ValueBase(registryKey, name), m_value(T()), m_savedValue(T()), m_valueHandler(valueHandler) {}
 
 		T& operator *() { return m_value; }
 		T* operator ->() { return &m_value; }
@@ -138,19 +169,13 @@ public:
 		operator const T& () const { return m_value; }
 		operator const T* () const { return &m_value; }
 
-		LPCTSTR getName() const { return m_name.GetString(); }
-
-		static const DWORD RegType;
-
 	protected:
-		CString m_name;
 		T m_value;				// Current value.
 		T m_savedValue;			// Value saved in profile storage.
 		IValueHandler* m_valueHandler;
 		static DefaultValueHandler m_defaultValueHandler;
+		static const DWORD RegType;
 	};
-
-	explicit CSettings(LPCTSTR companyName, LPCTSTR applicationName);
 
 	template<size_t size>
 	HRESULT load(IValue* (&valueList)[size]) { return load(valueList, size); }
@@ -160,26 +185,16 @@ public:
 
 	bool isChanged() const;
 	const auto& getValueList() const { return m_valueList; }
-	const CString& getRegistryKeyName() const;
 
 protected:
 	template<typename T> T read(Value<T>& value);
 	template<typename T> void write(Value<T>& value);
 	template<typename T> BYTE* read(BinaryValue<T>& value);
 	template<typename T> void write(BinaryValue<T>& value);
-	HRESULT read(LPCTSTR valueName, DWORD expectedType, std::unique_ptr<BYTE[]>& data, DWORD expectedSize = 0);
-	HRESULT write(LPCTSTR valueName, DWORD type, const BYTE* data, DWORD size);
+	HRESULT read(IValue& value, std::unique_ptr<BYTE[]>& data, DWORD expectedSize = 0);
+	HRESULT write(IValue& value, const BYTE* data, DWORD size);
 
 protected:
-	CString m_subKey;
-	mutable CString m_registryKeyName;
-
-	struct HKEYDeleter {
-		using pointer = HKEY;
-		void operator() (HKEY h);
-	};
-	std::unique_ptr<HKEY, HKEYDeleter> m_hKey;
-
 	std::vector<IValue*> m_valueList;
 };
 
@@ -211,14 +226,6 @@ bool CSettings::BinaryValue<T>::isChanged() const
 }
 
 template<typename T>
-CString CSettings::BinaryValue<T>::toString() const
-{
-	CString str;
-	str.Format(_T("%s: %s"), m_name.GetString(), m_valueHandler->valueToString(*this).GetString());
-	return str;
-}
-
-template<typename T>
 void CSettings::BinaryValue<T>::DefaultValueHandler::copy(T& dest, const T& source)
 {
 	dest = source;
@@ -238,7 +245,7 @@ bool CSettings::BinaryValue<T>::DefaultValueHandler::isChanged(const T& a, const
 }
 
 template<typename T>
-CString CSettings::BinaryValue<T>::DefaultValueHandler::valueToString(const BinaryValue<T>& value) const
+CString CSettings::BinaryValue<T>::DefaultValueHandler::valueToString(const BinaryValue<T>&) const
 {
 	CString typeName(typeid(T).name());
 	CString str;
@@ -250,7 +257,7 @@ template<typename T>
 BYTE* CSettings::read(BinaryValue<T>& value)
 {
 	std::unique_ptr<BYTE[]> data;
-	if(SUCCEEDED(read(value.getName(), value.RegType, data, sizeof(T)))) {
+	if(SUCCEEDED(read(value, data, sizeof(T)))) {
 		return data.release();
 	} else {
 		return nullptr;
@@ -260,7 +267,7 @@ BYTE* CSettings::read(BinaryValue<T>& value)
 template<typename T>
 void CSettings::write(BinaryValue<T>& value)
 {
-	write(value.getName(), value.RegType, (BYTE*)(T*)value, sizeof(T));
+	write(value, (BYTE*)(T*)value, sizeof(T));
 }
 
 #pragma endregion

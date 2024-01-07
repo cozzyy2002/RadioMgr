@@ -7,6 +7,10 @@ class CMySettings : public CSettings
 public:
 	CMySettings(LPCTSTR companyName, LPCTSTR applicationName);
 
+	CRegistryKey regKeyRoot;
+	CRegistryKey regKeyBluetooth;
+	CRegistryKey regKeyNetwork;
+
 	Value<bool> switchByLcdState;
 	Value<bool> restoreRadioState;
 	Value<int> setRadioOnDelay;
@@ -31,6 +35,9 @@ public:
 	Value<int> vpnConnectionRetry;
 
 	void load();
+	void save();
+
+	CString getRegistryKeyName(bool isRelative = false) const;
 
 #pragma region DebugSwitches
 	enum class DebugSwitch

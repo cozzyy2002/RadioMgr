@@ -67,6 +67,7 @@
     <ClInclude Include="Settings\TabItem.h">
       <Filter>Settings</Filter>
     </ClInclude>
+    <ClInclude Include="Settings\RegistryKey.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AboutDlg.cpp" />
@@ -118,6 +119,7 @@
     <ClCompile Include="Settings\TabItem.cpp">
       <Filter>Settings</Filter>
     </ClCompile>
+    <ClCompile Include="Settings\RegistryKey.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="btswwin.rc">

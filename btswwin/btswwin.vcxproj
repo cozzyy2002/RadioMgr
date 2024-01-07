@@ -211,6 +211,7 @@
     <ClInclude Include="Settings\MiscTabItem.h" />
     <ClInclude Include="Settings\MySettings.h" />
     <ClInclude Include="Settings\NetworkTabItem.h" />
+    <ClInclude Include="Settings\RegistryKey.h" />
     <ClInclude Include="Settings\Settings.h" />
     <ClInclude Include="Settings\SettingsDlg.h" />
     <ClInclude Include="Settings\TabItem.h" />
@@ -244,6 +245,7 @@
     <ClCompile Include="Settings\MiscTabItem.cpp" />
     <ClCompile Include="Settings\MySettings.cpp" />
     <ClCompile Include="Settings\NetworkTabItem.cpp" />
+    <ClCompile Include="Settings\RegistryKey.cpp" />
     <ClCompile Include="Settings\Settings.cpp" />
     <ClCompile Include="Settings\SettingsDlg.cpp" />
     <ClCompile Include="Settings\TabItem.cpp" />

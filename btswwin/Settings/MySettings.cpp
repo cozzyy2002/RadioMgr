@@ -20,7 +20,7 @@ CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
 	, vpnName(regKeyNetwork, _T("VpnName"))
 	, vpnConnectionDelay(regKeyNetwork, _T("VpnConnectionDelay"), 2)
 	, vpnConnectionRetry(regKeyNetwork, _T("VpnConnectionRetry"))
-	, debugSwitches(regKeyRoot, _T("DebugSwitches"))
+	, debugSwitches(regKeyRoot, _T("DebugSwitches"), DebugSwitch::None)
 	, m_windowPlacementValueHandler(this)
 {
 	static const auto subKeyFormat = _T("Software\\%s\\%s")

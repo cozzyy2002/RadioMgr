@@ -42,10 +42,9 @@ public:
 #pragma region DebugSwitches
 	enum class DebugSwitch
 	{
-		// Enable log for connecting device.
-		LogServiceStateGUID = 1,
-		// Enable LID open/close debug command in system menu.
-		LIDSwitch = 2,
+		None = 0,
+		LogServiceStateGUID = 1,	// Enable log for connecting device.
+		LIDSwitch = 2,				// Enable LID open/close debug command in system menu.
 	};
 
 	bool isEnabled(DebugSwitch);

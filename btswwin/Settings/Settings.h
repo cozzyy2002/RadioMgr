@@ -74,10 +74,10 @@ public:
 		DWORD getRegType() const override { return RegType; }
 #pragma endregion
 
-		explicit Value(CRegistryKey& registryKey, LPCTSTR name, const T& defaultValue)
-			: ValueBase(registryKey, name) { construct(defaultValue); }
-		explicit Value(CRegistryKey& registryKey, LPCTSTR name)
-			: ValueBase(registryKey, name) {construct(T());}
+		explicit Value(CRegistryKey& registryKey, LPCTSTR name, const T& defaultValue = T())
+			: ValueBase(registryKey, name)
+			, m_value(defaultValue), m_savedValue(defaultValue), m_defaultValue(defaultValue)
+		{}
 
 		T& operator =(const T& newValue) { return (m_value = newValue); }
 		T& operator *() { return m_value; }
@@ -87,11 +87,6 @@ public:
 		const T& getDefault() const { return m_defaultValue; }
 
 	protected:
-		void construct(const T& defaultValue)
-		{
-			m_value = m_savedValue = m_defaultValue = defaultValue;
-		}
-
 		T m_value;				// Current value.
 		T m_savedValue;			// Value saved in profile storage.
 		T m_defaultValue;		// Value to be set to m_value if the name doesn't exist when read() is called.
@@ -110,10 +105,9 @@ public:
 		DWORD getRegType() const override { return m_intValue.getRegType(); }
 #pragma endregion
 
+		// Note: A default value of EnumValue should be specified explicitly.
 		explicit EnumValue(CRegistryKey& registryKey, LPCTSTR name, const T& defaultValue)
 			: ValueBase(registryKey, name), m_intValue(registryKey, name, (int)defaultValue) {}
-		explicit EnumValue(CRegistryKey& registryKey, LPCTSTR name)
-			: ValueBase(registryKey, name), m_intValue(registryKey, name, (int)T()) {}
 
 		EnumValue& operator =(const T& newValue)
 		{

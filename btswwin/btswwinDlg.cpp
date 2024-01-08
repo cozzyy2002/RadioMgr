@@ -34,6 +34,7 @@ CbtswwinDlg::CbtswwinDlg(CResourceReader& resourceReader, CWnd* pParent /*=nullp
 	, m_vpnConnectRetry(0)
 	, m_RasStatus(_T(""))
 	, m_WiFiStatus(_T(""))
+	, m_pollingTimer(this), m_vpnConnectionTimer(this)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
@@ -42,7 +43,7 @@ CbtswwinDlg::CbtswwinDlg(CResourceReader& resourceReader, CWnd* pParent /*=nullp
 	m_settings = std::make_unique<CMySettings>(companyName.GetString(), fileName.GetString());
 }
 
-static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CbtswinDlg")));
+static auto& logger(log4cxx::Logger::getLogger(_T("btswwin.CbtswwinDlg")));
 
 // Logs error message with formatted HRESULT.
 // This function is called from tsm::Assert when assertion fails.
@@ -549,7 +550,7 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 
 			// Start polling timer when first instance is added.
 			if(m_radioInstances.GetItemCount() == 1) {
-				SetTimer(PollingTimerId, m_settings->bluetoothPollingTimer * 1000, NULL);
+				m_pollingTimer.start(m_settings->bluetoothPollingTimer);
 			}
 		}
 		break;
@@ -578,7 +579,7 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 		m_radioInstances.Remove(name);
 
 		// Stop polling timer when last instance is removed.
-		if(m_radioInstances.GetItemCount() == 0) { KillTimer(PollingTimerId); }
+		if(m_radioInstances.GetItemCount() == 0) { m_pollingTimer.stop(); }
 		break;
 	case RadioNotifyListener::Message::Type::InstanceRadioChange:
 		// RadioNotifyListener::OnInstanceRadioChange(BSTR bstrRadioInstanceId, DEVICE_RADIO_STATE radioState)
@@ -863,7 +864,7 @@ void CbtswwinDlg::startConnectingVpn(bool isRetry /*= false*/)
 	if(0 < delay) {
 		// Start connecting after elapse of the time.
 		// Timer is restarted if timer already started.
-		SetTimer(vpnConnectionTimerId, delay * 1000, nullptr);
+		m_vpnConnectionTimer.start(delay);
 	} else {
 		// Start connecting immediately.
 		connectVpn();
@@ -872,10 +873,7 @@ void CbtswwinDlg::startConnectingVpn(bool isRetry /*= false*/)
 
 void CbtswwinDlg::stopConnectingVpn()
 {
-	auto delay = *m_settings->vpnConnectionDelay;
-	if(0 < delay) {
-		KillTimer(vpnConnectionTimerId);
-	}
+	m_vpnConnectionTimer.stop();
 }
 
 HRESULT CbtswwinDlg::connectVpn()
@@ -947,16 +945,15 @@ void CbtswwinDlg::showRasSatus()
 
 void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)
 {
-	switch(nIDEvent) {
-	case PollingTimerId:
+	if(nIDEvent == m_pollingTimer.getEvent()) {
+		LOG4CXX_TRACE_FMT(logger, _T("Polling timer: ID=%I64u"), nIDEvent);
 		checkRadioState();
 		checkBluetoothDevice();
-		break;
-	case vpnConnectionTimerId:
-		KillTimer(vpnConnectionTimerId);
+	} else if(nIDEvent == m_vpnConnectionTimer.getEvent()) {
+		LOG4CXX_TRACE_FMT(logger, _T("VPN connection timer: ID=%I64u"), nIDEvent);
+		m_vpnConnectionTimer.stop();
 		m_rasDial.updateConnections();
 		connectVpn();
-		break;
 	}
 
 	CDialogEx::OnTimer(nIDEvent);
@@ -1086,6 +1083,11 @@ void CbtswwinDlg::OnFileSettings()
 	dlg.SelectedTab = m_selectedSettingsTab;
 	dlg.DoModal();
 	m_selectedSettingsTab = dlg.SelectedTab;
+
+	// Update polling timer.
+	if(m_settings->bluetoothPollingTimer != m_pollingTimer.getElapse()) {
+		m_pollingTimer.start(m_settings->bluetoothPollingTimer);
+	}
 }
 
 
@@ -1146,4 +1148,30 @@ void CbtswwinDlg::OnFileOpenLog(UINT nId)
 	} else {
 		LOG4CXX_ERROR(logger, _T("Menu item position is out of range: ") << pos);
 	}
+}
+
+UINT CbtswwinDlg::CTimer::m_instanceCount = 0;
+
+HRESULT CbtswwinDlg::CTimer::start(UINT nElapse)
+{
+	HR_ASSERT(0 < nElapse, E_INVALIDARG);
+
+	stop();
+
+	auto hr = WIN32_EXPECT(m_event = m_pOwner->SetTimer(m_instanceID, nElapse * m_nMultiplier, nullptr));
+	if(SUCCEEDED(hr)) { m_nElapse = nElapse; }
+
+	LOG4CXX_INFO_FMT(logger, _T("Timer started: ID=%I64u, %d * %d mSec"), m_event, m_nElapse, m_nMultiplier);
+	return hr;
+}
+
+HRESULT CbtswwinDlg::CTimer::stop()
+{
+	auto hr = S_FALSE;
+	if(isStarted()) {
+		LOG4CXX_INFO_FMT(logger, _T("Timer is stopping: ID=%I64u, %d * %d mSec"), m_event, m_nElapse, m_nMultiplier);
+		hr = WIN32_EXPECT(m_pOwner->KillTimer(m_event));
+		m_event = 0;
+	}
+	return hr;
 }

@@ -42,9 +42,7 @@ public:
 			logger->forcedLog(::log4cxx::Level::get##level(), message.GetString(), LOG4CXX_LOCATION); }} while (0)
 
 #define LOG4CXX_ERROR_FMT(logger, fmt, ...) LOG4CXX_XXX_FMT_DEF(Error, logger, fmt, __VA_ARGS__)
-
 #define LOG4CXX_WARN_FMT(logger, fmt, ...) LOG4CXX_XXX_FMT_DEF(Warn, logger, fmt, __VA_ARGS__)
-
 #define LOG4CXX_INFO_FMT(logger, fmt, ...) LOG4CXX_XXX_FMT_DEF(Info, logger, fmt, __VA_ARGS__)
-
 #define LOG4CXX_DEBUG_FMT(logger, fmt, ...) LOG4CXX_XXX_FMT_DEF(Debug, logger, fmt, __VA_ARGS__)
+#define LOG4CXX_TRACE_FMT(logger, fmt, ...) LOG4CXX_XXX_FMT_DEF(Trace, logger, fmt, __VA_ARGS__)

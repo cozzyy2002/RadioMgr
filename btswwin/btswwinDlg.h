@@ -53,10 +53,31 @@ public:
 	void print(LPCTSTR, ...);
 
 protected:
-	enum class TimerId : UINT_PTR {
-		Polling = 1,		// Polling timer for Bluetooth Radio and Device.
-		VpnConnection,		// Delay timer to connect VPN.
+	class CTimer
+	{
+	public:
+		CTimer(CWnd* pOwner, UINT nMultiplier = 1000)
+			: m_pOwner(pOwner), m_event(0), m_nElapse(0), m_nMultiplier(nMultiplier)
+			, m_instanceID(++m_instanceCount)
+		{}
+
+		HRESULT start(UINT nElapse);
+		HRESULT stop();
+		auto getEvent() const { return m_event; }
+		auto getElapse() const { return m_nElapse; }
+		bool isStarted() const { return m_event ? true : false; }
+
+	protected:
+		static UINT m_instanceCount;	// Used to initialize m_instanceID member.
+		const UINT m_instanceID;		// Used as nIDEvent parameter for CWnd::SetTimer() method.
+		CWnd* m_pOwner;
+		UINT_PTR m_event;
+		UINT m_nElapse;
+		const UINT m_nMultiplier;
 	};
+
+	CTimer m_pollingTimer;			// Polling timer for Bluetooth Radio and Device.
+	CTimer m_vpnConnectionTimer;	// Delay timer to connect VPN.
 
 	std::unique_ptr<CMySettings> m_settings;
 	CResourceReader& m_resourceReader;
@@ -74,7 +95,6 @@ protected:
 	HRESULT setRadioState(DEVICE_RADIO_STATE, bool restore = false);
 	HRESULT setRadioState(RadioInstanceData& data, DEVICE_RADIO_STATE, bool restore = false);
 
-	static const UINT_PTR PollingTimerId = static_cast<UINT_PTR>(TimerId::Polling);
 	HRESULT checkRadioState();
 	HRESULT checkBluetoothDevice();
 	void resetThread(std::unique_ptr<std::thread>&);
@@ -113,7 +133,6 @@ protected:
 	bool m_netIsConnected;
 	bool m_lidIsOpened;
 	int m_vpnConnectRetry;
-	static const UINT_PTR vpnConnectionTimerId = static_cast<UINT_PTR>(TimerId::VpnConnection);
 
 	void startConnectingVpn(bool isRetry = false);
 	void stopConnectingVpn();

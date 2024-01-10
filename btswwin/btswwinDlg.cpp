@@ -1161,7 +1161,7 @@ HRESULT CbtswwinDlg::CTimer::start(UINT nElapse)
 	auto hr = WIN32_EXPECT(m_event = m_pOwner->SetTimer(m_instanceID, nElapse * m_nMultiplier, nullptr));
 	if(SUCCEEDED(hr)) { m_nElapse = nElapse; }
 
-	LOG4CXX_INFO_FMT(logger, _T("Timer started: ID=%I64u, %d * %d mSec"), m_event, m_nElapse, m_nMultiplier);
+	LOG4CXX_INFO_FMT(logger, _T("Timer ID %I64u started: %d * %d mSec"), m_event, m_nElapse, m_nMultiplier);
 	return hr;
 }
 
@@ -1169,7 +1169,7 @@ HRESULT CbtswwinDlg::CTimer::stop()
 {
 	auto hr = S_FALSE;
 	if(isStarted()) {
-		LOG4CXX_INFO_FMT(logger, _T("Timer is stopping: ID=%I64u, %d * %d mSec"), m_event, m_nElapse, m_nMultiplier);
+		LOG4CXX_INFO_FMT(logger, _T("Timer ID %I64u is stopping: %d * %d mSec"), m_event, m_nElapse, m_nMultiplier);
 		hr = WIN32_EXPECT(m_pOwner->KillTimer(m_event));
 		m_event = 0;
 	}

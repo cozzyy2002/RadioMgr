@@ -862,9 +862,11 @@ void CbtswwinDlg::startConnectingVpn(bool isRetry /*= false*/)
 
 	auto delay = *m_settings->vpnConnectionDelay;
 	if(0 < delay) {
-		// Start connecting after elapse of the time.
-		// Timer is restarted if timer already started.
-		m_vpnConnectionTimer.start(delay);
+		if(canConnectVpn()) {
+			// Start connecting after elapse of the time.
+			// Timer is restarted if timer already started.
+			m_vpnConnectionTimer.start(delay);
+		}
 	} else {
 		// Start connecting immediately.
 		connectVpn();
@@ -876,7 +878,7 @@ void CbtswwinDlg::stopConnectingVpn()
 	m_vpnConnectionTimer.stop();
 }
 
-HRESULT CbtswwinDlg::connectVpn()
+bool CbtswwinDlg::canConnectVpn() const
 {
 	// Do not connect VPN on the following conditions.
 	if(
@@ -885,24 +887,32 @@ HRESULT CbtswwinDlg::connectVpn()
 		m_rasDial.isConnecting() ||						// Now connecting.
 		m_rasDial.isConnected(m_settings->vpnName) ||	// Specified VPN is connected already.
 		!m_lidIsOpened									// LID is closed.
-	) { return S_FALSE; }
+	) {
+		return false;
+	}
 
 	// Check VpnConnection setting whether the VPN connection should be made or not.
 	switch(*m_settings->vpnConnection) {
 	case CMySettings::VpnConnection::None:
-		return S_FALSE;
+		return false;
 	case CMySettings::VpnConnection::UnsecuredWiFi:
-		if(m_wlanIsSecured) { return S_FALSE; }
+		if(m_wlanIsSecured) { return false; }
 		// Go down to check SSID.
 	case CMySettings::VpnConnection::WiFi:
-		if(m_wlanConnectedSsid.IsEmpty()) { return S_FALSE; }
+		if(m_wlanConnectedSsid.IsEmpty()) { return false; }
 		break;
 	case CMySettings::VpnConnection::Any:
 		break;
 	default:
 		LOG4CXX_WARN_FMT(logger, _T("Unknown CMySettings::VpnConnection value: %d"), *m_settings->vpnConnection);
-		return E_UNEXPECTED;
+		return false;
 	}
+	return true;
+}
+
+HRESULT CbtswwinDlg::connectVpn()
+{
+	if(!canConnectVpn()) return S_FALSE;
 
 	print(_T("Connecting VPN: %s, Retry=%d"), m_settings->vpnName->GetString(), m_vpnConnectRetry);
 	return m_rasDial.connect(m_hWnd, WM_USER_VPN_NOTIFY, m_settings->vpnName->GetString());

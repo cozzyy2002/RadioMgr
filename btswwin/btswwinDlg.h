@@ -136,6 +136,7 @@ protected:
 
 	void startConnectingVpn(bool isRetry = false);
 	void stopConnectingVpn();
+	bool canConnectVpn() const;
 	HRESULT connectVpn();
 	void showRasSatus();
 

@@ -173,12 +173,14 @@ BOOL CbtswwinDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// Setup log file list.
-	auto& clazz = log4cxx::helpers::Class::forName(_T("FileAppender"));
+	// NOTE: I couldn't find Multi-Byte versin of log4cxx.
+	//       So Unicode(wchar_t) version of Class::forName() and FileAppender are used.
+	auto& clazz = log4cxx::helpers::Class::forName(L"FileAppender");
 	for(auto& appender : log4cxx::Logger::getRootLogger()->getAllAppenders()) {
 		if(appender->instanceof(clazz)) {
 			// Add file name of FileAppender to the file list.
 			auto fileAppender = (log4cxx::FileAppender*)appender->cast(clazz);
-			MAllocPtr fileName(_tcsdup(fileAppender->getFile().c_str()));
+			MAllocPtr fileName(_tcsdup(CString(fileAppender->getFile().c_str()).GetString()));
 			m_logFileList.push_back(std::move(fileName));
 		}
 	}
@@ -517,12 +519,14 @@ afx_msg LRESULT CbtswwinDlg::OnUserRadioManagerNotify(WPARAM wParam, LPARAM lPar
 		{
 			// Retrieve FriendlyName, Signature and RadioState from IRadioInstance object.
 			type = _T("InstanceAdd");
-			BSTR friendlyName, id;
-			message->radioInstance->GetFriendlyName(1033, &friendlyName);
-			HR_ASSERT_OK(message->radioInstance->GetInstanceSignature(&id));
+			BSTR _friendlyName, _id;
+			message->radioInstance->GetFriendlyName(1033, &_friendlyName);
+			HR_ASSERT_OK(message->radioInstance->GetInstanceSignature(&_id));
 			HR_ASSERT_OK(message->radioInstance->GetRadioState(&state));
 			auto savedState = state;
 			auto isChecked = TRUE;
+			CString friendlyName(_friendlyName);
+			CString id(_id);
 			auto it = m_previousRadioStates.find(id);
 			if(it != m_previousRadioStates.end()) {
 				// If RadioState is saved when the RadioInstance was removed, restore its state.

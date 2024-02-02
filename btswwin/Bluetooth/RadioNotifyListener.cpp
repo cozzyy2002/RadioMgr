@@ -38,7 +38,7 @@ HRESULT __stdcall RadioNotifyListener::OnInstanceRadioChange(BSTR bstrRadioInsta
 // Posts message to the window with Message object as lParam.
 HRESULT RadioNotifyListener::postMessage(Message::Type type, IRadioInstance* radioInstance, BSTR radioInstanceId, DEVICE_RADIO_STATE radioState)
 {
-	auto message = new Message{type, radioInstance, radioInstanceId, radioState};
+	auto message = new Message{type, radioInstance, CString(radioInstanceId), radioState};
 	auto hr = WIN32_EXPECT(PostMessage(m_hwnd, m_notifyMessageId, 0, (LPARAM)message));
 	if(FAILED(hr)) {
 		delete message;

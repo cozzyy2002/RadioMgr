@@ -1,4 +1,5 @@
 #include "Assert.h"
+#include <stdio.h>
 
 using namespace tsm;
 

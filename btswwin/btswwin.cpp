@@ -43,7 +43,7 @@ BOOL CbtswwinApp::InitInstance()
 	// Configure log4cxx using XML file in the folder of exe file.
 	WCHAR path[MAX_PATH];
 	static const auto pathLength = ARRAYSIZE(path);
-	GetModuleFileName(NULL, path, pathLength);
+	GetModuleFileNameW(NULL, path, pathLength);
 
 	// Prevent multiple app from running.
 	// Absolute path of app is used as the mutex name in global namespace.

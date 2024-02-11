@@ -43,16 +43,15 @@ BOOL CbtswwinApp::InitInstance()
 	// Configure log4cxx using XML file in the folder of exe file.
 	WCHAR path[MAX_PATH];
 	static const auto pathLength = ARRAYSIZE(path);
-	GetModuleFileNameW(NULL, path, pathLength);
+	WIN32_EXPECT(GetModuleFileNameW(NULL, path, pathLength));
 
 	// Prevent multiple app from running.
 	// Absolute path of app is used as the mutex name in global namespace.
 	CString mutexName(_T("Global\\"));
-	{
-		CString _path(path);
-		_path.Replace(_T('\\'), _T('/'));
-		mutexName += _path;
-	}
+	CString _path(path);
+	_path.Replace(_T('\\'), _T('/'));
+	mutexName += _path;
+
 	CHandle appMutex(CreateMutex(NULL, TRUE, mutexName.GetString()));
 	auto err = GetLastError();
 	CString errMsg;
@@ -60,7 +59,7 @@ BOOL CbtswwinApp::InitInstance()
 	case ERROR_SUCCESS:
 		break;
 	case ERROR_ALREADY_EXISTS:
-		errMsg.Format(_T("`%s` is already running."), CString(path).GetString());
+		errMsg.Format(_T("`%s` is already running."), _path.GetString());
 		break;
 	default:
 		errMsg.Format(_T("CreateMutex failed.\nError = %d"), err);

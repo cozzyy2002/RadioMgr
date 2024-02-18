@@ -85,7 +85,7 @@ protected:
 
 	static void unregisterPowerNotify(HPOWERNOTIFY);
 	using PowerNotifyHandle = SafeHandle<HPOWERNOTIFY, unregisterPowerNotify>;
-	PowerNotifyHandle m_hPowerNotify;
+	std::vector<PowerNotifyHandle> m_hPowerNotify;
 	DEVICE_RADIO_STATE m_radioState;
 
 	CComPtr<RadioNotifyListener> m_radioNotifyListener;
@@ -139,6 +139,15 @@ protected:
 	bool canConnectVpn() const;
 	HRESULT connectVpn();
 	void showRasSatus();
+
+	using PowerSettingFunc = void (CbtswwinDlg::*)(DWORD dataLength, UCHAR* pdata);
+	struct PowerSettingItem {
+		GUID PowerSetting;
+		PowerSettingFunc func;
+	};
+	static const PowerSettingItem PowerSettingItems[];
+
+	void onLidSwitchStateChange(DWORD dataLength, UCHAR* pdata);
 
 	// Selected tab index of settings dialog.
 	int m_selectedSettingsTab;

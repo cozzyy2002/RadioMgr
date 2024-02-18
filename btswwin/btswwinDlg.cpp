@@ -143,6 +143,12 @@ END_MESSAGE_MAP()
 
 // CbtswwinDlg message handlers
 
+/*static*/ log4cxx::LoggerPtr& CbtswwinDlg::PowerNotifyHandle::logger(log4cxx::Logger::getLogger(_T("btswwin.CbtswwinDlg.PowerNotifyHandle")));
+
+/*static*/ const CbtswwinDlg::PowerSettingItem CbtswwinDlg::PowerSettingItems[] = {
+	{ GUID_LIDSWITCH_STATE_CHANGE, &CbtswwinDlg::onLidSwitchStateChange },
+};
+
 BOOL CbtswwinDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
@@ -215,8 +221,12 @@ BOOL CbtswwinDlg::OnInitDialog()
 	auto hr = createRadioManager();
 
 	if(SUCCEEDED(hr)) {
-		m_hPowerNotify = RegisterPowerSettingNotification(m_hWnd, &GUID_LIDSWITCH_STATE_CHANGE, DEVICE_NOTIFY_WINDOW_HANDLE);
-		hr = WIN32_EXPECT(m_hPowerNotify);
+		for(auto& x : PowerSettingItems) {
+			auto hPowerNotify = RegisterPowerSettingNotification(m_hWnd, &x.PowerSetting, DEVICE_NOTIFY_WINDOW_HANDLE);
+			if(SUCCEEDED(WIN32_EXPECT(hPowerNotify))) {
+				m_hPowerNotify.push_back(std::move(PowerNotifyHandle(hPowerNotify)));
+			}
+		}
 	}
 
 	m_bluetoothDevices.OnInitCtrl();
@@ -423,51 +433,9 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 {
 	if(nPowerEvent == PBT_POWERSETTINGCHANGE) {
 		auto setting = (PPOWERBROADCAST_SETTING)nEventData;
-		if(setting->PowerSetting == GUID_LIDSWITCH_STATE_CHANGE) {
-
-			static const ValueName<UCHAR> lidSwitchDatas[] = {
-				{0, _T("closed")},
-				{1, _T("opened")},
-			};
-			print(_T("LIDSWITCH_STATE_CHANGE: LID is %s"), ValueToString(lidSwitchDatas, setting->Data[0]).GetString());
-
-			UpdateData();
-			switch(setting->Data[0]) {
-			case 0:		// The lid is closed.
-				m_lidIsOpened = false;
-				if(m_settings->switchByLcdState) {
-					if(m_settings->restoreRadioState) {
-						// Save current state to restore when lid will be opened.
-						m_radioInstances.For([](RadioInstanceData& data)
-							{
-								data.savedState = data.state;
-								return S_OK;
-							}
-						);
-					}
-					HR_EXPECT_OK(setRadioState(DRS_SW_RADIO_OFF));
-				}
-				break;
-			case 1:		// The lid is opened.
-				m_lidIsOpened = true;
-				if(m_settings->autoCheckRadioInstance) {
-					m_radioInstances.For([this](int nItem, BOOL isChecked)
-						{
-							// Check all items of RadioInstance list.
-							if(!isChecked) { m_radioInstances.SetCheck(nItem); }
-							return S_OK;
-						});
-				}
-				if(m_settings->switchByLcdState) {
-					resetThread(m_setRadioOnThread);
-					m_setRadioOnThread = std::make_unique<std::thread>([this]
-						{
-							// Workaround for failure of IRadioInstance::SetRadioState(DRS_RADIO_ON).
-							Sleep(m_settings->setRadioOnDelay * 1000);
-							LOG4CXX_DEBUG(logger, _T("Switching Radio by LID open."));
-							HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_settings->restoreRadioState));
-						});
-				}
+		for(auto& x : PowerSettingItems) {
+			if(setting->PowerSetting == x.PowerSetting) {
+				(this->*x.func)(setting->DataLength, setting->Data);
 				break;
 			}
 		}
@@ -475,6 +443,56 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 
 	return TRUE;
 }
+
+void CbtswwinDlg::onLidSwitchStateChange(DWORD dataLength, UCHAR* pdata)
+{
+	static const ValueName<UCHAR> lidSwitchDatas[] = {
+		{0, _T("closed")},
+		{1, _T("opened")},
+	};
+	print(_T("LIDSWITCH_STATE_CHANGE: LID is %s"), ValueToString(lidSwitchDatas, *pdata).GetString());
+
+	UpdateData();
+	switch(*pdata) {
+	case 0:		// The lid is closed.
+		m_lidIsOpened = false;
+		if(m_settings->switchByLcdState) {
+			if(m_settings->restoreRadioState) {
+				// Save current state to restore when lid will be opened.
+				m_radioInstances.For([](RadioInstanceData& data)
+					{
+						data.savedState = data.state;
+						return S_OK;
+					}
+				);
+			}
+			HR_EXPECT_OK(setRadioState(DRS_SW_RADIO_OFF));
+		}
+		break;
+	case 1:		// The lid is opened.
+		m_lidIsOpened = true;
+		if(m_settings->autoCheckRadioInstance) {
+			m_radioInstances.For([this](int nItem, BOOL isChecked)
+				{
+					// Check all items of RadioInstance list.
+					if(!isChecked) { m_radioInstances.SetCheck(nItem); }
+					return S_OK;
+				});
+		}
+		if(m_settings->switchByLcdState) {
+			resetThread(m_setRadioOnThread);
+			m_setRadioOnThread = std::make_unique<std::thread>([this]
+				{
+					// Workaround for failure of IRadioInstance::SetRadioState(DRS_RADIO_ON).
+					Sleep(m_settings->setRadioOnDelay * 1000);
+					LOG4CXX_DEBUG(logger, _T("Switching Radio by LID open."));
+					HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_settings->restoreRadioState));
+				});
+		}
+		break;
+	}
+}
+
 
 // Sets state of all Radio instances checked in the ListCtrl.
 HRESULT CbtswwinDlg::setRadioState(DEVICE_RADIO_STATE state, bool restore /*= false*/)

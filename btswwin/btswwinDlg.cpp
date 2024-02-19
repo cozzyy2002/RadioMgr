@@ -146,7 +146,11 @@ END_MESSAGE_MAP()
 /*static*/ log4cxx::LoggerPtr& CbtswwinDlg::PowerNotifyHandle::logger(log4cxx::Logger::getLogger(_T("btswwin.CbtswwinDlg.PowerNotifyHandle")));
 
 /*static*/ const CbtswwinDlg::PowerSettingItem CbtswwinDlg::PowerSettingItems[] = {
-	{ GUID_LIDSWITCH_STATE_CHANGE, &CbtswwinDlg::onLidSwitchStateChange },
+	{ GUID_LIDSWITCH_STATE_CHANGE, &CbtswwinDlg::onPowerSettingLidSwitchStateChange },
+	{ GUID_ACDC_POWER_SOURCE, &CbtswwinDlg::onPowerSettingAcDcPowerSource },
+	{ GUID_CONSOLE_DISPLAY_STATE, &CbtswwinDlg::onPowerSettingConsoleDisplayState },
+	{ GUID_POWER_SAVING_STATUS, &CbtswwinDlg::onPowerSettingPowerSavingStatus },
+	{ GUID_SYSTEM_AWAYMODE, &CbtswwinDlg::onPowerSettingSystemAwayMode },
 };
 
 BOOL CbtswwinDlg::OnInitDialog()
@@ -444,7 +448,7 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 	return TRUE;
 }
 
-void CbtswwinDlg::onLidSwitchStateChange(DWORD dataLength, UCHAR* pdata)
+void CbtswwinDlg::onPowerSettingLidSwitchStateChange(DWORD dataLength, UCHAR* pdata)
 {
 	static const ValueName<UCHAR> lidSwitchDatas[] = {
 		{0, _T("closed")},
@@ -491,6 +495,44 @@ void CbtswwinDlg::onLidSwitchStateChange(DWORD dataLength, UCHAR* pdata)
 		}
 		break;
 	}
+}
+
+void CbtswwinDlg::onPowerSettingAcDcPowerSource(DWORD dataLength, UCHAR* pdata)
+{
+	static const ValueName<DWORD> valueNames[] = {
+		{PoAc, _T("AC power source")},
+		{PoDc, _T("onboard battery power source")},
+		{PoHot, _T("short-term power source such as a UPS device")},
+	};
+	LOG4CXX_INFO_FMT(logger, _T("ACDC_POWER_SOURCE: The computer is powered by %s."), ValueToString(valueNames, *(DWORD*)pdata).GetString());
+}
+
+void CbtswwinDlg::onPowerSettingConsoleDisplayState(DWORD dataLength, UCHAR* pdata)
+{
+	static const ValueName<DWORD> valueNames[] = {
+		{PowerMonitorOff, _T("off")},
+		{PowerMonitorOn, _T("on")},
+		{PowerMonitorDim, _T("dimmed")},
+	};
+	LOG4CXX_INFO_FMT(logger, _T("CONSOLE_DISPLAY_STATE: The display is %s."), ValueToString(valueNames, *(DWORD*)pdata).GetString());
+}
+
+void CbtswwinDlg::onPowerSettingPowerSavingStatus(DWORD dataLength, UCHAR* pdata)
+{
+	static const ValueName<DWORD> valueNames[] = {
+		{0, _T("off")},
+		{1, _T("on")},
+	};
+	LOG4CXX_INFO_FMT(logger, _T("POWER_SAVING_STATUS: Battery saver is %s."), ValueToString(valueNames, *(DWORD*)pdata).GetString());
+}
+
+void CbtswwinDlg::onPowerSettingSystemAwayMode(DWORD dataLength, UCHAR* pdata)
+{
+	static const ValueName<DWORD> valueNames[] = {
+		{0, _T("exiting")},
+		{1, _T("entering")},
+	};
+	LOG4CXX_INFO_FMT(logger, _T("SYSTEM_AWAYMODE: The computer is %s away-mode."), ValueToString(valueNames, *(DWORD*)pdata).GetString());
 }
 
 

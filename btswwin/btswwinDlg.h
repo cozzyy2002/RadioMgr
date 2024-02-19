@@ -147,7 +147,11 @@ protected:
 	};
 	static const PowerSettingItem PowerSettingItems[];
 
-	void onLidSwitchStateChange(DWORD dataLength, UCHAR* pdata);
+	void onPowerSettingLidSwitchStateChange(DWORD dataLength, UCHAR* pdata);
+	void onPowerSettingAcDcPowerSource(DWORD dataLength, UCHAR* pdata);
+	void onPowerSettingConsoleDisplayState(DWORD dataLength, UCHAR* pdata);
+	void onPowerSettingPowerSavingStatus(DWORD dataLength, UCHAR* pdata);
+	void onPowerSettingSystemAwayMode(DWORD dataLength, UCHAR* pdata);
 
 	// Selected tab index of settings dialog.
 	int m_selectedSettingsTab;

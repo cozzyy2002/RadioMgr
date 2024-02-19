@@ -14,7 +14,7 @@ public:
 	}
 	SafeHandle(SafeHandle&& src) noexcept : m_handle(src.m_handle.release())
 	{
-		LOG4CXX_DEBUG(logger, _T("SafeHandle copied: HANDLE = ") << m_handle.get());
+		LOG4CXX_DEBUG(logger, _T("SafeHandle moved: HANDLE = ") << m_handle.get());
 	}
 	SafeHandle& operator=(H h) {
 		LOG4CXX_DEBUG(logger, _T("SafeHandle substitutd: HANDLE = ") << h);

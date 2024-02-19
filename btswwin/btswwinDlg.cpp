@@ -225,6 +225,7 @@ BOOL CbtswwinDlg::OnInitDialog()
 	auto hr = createRadioManager();
 
 	if(SUCCEEDED(hr)) {
+		m_hPowerNotify.reserve(ARRAYSIZE(PowerSettingItems));
 		for(auto& x : PowerSettingItems) {
 			auto hPowerNotify = RegisterPowerSettingNotification(m_hWnd, &x.PowerSetting, DEVICE_NOTIFY_WINDOW_HANDLE);
 			if(SUCCEEDED(WIN32_EXPECT(hPowerNotify))) {

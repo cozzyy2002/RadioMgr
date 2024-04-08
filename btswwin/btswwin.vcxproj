@@ -200,6 +200,7 @@
     <ClInclude Include="Bluetooth\RadioNotifyListener.h" />
     <ClInclude Include="btswwin.h" />
     <ClInclude Include="btswwinDlg.h" />
+    <ClInclude Include="Command\Command.h" />
     <ClInclude Include="Network\Net.h" />
     <ClInclude Include="Network\RasDial.h" />
     <ClInclude Include="Network\WLan.h" />
@@ -231,6 +232,7 @@
     <ClCompile Include="Bluetooth\RadioNotifyListener.cpp" />
     <ClCompile Include="btswwin.cpp" />
     <ClCompile Include="btswwinDlg.cpp" />
+    <ClCompile Include="Command\Command.cpp" />
     <ClCompile Include="Network\Net.cpp" />
     <ClCompile Include="Network\RasDial.cpp" />
     <ClCompile Include="Network\WLan.cpp" />

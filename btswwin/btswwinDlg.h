@@ -28,6 +28,7 @@ enum {
 	WM_USER_WLAN_NOTIFY,			// Sent by CWLan to notify Wi-Fi is connected/disconnected.
 	WM_USER_NET_NOTIFY,				// Sent by CNet to notify connectivity changed.
 	WM_USER_VPN_NOTIFY,				// Sent by CRasDial to notify result of connecting VPN.
+	WM_USER_COMMAND_EXEC_RESULT,	// Sent by CCommad to notify result of exec() method.
 };
 
 // Deleter for MAllocPtr.

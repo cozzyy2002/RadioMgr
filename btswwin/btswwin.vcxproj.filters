@@ -14,6 +14,9 @@
     <Filter Include="Settings">
       <UniqueIdentifier>{fe1453ab-0523-468c-b7ff-6fa21739e9d9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Command">
+      <UniqueIdentifier>{9a3af0f7-e3a1-4796-b6a1-4fd331b98a18}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AboutDlg.h" />
@@ -68,6 +71,9 @@
       <Filter>Settings</Filter>
     </ClInclude>
     <ClInclude Include="Settings\RegistryKey.h" />
+    <ClInclude Include="Command\Command.h">
+      <Filter>Command</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AboutDlg.cpp" />
@@ -120,6 +126,9 @@
       <Filter>Settings</Filter>
     </ClCompile>
     <ClCompile Include="Settings\RegistryKey.cpp" />
+    <ClCompile Include="Command\Command.cpp">
+      <Filter>Command</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="btswwin.rc">

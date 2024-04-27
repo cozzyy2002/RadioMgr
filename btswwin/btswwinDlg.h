@@ -190,6 +190,7 @@ protected:
 	afx_msg LRESULT OnUserWLanNotify(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserNetNotify(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserVpnNotify(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUserCommandExecResult(WPARAM wParam, LPARAM lParam);
 	//virtual void PostNcDestroy();
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);

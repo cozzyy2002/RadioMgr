@@ -7,13 +7,13 @@ class CCommand
 {
 public:
 	CCommand();
+	virtual ~CCommand() {}
 
-	struct ExecResult {
-		explicit ExecResult() : exitCode(0) {}
-		DWORD exitCode;
-		CString cmd;
-	};
 	HRESULT exec(HWND hwnd, UINT messageId, LPCTSTR cmd);
+	DWORD exitCode;
+	CString cmd;
+
+	static CCommand* getInstanceFromNotify(WPARAM wParam, LPARAM lParam);
 
 protected:
 	HWND m_hwnd;

@@ -7,6 +7,7 @@
 #include "btswwin.h"
 #include "btswwinDlg.h"
 #include "Settings/SettingsDlg.h"
+#include "Command/Command.h"
 #include "AboutDlg.h"
 #include "ValueName.h"
 #include "afxdialogex.h"
@@ -120,6 +121,7 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_MESSAGE(WM_USER_WLAN_NOTIFY, &CbtswwinDlg::OnUserWLanNotify)
 	ON_MESSAGE(WM_USER_NET_NOTIFY, &CbtswwinDlg::OnUserNetNotify)
 	ON_MESSAGE(WM_USER_VPN_NOTIFY, &CbtswwinDlg::OnUserVpnNotify)
+	ON_MESSAGE(WM_USER_COMMAND_EXEC_RESULT, &CbtswwinDlg::OnUserCommandExecResult)
 	ON_WM_TIMER()
 	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_ON, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
 	ON_UPDATE_COMMAND_UI(ID_LOCAL_RADIO_OFF, &CbtswwinDlg::OnSwitchRadioUpdateCommandUI)
@@ -493,6 +495,12 @@ void CbtswwinDlg::onPowerSettingLidSwitchStateChange(DWORD dataLength, UCHAR* pd
 					LOG4CXX_DEBUG(logger, _T("Switching Radio by LID open."));
 					HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_settings->restoreRadioState));
 				});
+		}
+		{
+			auto cmd = new CCommand();
+			if(FAILED(cmd->exec(m_hWnd, WM_USER_COMMAND_EXEC_RESULT, _T("cmd")))) {
+				delete cmd;
+			}
 		}
 		break;
 	}
@@ -1016,6 +1024,14 @@ void CbtswwinDlg::showRasSatus()
 		m_RasStatus = rasStatus;
 		UpdateData(FALSE);
 	}
+}
+
+LRESULT CbtswwinDlg::OnUserCommandExecResult(WPARAM wParam, LPARAM lParam)
+{
+	std::unique_ptr<CCommand> result(CCommand::getInstanceFromNotify(wParam, lParam));
+	LOG4CXX_INFO_FMT(logger, _T("`%s` exits with code %d"), result->cmd.GetString(), result->exitCode);
+
+	return 0;
 }
 
 void CbtswwinDlg::OnTimer(UINT_PTR nIDEvent)

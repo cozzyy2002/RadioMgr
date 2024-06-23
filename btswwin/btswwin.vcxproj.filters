@@ -163,6 +163,9 @@
     <Image Include="res\UnknownDevice.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\DeviceSmartPhone.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="log4cxx.config.xml" />

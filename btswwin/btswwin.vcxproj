@@ -261,6 +261,7 @@
   <ItemGroup>
     <Image Include="res\DeviceConnectedOverlay.bmp" />
     <Image Include="res\DeviceHeadphone.bmp" />
+    <Image Include="res\DeviceSmartPhone.bmp" />
     <Image Include="res\LaptopComputer.bmp" />
     <Image Include="res\RadioOn.bmp" />
     <Image Include="res\RadioOff.bmp" />

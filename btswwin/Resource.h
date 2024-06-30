@@ -35,6 +35,8 @@
 #define IDB_BITMAP3                     155
 #define IDB_BITMAP_DEVICE_SMART_PHONE   155
 #define IDB_BITMAP_DEVICE_SMARTPHONE    155
+#define IDB_BITMAP5                     158
+#define IDB_BITMAP_DEVICE_PRINTER       158
 #define ID_LIST_LOG                     1001
 #define IDC_CHECK_SWITCH_BY_LCD_STATE   1002
 #define IDC_CHECK_RESTORE_RADIO_STATE   1003
@@ -119,7 +121,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        158
+#define _APS_NEXT_RESOURCE_VALUE        159
 #define _APS_NEXT_COMMAND_VALUE         32808
 #define _APS_NEXT_CONTROL_VALUE         1028
 #define _APS_NEXT_SYMED_VALUE           101

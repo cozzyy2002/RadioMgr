@@ -34,6 +34,20 @@ public:
 	Value<int> vpnConnectionDelay;
 	Value<int> vpnConnectionRetry;
 
+	// Specifies triggers to perform an action.
+	enum class Trigger
+	{
+		None			= 0,
+		LidOpen			= 1,
+		LidClose		= 2,
+		LidOpenClose	= LidOpen | LidClose,
+		PowerSourceAc	= 4,
+		PowerSourceDc	= 8,
+		PowerSourceHot	= 0x10,
+		PowerSourceChanged = PowerSourceAc | PowerSourceDc | PowerSourceHot,
+	};
+	EnumValue<Trigger> batteryLogTrigger;
+
 	void load();
 	void save();
 

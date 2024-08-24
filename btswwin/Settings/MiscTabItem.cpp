@@ -56,12 +56,7 @@ void CMiscTabItem::OnClickedCheckButton()
 // Writes setting value to the log file.
 void CMiscTabItem::OnBnClickedButtonLogSettings()
 {
-#ifdef _UNICODE
-	std::wostringstream
-#else
-	std::ostringstream
-#endif
-		msg;
+	std::tostringstream msg;
 	msg << _T("All setting values in ") << m_settings.getRegistryKeyName().GetString();
 
 	for(auto& value : m_settings.getValueList()) {

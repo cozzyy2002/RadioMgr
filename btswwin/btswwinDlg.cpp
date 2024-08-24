@@ -145,12 +145,15 @@ END_MESSAGE_MAP()
 
 /*static*/ log4cxx::LoggerPtr& CbtswwinDlg::PowerNotifyHandle::logger(log4cxx::Logger::getLogger(_T("btswwin.CbtswwinDlg.PowerNotifyHandle")));
 
+// List of GUID and notified function to be registered for Power Events.
+// About GUIDs, see https://learn.microsoft.com/en-us/windows/win32/power/power-setting-guids
 /*static*/ const CbtswwinDlg::PowerSettingItem CbtswwinDlg::PowerSettingItems[] = {
 	{ GUID_LIDSWITCH_STATE_CHANGE, &CbtswwinDlg::onPowerSettingLidSwitchStateChange },
 	{ GUID_ACDC_POWER_SOURCE, &CbtswwinDlg::onPowerSettingAcDcPowerSource },
 	{ GUID_CONSOLE_DISPLAY_STATE, &CbtswwinDlg::onPowerSettingConsoleDisplayState },
 	{ GUID_POWER_SAVING_STATUS, &CbtswwinDlg::onPowerSettingPowerSavingStatus },
 	{ GUID_SYSTEM_AWAYMODE, &CbtswwinDlg::onPowerSettingSystemAwayMode },
+	{ GUID_BATTERY_PERCENTAGE_REMAINING, &CbtswwinDlg::onPowerSettingsBatteryRemaining },
 };
 
 BOOL CbtswwinDlg::OnInitDialog()
@@ -449,6 +452,29 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 	return TRUE;
 }
 
+void CbtswwinDlg::logBatteryRemain(CMySettings::Trigger trigger)
+{
+	if(batteryRemain.isValid(batteryRemain.current) && (m_settings->batteryLogTrigger & trigger)) {
+		std::tostringstream stream;
+		stream << _T("Battery remain: ") << batteryRemain.current << _T("%");
+		if(batteryRemain.isValid(batteryRemain.previous)) {
+			LPCTSTR flag = _T("+");
+			DWORD diff;
+			if(batteryRemain.current < batteryRemain.previous) {
+				flag = _T("-");
+				diff = batteryRemain.previous - batteryRemain.current;
+			} else {
+				diff = batteryRemain.current - batteryRemain.previous;
+			}
+			if(0 < diff) {
+				stream << _T("(") << flag << diff << _T("%)");
+			}
+		}
+		LOG4CXX_INFO(logger, stream.str());
+		batteryRemain.previous = batteryRemain.current;
+	}
+}
+
 void CbtswwinDlg::onPowerSettingLidSwitchStateChange(DWORD dataLength, UCHAR* pdata)
 {
 	static const ValueName<UCHAR> lidSwitchDatas[] = {
@@ -473,6 +499,7 @@ void CbtswwinDlg::onPowerSettingLidSwitchStateChange(DWORD dataLength, UCHAR* pd
 			}
 			HR_EXPECT_OK(setRadioState(DRS_SW_RADIO_OFF));
 		}
+		logBatteryRemain(CMySettings::Trigger::LidClose);
 		break;
 	case 1:		// The lid is opened.
 		m_lidIsOpened = true;
@@ -494,6 +521,7 @@ void CbtswwinDlg::onPowerSettingLidSwitchStateChange(DWORD dataLength, UCHAR* pd
 					HR_EXPECT_OK(setRadioState(DRS_RADIO_ON, m_settings->restoreRadioState));
 				});
 		}
+		logBatteryRemain(CMySettings::Trigger::LidOpen);
 		break;
 	}
 }
@@ -506,6 +534,8 @@ void CbtswwinDlg::onPowerSettingAcDcPowerSource(DWORD dataLength, UCHAR* pdata)
 		{PoHot, _T("short-term power source such as a UPS device")},
 	};
 	LOG4CXX_INFO_FMT(logger, _T("ACDC_POWER_SOURCE: The computer is powered by %s."), ValueToString(valueNames, *(DWORD*)pdata).GetString());
+
+	logBatteryRemain(CMySettings::Trigger::PowerSourceChanged);
 }
 
 void CbtswwinDlg::onPowerSettingConsoleDisplayState(DWORD dataLength, UCHAR* pdata)
@@ -534,6 +564,12 @@ void CbtswwinDlg::onPowerSettingSystemAwayMode(DWORD dataLength, UCHAR* pdata)
 		{1, _T("entering")},
 	};
 	LOG4CXX_INFO_FMT(logger, _T("SYSTEM_AWAYMODE: The computer is %s away-mode."), ValueToString(valueNames, *(DWORD*)pdata).GetString());
+}
+
+void CbtswwinDlg::onPowerSettingsBatteryRemaining(DWORD dataLength, UCHAR* pdata)
+{
+	batteryRemain.current = *(DWORD*)pdata;
+	LOG4CXX_DEBUG_FMT(logger, _T("BATTERY_PERCENTAGE_REMAINING %d%%"), batteryRemain.current);
 }
 
 

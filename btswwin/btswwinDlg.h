@@ -140,6 +140,20 @@ protected:
 	HRESULT connectVpn();
 	void showRasSatus();
 
+	struct BatteryRemain
+	{
+		DWORD current;
+		DWORD previous;
+
+		BatteryRemain() : current(unknown), previous(unknown) {}
+		bool isValid(DWORD value) { return value != unknown; }
+
+	protected:
+		static const DWORD unknown = 1000;
+	};
+	BatteryRemain batteryRemain;
+	void logBatteryRemain(CMySettings::Trigger);
+
 	using PowerSettingFunc = void (CbtswwinDlg::*)(DWORD dataLength, UCHAR* pdata);
 	struct PowerSettingItem {
 		GUID PowerSetting;
@@ -152,6 +166,7 @@ protected:
 	void onPowerSettingConsoleDisplayState(DWORD dataLength, UCHAR* pdata);
 	void onPowerSettingPowerSavingStatus(DWORD dataLength, UCHAR* pdata);
 	void onPowerSettingSystemAwayMode(DWORD dataLength, UCHAR* pdata);
+	void onPowerSettingsBatteryRemaining(DWORD dataLength, UCHAR* pdata);
 
 	// Selected tab index of settings dialog.
 	int m_selectedSettingsTab;

@@ -30,3 +30,12 @@ public:
 };
 
 extern CbtswwinApp theApp;
+
+namespace std
+{
+#ifdef _UNICODE
+	using tostringstream = wostringstream;
+#else
+	using tostringstream = ostringstream;
+#endif
+}

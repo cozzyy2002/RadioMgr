@@ -101,7 +101,7 @@ public:
 		void read(CSettings* settings) override { m_intValue.read(settings); }
 		void write(CSettings* settings) override { m_intValue.write(settings); }
 		bool isChanged() const override { return m_intValue.isChanged(); }
-		CString valueToString() const override { return m_intValue.valueToString(); }
+		CString valueToString() const override;
 		DWORD getRegType() const override { return m_intValue.getRegType(); }
 #pragma endregion
 
@@ -333,3 +333,11 @@ bool checkFlag(const T a, const T b)
 }
 
 #pragma endregion
+
+template<typename T>
+inline CString CSettings::EnumValue<T>::valueToString() const
+{
+	CString str;
+	str.Format(_T("0x%x"), (int)*this);
+	return str;
+}

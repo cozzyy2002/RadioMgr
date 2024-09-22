@@ -454,7 +454,7 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 
 void CbtswwinDlg::logBatteryRemain(CMySettings::Trigger trigger)
 {
-	if(batteryRemain.isValid(batteryRemain.current) && (m_settings->batteryLogTrigger & trigger)) {
+	if(batteryRemain.isValid(batteryRemain.current) && (checkFlag(*m_settings->batteryLogTrigger, trigger))) {
 		std::tostringstream stream;
 		stream << _T("Battery remain: ") << batteryRemain.current << _T("%");
 		if(batteryRemain.isValid(batteryRemain.previous)) {

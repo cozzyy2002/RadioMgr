@@ -38,14 +38,15 @@ public:
 	enum class Trigger
 	{
 		None			= 0,
-		LidOpen			= 1,
-		LidClose		= 2,
+		LidOpen			= 1 << 0,
+		LidClose		= 1 << 1,
 		LidOpenClose	= LidOpen | LidClose,
-		PowerSourceAc	= 4,
-		PowerSourceDc	= 8,
-		PowerSourceHot	= 0x10,
+		PowerSourceAc	= 1 << 2,
+		PowerSourceDc	= 1 << 3,
+		PowerSourceHot	= 1 << 4,
 		PowerSourceChanged = PowerSourceAc | PowerSourceDc | PowerSourceHot,
 	};
+
 	EnumValue<Trigger> batteryLogTrigger;
 
 	void load();
@@ -56,9 +57,9 @@ public:
 #pragma region DebugSwitches
 	enum class DebugSwitch
 	{
-		None = 0,
-		LogServiceStateGUID = 1,	// Enable log for connecting device.
-		LIDSwitch = 2,				// Enable LID open/close debug command in system menu.
+		None				= 0,
+		LogServiceStateGUID	= 1 << 0,	// Enable log for connecting device.
+		LIDSwitch			= 1 << 1,	// Enable LID open/close debug command in system menu.
 	};
 
 	bool isEnabled(DebugSwitch);

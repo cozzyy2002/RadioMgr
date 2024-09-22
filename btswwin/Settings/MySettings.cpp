@@ -122,5 +122,5 @@ const DWORD CSettings::BinaryValue<WINDOWPLACEMENT>::RegType = REG_BINARY;
 
 bool CMySettings::isEnabled(DebugSwitch flag)
 {
-	return (flag & debugSwitches);
+	return checkFlag(*debugSwitches, flag);
 }

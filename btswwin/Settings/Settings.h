@@ -266,11 +266,70 @@ void CSettings::write(BinaryValue<T>& value)
 
 #pragma endregion
 
-template<typename T>
-int operator &(const CSettings::EnumValue<T>& a, T b) { return (int)a & (int)b; }
+#pragma region Utility functions to modify or check enum class value
 
+/**
+ * Sets or Resets target of type T and returns reference of the target.
+ * If `set` is true(default), flag bit of `value` in target is set.
+ * Otherwise, it is reset.
+ */
 template<typename T>
-int operator &(T a, const CSettings::EnumValue<T>& b) { return (int)a & (int)b; }
+T& setFlag(T& target, const T value, bool set = true)
+{
+	if(set) {
+		target = (T)(
+			std::underlying_type<T>::type(target) |
+			std::underlying_type<T>::type(value)
+		);
+	} else {
+		target = (T)(
+			std::underlying_type<T>::type(target) &
+			~std::underlying_type<T>::type(value)
+		);
+	}
+	return target;
+}
 
+/**
+ * Resets target of type T and returns reference of the target.
+ */
 template<typename T>
-int operator &(const CSettings::EnumValue<T>& a, const CSettings::EnumValue<T>& b) { return (int)a & (int)b; }
+T& resetFlag(T& target, const T value)
+{
+	return setFlag(target, value, false);
+}
+
+/**
+ * Returns result of AND(&) operation of two value.
+ */
+template<typename T>
+T andFlag(const T a, const T b)
+{
+	return (T)(
+		std::underlying_type<T>::type(a) &
+		std::underlying_type<T>::type(b)
+	);
+}
+
+/**
+ * Returns result of OR(|) operation of two value.
+ */
+template<typename T>
+T orFlag(const T a, const T b)
+{
+	return (T)(
+		std::underlying_type<T>::type(a) |
+		std::underlying_type<T>::type(b)
+	);
+}
+
+/**
+ * Returns wether result of and(&) operation of two value is zero or none zero.
+ */
+template<typename T>
+bool checkFlag(const T a, const T b)
+{
+	return std::underlying_type<T>::type(andFlag(a, b));
+}
+
+#pragma endregion

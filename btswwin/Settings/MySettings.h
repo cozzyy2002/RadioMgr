@@ -45,6 +45,10 @@ public:
 		PowerSourceDc	= 1 << 3,
 		PowerSourceHot	= 1 << 4,
 		PowerSourceChanged = PowerSourceAc | PowerSourceDc | PowerSourceHot,
+		ConsoleDisplayOff		= 1 << 5,
+		ConsoleDisplayOn		= 1 << 6,
+		ConsoleDisplayDimmed	= 1 << 7,
+		ConsoleDisplayChanged = ConsoleDisplayOff | ConsoleDisplayOn | ConsoleDisplayDimmed,
 	};
 
 	EnumValue<Trigger> batteryLogTrigger;

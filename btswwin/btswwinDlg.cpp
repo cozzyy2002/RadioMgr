@@ -546,6 +546,8 @@ void CbtswwinDlg::onPowerSettingConsoleDisplayState(DWORD dataLength, UCHAR* pda
 		{PowerMonitorDim, _T("dimmed")},
 	};
 	LOG4CXX_INFO_FMT(logger, _T("CONSOLE_DISPLAY_STATE: The display is %s."), ValueToString(valueNames, *(DWORD*)pdata).GetString());
+
+	logBatteryRemain(CMySettings::Trigger::ConsoleDisplayChanged);
 }
 
 void CbtswwinDlg::onPowerSettingPowerSavingStatus(DWORD dataLength, UCHAR* pdata)

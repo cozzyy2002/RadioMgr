@@ -54,6 +54,7 @@ void CMiscTabItem::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK_SAVE_WINDOW_PLACEMENT, m_saveWindowPlacement);
 	DDX_Control(pDX, IDC_CHECK_LOG_BATTERY_REMAIN_LID_OPEN_CLOSE, m_batteryRemainLidOpenClose);
 	DDX_Control(pDX, IDC_CHECK_LOG_BATTERY_REMAIN_POWER_SOURCE_CHANGED, m_batteryRemainPowerSourceChanged);
+	DDX_Control(pDX, IDC_CHECK_LOG_BATTERY_REMAIN_CONSOLE_DISPLAY_CHANGED, m_batteryRemainConsoleDisplayChanged);
 }
 
 
@@ -61,6 +62,7 @@ BEGIN_MESSAGE_MAP(CMiscTabItem, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_SAVE_WINDOW_PLACEMENT, &CMiscTabItem::OnClickedCheckButton)
 	ON_BN_CLICKED(IDC_CHECK_LOG_BATTERY_REMAIN_LID_OPEN_CLOSE, &CMiscTabItem::OnClickedCheckButton)
 	ON_BN_CLICKED(IDC_CHECK_LOG_BATTERY_REMAIN_POWER_SOURCE_CHANGED, &CMiscTabItem::OnClickedCheckButton)
+	ON_BN_CLICKED(IDC_CHECK_LOG_BATTERY_REMAIN_CONSOLE_DISPLAY_CHANGED, &CMiscTabItem::OnClickedCheckButton)
 	ON_BN_CLICKED(IDC_BUTTON_LOG_SETTINGS, &CMiscTabItem::OnBnClickedButtonLogSettings)
 END_MESSAGE_MAP()
 
@@ -104,6 +106,10 @@ void LogPowerRaminController::setValueToCtrl()
 		m_dlg->m_batteryRemainPowerSourceChanged,
 		checkFlag(*m_value, CMySettings::Trigger::PowerSourceChanged)
 	);
+	setButtonCheck(
+		m_dlg->m_batteryRemainConsoleDisplayChanged,
+		checkFlag(*m_value, CMySettings::Trigger::ConsoleDisplayChanged)
+	);
 }
 
 void LogPowerRaminController::getValueFromCtrl()
@@ -121,5 +127,6 @@ CMySettings::Trigger LogPowerRaminController::getButtonStates() const
 	auto ret(CMySettings::Trigger::None);
 	setFlag(ret, CMySettings::Trigger::LidOpenClose, m_dlg->m_batteryRemainLidOpenClose.GetCheck());
 	setFlag(ret, CMySettings::Trigger::PowerSourceChanged, m_dlg->m_batteryRemainPowerSourceChanged.GetCheck());
+	setFlag(ret, CMySettings::Trigger::ConsoleDisplayChanged, m_dlg->m_batteryRemainConsoleDisplayChanged.GetCheck());
 	return ret;
 }

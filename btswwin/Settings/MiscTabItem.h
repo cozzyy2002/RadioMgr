@@ -31,4 +31,5 @@ public:
 	afx_msg void OnBnClickedButtonLogSettings();
 	CButton m_batteryRemainLidOpenClose;
 	CButton m_batteryRemainPowerSourceChanged;
+	CButton m_batteryRemainConsoleDisplayChanged;
 };

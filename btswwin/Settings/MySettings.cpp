@@ -20,7 +20,7 @@ CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
 	, vpnName(regKeyNetwork, _T("VpnName"))
 	, vpnConnectionDelay(regKeyNetwork, _T("VpnConnectionDelay"), 2)
 	, vpnConnectionRetry(regKeyNetwork, _T("VpnConnectionRetry"))
-	, batteryLogTrigger(regKeyRoot, _T("BatteryLogTrigger"), Trigger::LidOpenClose)
+	, batteryLogTrigger(regKeyRoot, _T("BatteryLogTrigger"), Trigger::PowerSourceChanged)
 	, debugSwitches(regKeyRoot, _T("DebugSwitches"), DebugSwitch::None)
 	, m_windowPlacementValueHandler(this)
 {

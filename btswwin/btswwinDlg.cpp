@@ -454,24 +454,25 @@ UINT CbtswwinDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData)
 
 void CbtswwinDlg::logBatteryRemain(CMySettings::Trigger trigger)
 {
-	if(batteryRemain.isValid(batteryRemain.current) && (checkFlag(*m_settings->batteryLogTrigger, trigger))) {
+	if(batteryRemain.isValid(batteryRemain.current) && checkFlag(*m_settings->batteryLogTrigger, trigger)) {
 		std::tostringstream stream;
 		stream << _T("Battery remain: ") << batteryRemain.current << _T("%");
+		auto now(CTime::GetCurrentTime());
 		if(batteryRemain.isValid(batteryRemain.previous)) {
-			LPCTSTR flag = _T("+");
-			DWORD diff;
-			if(batteryRemain.current < batteryRemain.previous) {
-				flag = _T("-");
-				diff = batteryRemain.previous - batteryRemain.current;
-			} else {
-				diff = batteryRemain.current - batteryRemain.previous;
-			}
-			if(0 < diff) {
-				stream << _T("(") << flag << diff << _T("%)");
-			}
+			auto diff = batteryRemain.current - batteryRemain.previous;
+
+			// If there's no difference from previous time, no log is written.
+			if(0 == diff) return;
+
+			// Append difference and elapsed time to log message.
+			auto diffTime = now - batteryRemain.previousTime;
+			stream
+				<< _T("(") << std::showpos << diff << _T("%), ")
+				<< diffTime.Format(_T("%D day(s) %H:%M:%S elapsed")).GetString();
 		}
 		LOG4CXX_INFO(logger, stream.str());
 		batteryRemain.previous = batteryRemain.current;
+		batteryRemain.previousTime = now;
 	}
 }
 

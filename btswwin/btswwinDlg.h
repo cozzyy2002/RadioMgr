@@ -142,14 +142,15 @@ protected:
 
 	struct BatteryRemain
 	{
-		DWORD current;
-		DWORD previous;
+		int current;
+		int previous;
+		CTime previousTime;
 
 		BatteryRemain() : current(unknown), previous(unknown) {}
-		bool isValid(DWORD value) { return value != unknown; }
+		bool isValid(int value) { return value != unknown; }
 
 	protected:
-		static const DWORD unknown = 1000;
+		static const int unknown = 1000;
 	};
 	BatteryRemain batteryRemain;
 	void logBatteryRemain(CMySettings::Trigger);

@@ -55,6 +55,7 @@ void CMiscTabItem::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK_LOG_BATTERY_REMAIN_LID_OPEN_CLOSE, m_batteryRemainLidOpenClose);
 	DDX_Control(pDX, IDC_CHECK_LOG_BATTERY_REMAIN_POWER_SOURCE_CHANGED, m_batteryRemainPowerSourceChanged);
 	DDX_Control(pDX, IDC_CHECK_LOG_BATTERY_REMAIN_CONSOLE_DISPLAY_CHANGED, m_batteryRemainConsoleDisplayChanged);
+	DDX_Control(pDX, IDC_COMBOBOXEX_LOG_BATTERY_REMAIN, m_logBatteryRemainTriggers);
 }
 
 
@@ -73,6 +74,23 @@ END_MESSAGE_MAP()
 BOOL CMiscTabItem::OnInitDialog()
 {
 	CTabItem::OnInitDialog();
+
+	auto style = m_logBatteryRemainTriggers.GetExStyle();
+	//m_logBatteryRemainTriggers.SetExtendedStyle(BS_AUTOCHECKBOX, BS_AUTOCHECKBOX);
+	//RECT rect{17,86,135,13};
+	//m_logBatteryRemainTriggers.Create(CBS_DROPDOWNLIST, rect, this, IDC_COMBOBOXEX_LOG_BATTERY_REMAIN);
+	COMBOBOXEXITEM item = {CBEIF_TEXT};
+	item.iItem = 0;
+	item.pszText = _T("Console");
+	auto n = m_logBatteryRemainTriggers.InsertItem(&item);
+	item.iItem = 1;
+	item.pszText = _T("AC Power");
+	n = m_logBatteryRemainTriggers.InsertItem(&item);
+	item.iItem = 2;
+	item.pszText = _T("Display");
+	n = m_logBatteryRemainTriggers.InsertItem(&item);
+	//m_logBatteryRemainTriggers.AddString(_T("AC Power"));
+	//m_logBatteryRemainTriggers.AddString(_T("Display"));
 
 	return 0;
 }

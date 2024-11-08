@@ -32,4 +32,5 @@ public:
 	CButton m_batteryRemainLidOpenClose;
 	CButton m_batteryRemainPowerSourceChanged;
 	CButton m_batteryRemainConsoleDisplayChanged;
+	CComboBoxEx m_logBatteryRemainTriggers;
 };

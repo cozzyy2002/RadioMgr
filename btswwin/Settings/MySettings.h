@@ -49,9 +49,16 @@ public:
 		ConsoleDisplayOn		= 1 << 6,
 		ConsoleDisplayDimmed	= 1 << 7,
 		ConsoleDisplayChanged = ConsoleDisplayOff | ConsoleDisplayOn | ConsoleDisplayDimmed,
+		BatteryLevelLow			= 1 << 8,
+		BatteryLevelHigh		= 1 << 9,
+		BatteryLevelFull		= 1 << 10,
+		BatteryLevelChanged		= BatteryLevelLow | BatteryLevelHigh | BatteryLevelFull,
 	};
 
 	EnumValue<Trigger> batteryLogTrigger;
+
+	Value<int> batteryLogLow;
+	Value<int> batteryLogHigh;
 
 	void load();
 	void save();

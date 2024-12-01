@@ -457,9 +457,9 @@ void CbtswwinDlg::logBatteryRemain(CMySettings::Trigger trigger)
 	if(batteryRemain.isValid(batteryRemain.current) && checkFlag(*m_settings->batteryLogTrigger, trigger)) {
 		std::tostringstream stream;
 		stream << _T("Battery remain: ") << batteryRemain.current << _T("%");
-		auto now(CTime::GetCurrentTime());
+		auto const now(CTime::GetCurrentTime());
 		if(batteryRemain.isValid(batteryRemain.previous)) {
-			auto diff = batteryRemain.current - batteryRemain.previous;
+			const auto diff = batteryRemain.current - batteryRemain.previous;
 
 			// If there's no difference from previous time, no log is written.
 			if(0 == diff) return;
@@ -573,6 +573,23 @@ void CbtswwinDlg::onPowerSettingsBatteryRemaining(DWORD dataLength, UCHAR* pdata
 {
 	batteryRemain.current = *(DWORD*)pdata;
 	LOG4CXX_DEBUG_FMT(logger, _T("BATTERY_PERCENTAGE_REMAINING %d%%"), batteryRemain.current);
+
+	// Check if battery remain has exceeded any of the thresholds(Low/High/100%)
+	auto trigger(CMySettings::Trigger::None);
+	auto const isPreviousValid(batteryRemain.isValid(batteryRemain.previous));
+	if((!isPreviousValid || (batteryRemain.previous > m_settings->batteryLogLow)) && (m_settings->batteryLogLow >= batteryRemain.current)) {
+		trigger = orFlag(trigger, CMySettings::Trigger::BatteryLevelLow);
+	}
+	if((!isPreviousValid || (batteryRemain.previous < m_settings->batteryLogHigh)) && (m_settings->batteryLogHigh <= batteryRemain.current)) {
+		trigger = orFlag(trigger, CMySettings::Trigger::BatteryLevelHigh);
+	}
+	if((!isPreviousValid || (batteryRemain.previous < 100)) && (100 <= batteryRemain.current)) {
+		trigger = orFlag(trigger, CMySettings::Trigger::BatteryLevelFull);
+	}
+
+	if(trigger != CMySettings::Trigger::None) {
+		logBatteryRemain(trigger);
+	}
 }
 
 

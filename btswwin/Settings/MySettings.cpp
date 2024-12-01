@@ -21,6 +21,8 @@ CMySettings::CMySettings(LPCTSTR companyName, LPCTSTR applicationName)
 	, vpnConnectionDelay(regKeyNetwork, _T("VpnConnectionDelay"), 2)
 	, vpnConnectionRetry(regKeyNetwork, _T("VpnConnectionRetry"))
 	, batteryLogTrigger(regKeyRoot, _T("BatteryLogTrigger"), Trigger::PowerSourceChanged)
+	, batteryLogLow(regKeyRoot, _T("BatteryLogLow"), 20)
+	, batteryLogHigh(regKeyRoot, _T("BatteryLogHigh"), 90)
 	, debugSwitches(regKeyRoot, _T("DebugSwitches"), DebugSwitch::None)
 	, m_windowPlacementValueHandler(this)
 {
@@ -54,6 +56,8 @@ void CMySettings::load()
 		&vpnConnection, &vpnName,
 		&vpnConnectionDelay, &vpnConnectionRetry,
 		&batteryLogTrigger,
+		&batteryLogLow,
+		&batteryLogHigh,
 		&debugSwitches
 	};
 	HR_EXPECT_OK(CSettings::load(valueList));

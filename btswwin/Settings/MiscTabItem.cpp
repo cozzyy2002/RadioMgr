@@ -124,7 +124,7 @@ bool LogPowerRaminController::isChanged() const
 
 CMySettings::Trigger LogPowerRaminController::getButtonStates() const
 {
-	auto ret(CMySettings::Trigger::None);
+	auto ret(*m_value);
 	setFlag(ret, CMySettings::Trigger::LidOpenClose, m_dlg->m_batteryRemainLidOpenClose.GetCheck());
 	setFlag(ret, CMySettings::Trigger::PowerSourceChanged, m_dlg->m_batteryRemainPowerSourceChanged.GetCheck());
 	setFlag(ret, CMySettings::Trigger::ConsoleDisplayChanged, m_dlg->m_batteryRemainConsoleDisplayChanged.GetCheck());

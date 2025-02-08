@@ -37,6 +37,7 @@
 #define IDB_BITMAP_DEVICE_SMARTPHONE    155
 #define IDB_BITMAP5                     158
 #define IDB_BITMAP_DEVICE_PRINTER       158
+#define IDD_UPDATE_DEVICE_NAME          159
 #define ID_LIST_LOG                     1001
 #define IDC_CHECK_SWITCH_BY_LCD_STATE   1002
 #define IDC_CHECK_RESTORE_RADIO_STATE   1003
@@ -83,6 +84,7 @@
 #define IDC_EDIT_WIFI_STATUS            1027
 #define IDC_EDIT_WIFI_STATUS2           1028
 #define IDC_EDIT_RAS_STATUS             1028
+#define IDC_EDIT_DEVICE_NAME            1028
 #define ID_CONNECT_CONNECT              32771
 #define File                            32772
 #define ID_DEVICE_CONNECT               32773
@@ -120,14 +122,16 @@
 #define ID_REMOTE_DEVICE_PROPERTY       32805
 #define ID_REMOTE_DEVICE_PROPERTIES     32806
 #define ID_CONNECT_PROPERTIES           32807
+#define ID_CONNECT_RENAME               32808
+#define ID_REMOTE_DEVICE_RENAME         32809
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        159
-#define _APS_NEXT_COMMAND_VALUE         32808
-#define _APS_NEXT_CONTROL_VALUE         1028
+#define _APS_NEXT_RESOURCE_VALUE        161
+#define _APS_NEXT_COMMAND_VALUE         32810
+#define _APS_NEXT_CONTROL_VALUE         1029
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

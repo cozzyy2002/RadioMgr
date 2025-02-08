@@ -227,4 +227,6 @@ public:
 	afx_msg void OnFileOpenLog(UINT);
 	CString m_RasStatus;
 	CString m_WiFiStatus;
+	afx_msg void OnRenameDeviceCommand();
+	afx_msg void OnRenameCeviceUpdateCommand(CCmdUI* pCmdUI);
 };

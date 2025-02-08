@@ -7,6 +7,7 @@
 #include "btswwin.h"
 #include "btswwinDlg.h"
 #include "Settings/SettingsDlg.h"
+#include "UpdateDeviceNameDlg.h"
 #include "AboutDlg.h"
 #include "ValueName.h"
 #include "afxdialogex.h"
@@ -137,6 +138,8 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_UPDATE_COMMAND_UI(ID_OPEN_LOGFILE_MIN, &CbtswwinDlg::OnFileOpenLogCommandUI)
 	ON_COMMAND_RANGE(ID_OPEN_LOGFILE_MIN, ID_OPEN_LOGFILE_MAX, &CbtswwinDlg::OnFileOpenLog)
 	ON_UPDATE_COMMAND_UI(IDM_ABOUTBOX, &CbtswwinDlg::OnExitUpdateCommandUI)
+	ON_COMMAND(ID_REMOTE_DEVICE_RENAME, &CbtswwinDlg::OnRenameDeviceCommand)
+	ON_UPDATE_COMMAND_UI(ID_REMOTE_DEVICE_RENAME, &CbtswwinDlg::OnRenameCeviceUpdateCommand)
 END_MESSAGE_MAP()
 
 
@@ -890,6 +893,27 @@ void CbtswwinDlg::OnConnectDeviceCommand()
 
 			PostMessage(WM_USER_CONNECT_DEVICE_RESULT, serviceCount, (LPARAM)deviceInfo);
 		});
+}
+
+
+void CbtswwinDlg::OnRenameDeviceCommand()
+{
+	auto deviceInfo = m_bluetoothDevices.GetSelectedDevice();
+	CString deviceName(deviceInfo->szName);
+
+	CUpdateDeviceNameDlg dlg(deviceName);
+	if(dlg.DoModal() == IDOK) {
+		auto newInfo(*deviceInfo);
+		CA2W name(deviceName.GetString());
+		wcscpy_s(newInfo.szName, name);
+		WIN32_EXPECT(BluetoothUpdateDeviceRecord(&newInfo));
+	}
+}
+
+
+void CbtswwinDlg::OnRenameCeviceUpdateCommand(CCmdUI* pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
 }
 
 void CbtswwinDlg::OnDevicePropertiesUpdateCommandUI(CCmdUI* pCmdUI)

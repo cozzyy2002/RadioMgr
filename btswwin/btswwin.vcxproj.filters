@@ -68,6 +68,7 @@
       <Filter>Settings</Filter>
     </ClInclude>
     <ClInclude Include="Settings\RegistryKey.h" />
+    <ClInclude Include="UpdateDeviceNameDlg.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AboutDlg.cpp" />
@@ -120,6 +121,7 @@
       <Filter>Settings</Filter>
     </ClCompile>
     <ClCompile Include="Settings\RegistryKey.cpp" />
+    <ClCompile Include="UpdateDeviceNameDlg.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="btswwin.rc">

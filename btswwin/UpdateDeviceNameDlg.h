@@ -21,9 +21,14 @@ public:
 #endif
 
 protected:
+	CString& m_deviceNameOrg;
+
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
-	CString m_deviceName;
-
 	DECLARE_MESSAGE_MAP()
+public:
+	CString m_deviceName;
+	afx_msg void OnEnChangeEditDeviceName();
+	virtual void OnOK();
 };

@@ -139,7 +139,7 @@ BEGIN_MESSAGE_MAP(CbtswwinDlg, CDialogEx)
 	ON_COMMAND_RANGE(ID_OPEN_LOGFILE_MIN, ID_OPEN_LOGFILE_MAX, &CbtswwinDlg::OnFileOpenLog)
 	ON_UPDATE_COMMAND_UI(IDM_ABOUTBOX, &CbtswwinDlg::OnExitUpdateCommandUI)
 	ON_COMMAND(ID_REMOTE_DEVICE_RENAME, &CbtswwinDlg::OnRenameDeviceCommand)
-	ON_UPDATE_COMMAND_UI(ID_REMOTE_DEVICE_RENAME, &CbtswwinDlg::OnRenameCeviceUpdateCommand)
+	ON_UPDATE_COMMAND_UI(ID_REMOTE_DEVICE_RENAME, &CbtswwinDlg::OnRenameDeviceUpdateCommand)
 END_MESSAGE_MAP()
 
 
@@ -906,12 +906,12 @@ void CbtswwinDlg::OnRenameDeviceCommand()
 		auto newInfo(*deviceInfo);
 		CA2W name(deviceName.GetString());
 		wcscpy_s(newInfo.szName, name);
-		WIN32_EXPECT(BluetoothUpdateDeviceRecord(&newInfo));
+		HR_EXPECT_OK(HRESULT_FROM_WIN32(BluetoothUpdateDeviceRecord(&newInfo)));
 	}
 }
 
 
-void CbtswwinDlg::OnRenameCeviceUpdateCommand(CCmdUI* pCmdUI)
+void CbtswwinDlg::OnRenameDeviceUpdateCommand(CCmdUI* pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
 }

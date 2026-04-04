@@ -162,14 +162,17 @@ CString addressToString(const BLUETOOTH_ADDRESS& address)
     return str;
 }
 
-// Returns Bluetooth device name.
-// If the name is empty, returns its address as string.
-CString getDeviceNameOrAddress(const BLUETOOTH_DEVICE_INFO& info)
+// Returns Bluetooth device name and is address as string.
+CString getDeviceNameAndAddress(const BLUETOOTH_DEVICE_INFO& info)
 {
+	CString address(addressToString(info.Address));
 	if(info.szName[0] != L'\0') {
-		return CString(info.szName);
+		CString str;
+		CString name(info.szName);
+		str.Format(_T("%s(%s)"), name.GetString(), address.GetString());
+		return str;
 	} else {
-		return addressToString(info.Address);
+		return address;
 	}
 }
 

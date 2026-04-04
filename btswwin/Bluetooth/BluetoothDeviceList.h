@@ -57,7 +57,7 @@ protected:
 };
 
 CString addressToString(const BLUETOOTH_ADDRESS&);
-CString getDeviceNameOrAddress(const BLUETOOTH_DEVICE_INFO&);
+CString getDeviceNameAndAddress(const BLUETOOTH_DEVICE_INFO&);
 
 #pragma region Operator functions for CBluetoothDeviceList::UpdateMask to be used as flag.
 inline bool operator&(CBluetoothDeviceList::UpdateMask a, CBluetoothDeviceList::UpdateMask b)
